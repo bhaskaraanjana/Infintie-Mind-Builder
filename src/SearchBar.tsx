@@ -55,115 +55,189 @@ export const SearchBar: React.FC = () => {
 
     if (!isOpen) {
         return (
-            <div style={{
+            <div className="glass" style={{
                 position: 'fixed',
                 top: '20px',
-                right: '20px',
-                zIndex: 50
-            }}>
-                <div style={{
-                    backgroundColor: 'rgba(42, 42, 42, 0.9)',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    color: '#999',
-                    backdropFilter: 'blur(10px)'
-                }}>
-                    Press <kbd style={{ padding: '2px 6px', backgroundColor: '#555', borderRadius: '3px' }}>⌘K</kbd> to search
-                </div>
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 'var(--z-popover)',
+                padding: '10px 20px',
+                borderRadius: 'var(--radius-xl)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-2)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-base)'
+            }}
+                onClick={() => setIsOpen(true)}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateX(-50%) translateY(-2px)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateX(-50%)';
+                    e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+                }}
+            >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <span style={{ color: 'var(--neutral-600)', fontSize: 'var(--text-sm)' }}>Search notes...</span>
+                <kbd className="badge badge-neutral" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>⌘K</kbd>
             </div>
         );
     }
 
     return (
-        <div style={{
+        <div className="fade-in" style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             justifyContent: 'center',
             paddingTop: '100px',
-            zIndex: 1000
+            zIndex: 'var(--z-modal)'
         }}
             onClick={() => setIsOpen(false)}
         >
-            <div
+            <div className="glass scale-in"
                 style={{
                     width: '600px',
+                    maxWidth: '90vw',
                     maxHeight: '500px',
-                    backgroundColor: '#2a2a2a',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-                    overflow: 'hidden'
+                    borderRadius: 'var(--radius-2xl)',
+                    boxShadow: 'var(--shadow-2xl)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Search input */}
-                <div style={{ padding: '16px', borderBottom: '1px solid #444' }}>
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search notes... (use #tag for tags)"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            backgroundColor: '#1a1a1a',
-                            border: '1px solid #555',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            fontSize: '16px',
-                            outline: 'none'
-                        }}
-                        autoFocus
-                    />
+                {/* Search Input */}
+                <div style={{
+                    padding: 'var(--spacing-4)',
+                    borderBottom: '1px solid var(--neutral-200)'
+                }}>
+                    <div style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-3)'
+                    }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--neutral-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <input
+                            ref={inputRef}
+                            type="search"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search notes... (use #tag for tags)"
+                            style={{
+                                flex: 1,
+                                padding: 'var(--spacing-2)',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: 'var(--neutral-900)',
+                                fontSize: 'var(--text-base)',
+                                outline: 'none'
+                            }}
+                            autoFocus
+                        />
+                        {query && (
+                            <button
+                                onClick={() => setQuery('')}
+                                className="button-secondary"
+                                style={{
+                                    padding: 'var(--spacing-1)',
+                                    minWidth: '24px',
+                                    height: '24px',
+                                    borderRadius: 'var(--radius-full)'
+                                }}
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Results */}
                 <div style={{
-                    maxHeight: '400px',
-                    overflowY: 'auto'
+                    flex: 1,
+                    overflowY: 'auto',
+                    maxHeight: '400px'
                 }}>
                     {results.length === 0 && query.trim() && (
-                        <div style={{ padding: '24px', textAlign: 'center', color: '#666' }}>
-                            No results found
+                        <div style={{
+                            padding: 'var(--spacing-8)',
+                            textAlign: 'center',
+                            color: 'var(--neutral-500)'
+                        }}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto var(--spacing-4)' }}>
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                            <div style={{ fontSize: 'var(--text-sm)' }}>No results found</div>
                         </div>
                     )}
-                    {results.map((result) => (
+                    {results.length === 0 && !query.trim() && (
+                        <div style={{
+                            padding: 'var(--spacing-8)',
+                            textAlign: 'center',
+                            color: 'var(--neutral-500)',
+                            fontSize: 'var(--text-sm)'
+                        }}>
+                            Start typing to search your notes...
+                        </div>
+                    )}
+                    {results.map((result, index) => (
                         <div
                             key={result.item.id}
+                            className="slide-in-down"
                             onClick={() => navigateToNote(result.item.id)}
                             style={{
-                                padding: '12px 16px',
-                                borderBottom: '1px solid #333',
+                                padding: 'var(--spacing-4)',
+                                borderBottom: index < results.length - 1 ? '1px solid var(--neutral-200)' : 'none',
                                 cursor: 'pointer',
-                                transition: 'background-color 0.2s'
+                                transition: 'all var(--transition-fast)',
+                                animationDelay: `${index * 30}ms`
                             }}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#3a3a3a'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'var(--neutral-100)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
                         >
-                            <div style={{ fontWeight: 'bold', color: '#fff', marginBottom: '4px' }}>
+                            <div style={{
+                                fontWeight: 600,
+                                color: 'var(--neutral-900)',
+                                marginBottom: 'var(--spacing-1)',
+                                fontSize: 'var(--text-sm)'
+                            }}>
                                 {result.item.title}
                             </div>
-                            <div style={{ fontSize: '13px', color: '#999', marginBottom: '4px' }}>
-                                {getHighlightedText(result.item.content, result.matches)}...
+                            <div style={{
+                                fontSize: 'var(--text-sm)',
+                                color: 'var(--neutral-600)',
+                                marginBottom: 'var(--spacing-2)',
+                                lineHeight: 1.5
+                            }}>
+                                {getHighlightedText(result.item.content, result.matches).slice(0, 100)}...
                             </div>
                             {result.item.tags && result.item.tags.length > 0 && (
-                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
                                     {result.item.tags.map(tag => (
                                         <span
                                             key={tag}
-                                            style={{
-                                                fontSize: '11px',
-                                                padding: '2px 6px',
-                                                backgroundColor: '#4a9eff',
-                                                color: '#fff',
-                                                borderRadius: '8px'
-                                            }}
+                                            className="badge badge-primary"
+                                            style={{ fontSize: '11px' }}
                                         >
                                             #{tag}
                                         </span>
