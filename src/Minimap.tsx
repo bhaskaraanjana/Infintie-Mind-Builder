@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from './store';
 
 export const Minimap: React.FC = () => {
     const { notes, clusters, viewport, setViewport } = useStore();
+    const [hover, setHover] = useState(false);
+    const [, forceUpdate] = useState({});
 
-    const minimapWidth = 200;
-    const minimapHeight = 150;
-    const worldSize = 8000; // Assume world is ±4000 in each direction
+    // Force re-render when viewport changes to update minimap dynamically
+    useEffect(() => {
+        forceUpdate({});
+    }, [viewport.x, viewport.y, viewport.scale]);
+
+    const minimapWidth = 220;
+    const minimapHeight = 165;
+    const worldSize = 8000;
     const scale = minimapWidth / worldSize;
 
     const handleMinimapClick = (e: React.MouseEvent<SVGElement>) => {
@@ -21,7 +28,8 @@ export const Minimap: React.FC = () => {
         // Center viewport on clicked location
         setViewport({
             x: -worldX + window.innerWidth / 2,
-            y: -worldY + window.innerHeight / 2
+            y: -worldY + window.innerHeight / 2,
+            scale: viewport.scale
         });
     };
 
@@ -32,52 +40,117 @@ export const Minimap: React.FC = () => {
     const viewportY = ((-viewport.y / viewport.scale + worldSize / 2) * scale);
 
     return (
-        <div style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            backgroundColor: 'rgba(26, 26, 26, 0.95)',
-            border: '2px solid #444',
-            borderRadius: '8px',
-            padding: '8px',
-            zIndex: 50,
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-        }}>
+        <div
+            className="glass"
+            style={{
+                position: 'fixed',
+                bottom: '20px',
+                right: '20px',
+                borderRadius: 'var(--radius-2xl)',
+                padding: 'var(--spacing-4)',
+                zIndex: 'var(--z-sticky)',
+                boxShadow: 'var(--shadow-2xl)',
+                opacity: hover ? 1 : 0.85,
+                transition: 'all var(--transition-base)'
+            }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+        >
+            {/* Header */}
             <div style={{
-                fontSize: '11px',
-                color: '#999',
-                marginBottom: '4px',
-                fontWeight: '600'
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-2)',
+                marginBottom: 'var(--spacing-2)'
             }}>
-                MINIMAP
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neutral-600)" strokeWidth="2">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                </svg>
+                <div style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--neutral-700)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                }}>
+                    Map
+                </div>
+                <div className="badge badge-neutral" style={{
+                    fontSize: '10px',
+                    marginLeft: 'auto'
+                }}>
+                    {Object.keys(notes).length}
+                </div>
             </div>
+
+            {/* SVG Canvas */}
             <svg
                 width={minimapWidth}
                 height={minimapHeight}
-                style={{ display: 'block', cursor: 'pointer' }}
+                style={{
+                    display: 'block',
+                    cursor: 'pointer',
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundColor: 'var(--neutral-50)',
+                    border: '1px solid var(--neutral-200)'
+                }}
                 onClick={handleMinimapClick}
             >
-                {/* Background */}
-                <rect width={minimapWidth} height={minimapHeight} fill="#0a0a0a" />
+                {/* Grid pattern */}
+                <defs>
+                    <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--neutral-300)" strokeWidth="0.5" opacity="0.3" />
+                    </pattern>
+                    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                        <rect width="50" height="50" fill="url(#smallGrid)" />
+                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--neutral-300)" strokeWidth="1" opacity="0.5" />
+                    </pattern>
+                </defs>
 
-                {/* Grid lines */}
-                <line x1={minimapWidth / 2} y1={0} x2={minimapWidth / 2} y2={minimapHeight} stroke="#222" strokeWidth="1" />
-                <line x1={0} y1={minimapHeight / 2} x2={minimapWidth} y2={minimapHeight / 2} stroke="#222" strokeWidth="1" />
+                {/* Background grid */}
+                <rect width={minimapWidth} height={minimapHeight} fill="url(#grid)" />
+
+                {/* Center crosshair */}
+                <line
+                    x1={minimapWidth / 2}
+                    y1={minimapHeight / 2 - 5}
+                    x2={minimapWidth / 2}
+                    y2={minimapHeight / 2 + 5}
+                    stroke="var(--neutral-400)"
+                    strokeWidth="1"
+                    opacity="0.5"
+                />
+                <line
+                    x1={minimapWidth / 2 - 5}
+                    y1={minimapHeight / 2}
+                    x2={minimapWidth / 2 + 5}
+                    y2={minimapHeight / 2}
+                    stroke="var(--neutral-400)"
+                    strokeWidth="1"
+                    opacity="0.5"
+                />
 
                 {/* Clusters */}
                 {Object.values(clusters).map(cluster => {
                     const x = ((cluster.x + worldSize / 2) * scale);
                     const y = ((cluster.y + worldSize / 2) * scale);
                     return (
-                        <circle
-                            key={cluster.id}
-                            cx={x}
-                            cy={y}
-                            r={8}
-                            fill={cluster.color}
-                            opacity={0.4}
-                        />
+                        <g key={cluster.id}>
+                            <circle
+                                cx={x}
+                                cy={y}
+                                r={12}
+                                fill={cluster.color}
+                                opacity={0.15}
+                            />
+                            <circle
+                                cx={x}
+                                cy={y}
+                                r={6}
+                                fill={cluster.color}
+                                opacity={0.5}
+                            />
+                        </g>
                     );
                 })}
 
@@ -90,7 +163,7 @@ export const Minimap: React.FC = () => {
                         fleeting: '#FFD700',
                         literature: '#87CEEB',
                         permanent: '#90EE90',
-                        hub: '#DDA0DD'
+                        hub: '#D8BFD8'
                     };
 
                     return (
@@ -98,25 +171,55 @@ export const Minimap: React.FC = () => {
                             key={note.id}
                             cx={x}
                             cy={y}
-                            r={2}
+                            r={2.5}
                             fill={colors[note.type]}
-                            opacity={0.8}
+                            opacity={0.9}
                         />
                     );
                 })}
 
-                {/* Viewport indicator */}
-                <rect
-                    x={viewportX}
-                    y={viewportY}
-                    width={viewportWidth}
-                    height={viewportHeight}
-                    fill="none"
-                    stroke="#4a9eff"
-                    strokeWidth="2"
-                    opacity={0.8}
-                />
+                {/* Viewport indicator - dynamically updated */}
+                <g>
+                    {/* Outer glow */}
+                    <rect
+                        x={viewportX}
+                        y={viewportY}
+                        width={viewportWidth}
+                        height={viewportHeight}
+                        fill="none"
+                        stroke="var(--primary-500)"
+                        strokeWidth="3"
+                        opacity="0.2"
+                        rx="2"
+                    />
+                    {/* Main rectangle */}
+                    <rect
+                        x={viewportX}
+                        y={viewportY}
+                        width={viewportWidth}
+                        height={viewportHeight}
+                        fill="var(--primary-500)"
+                        fillOpacity="0.1"
+                        stroke="var(--primary-600)"
+                        strokeWidth="2"
+                        opacity="0.9"
+                        rx="2"
+                    />
+                </g>
             </svg>
+
+            {/* Footer stats */}
+            <div style={{
+                marginTop: 'var(--spacing-2)',
+                display: 'flex',
+                gap: 'var(--spacing-3)',
+                fontSize: '10px',
+                color: 'var(--neutral-600)'
+            }}>
+                <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
+                <div>•</div>
+                <div>Clusters: {Object.keys(clusters).length}</div>
+            </div>
         </div>
     );
 };
