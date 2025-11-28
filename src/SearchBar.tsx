@@ -83,7 +83,7 @@ export const SearchBar: React.FC = () => {
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                 </svg>
-                <span style={{ color: 'var(--neutral-600)', fontSize: 'var(--text-sm)' }}>Search notes...</span>
+                <span style={{ color: 'var(--theme-text-secondary)', fontSize: 'var(--text-sm)' }}>Search notes...</span>
                 <kbd className="badge badge-neutral" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>⌘K</kbd>
             </div>
         );

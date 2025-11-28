@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from './store';
 
+import { themes } from './themes';
+
 export const Minimap: React.FC = () => {
-    const { notes, clusters, viewport, setViewport } = useStore();
+    const { notes, clusters, viewport, setViewport, theme: themeName } = useStore();
+    const theme = themes[themeName];
     const [hover, setHover] = useState(false);
     const [, forceUpdate] = useState({});
 
@@ -63,12 +66,12 @@ export const Minimap: React.FC = () => {
                 gap: 'var(--spacing-2)',
                 marginBottom: 'var(--spacing-2)'
             }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neutral-600)" strokeWidth="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-secondary)" strokeWidth="2">
                     <polygon points="3 11 22 2 13 21 11 13 3 11" />
                 </svg>
                 <div style={{
                     fontSize: 'var(--text-xs)',
-                    color: 'var(--neutral-700)',
+                    color: 'var(--theme-text)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px'
@@ -91,19 +94,19 @@ export const Minimap: React.FC = () => {
                     display: 'block',
                     cursor: 'pointer',
                     borderRadius: 'var(--radius-lg)',
-                    backgroundColor: 'var(--neutral-50)',
-                    border: '1px solid var(--neutral-200)'
+                    backgroundColor: 'var(--theme-canvas-bg)',
+                    border: '1px solid var(--theme-border)'
                 }}
                 onClick={handleMinimapClick}
             >
                 {/* Grid pattern */}
                 <defs>
                     <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--neutral-300)" strokeWidth="0.5" opacity="0.3" />
+                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--theme-border)" strokeWidth="0.5" opacity="0.3" />
                     </pattern>
                     <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
                         <rect width="50" height="50" fill="url(#smallGrid)" />
-                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--neutral-300)" strokeWidth="1" opacity="0.5" />
+                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--theme-border)" strokeWidth="1" opacity="0.5" />
                     </pattern>
                 </defs>
 
@@ -116,7 +119,7 @@ export const Minimap: React.FC = () => {
                     y1={minimapHeight / 2 - 5}
                     x2={minimapWidth / 2}
                     y2={minimapHeight / 2 + 5}
-                    stroke="var(--neutral-400)"
+                    stroke="var(--theme-text-secondary)"
                     strokeWidth="1"
                     opacity="0.5"
                 />
@@ -125,7 +128,7 @@ export const Minimap: React.FC = () => {
                     y1={minimapHeight / 2}
                     x2={minimapWidth / 2 + 5}
                     y2={minimapHeight / 2}
-                    stroke="var(--neutral-400)"
+                    stroke="var(--theme-text-secondary)"
                     strokeWidth="1"
                     opacity="0.5"
                 />
@@ -159,12 +162,9 @@ export const Minimap: React.FC = () => {
                     const x = ((note.x + worldSize / 2) * scale);
                     const y = ((note.y + worldSize / 2) * scale);
 
-                    const colors = {
-                        fleeting: '#FFD700',
-                        literature: '#87CEEB',
-                        permanent: '#90EE90',
-                        hub: '#D8BFD8'
-                    };
+                    const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
+                    // @ts-ignore
+                    const fill = noteColor.main;
 
                     return (
                         <circle
@@ -172,7 +172,7 @@ export const Minimap: React.FC = () => {
                             cx={x}
                             cy={y}
                             r={2.5}
-                            fill={colors[note.type]}
+                            fill={fill}
                             opacity={0.9}
                         />
                     );
@@ -214,7 +214,7 @@ export const Minimap: React.FC = () => {
                 display: 'flex',
                 gap: 'var(--spacing-3)',
                 fontSize: '10px',
-                color: 'var(--neutral-600)'
+                color: 'var(--theme-text-secondary)'
             }}>
                 <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
                 <div>•</div>

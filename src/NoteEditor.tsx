@@ -11,8 +11,11 @@ const NOTE_TYPE_COLORS = {
     hub: { bg: '#F5E6FF', border: '#D8BFD8', label: 'Hub' }
 };
 
+import { themes } from './themes';
+
 export const NoteEditor = () => {
-    const { notes, editingNoteId, setEditingNoteId, updateNote, deleteNote } = useStore();
+    const { notes, editingNoteId, setEditingNoteId, updateNote, deleteNote, theme: themeName } = useStore();
+    const theme = themes[themeName];
     const note = editingNoteId ? notes[editingNoteId] : null;
 
     const [title, setTitle] = useState('');
@@ -158,7 +161,13 @@ export const NoteEditor = () => {
     };
 
     const backlinks = getBacklinks(note.id, notes);
-    const typeInfo = NOTE_TYPE_COLORS[type];
+
+    // Dynamic type colors based on theme
+    const typeColor = theme.colors[type as keyof typeof theme.colors] || theme.colors.fleeting;
+    // @ts-ignore
+    const typeMain = typeColor.main;
+    const typeBg = `${typeMain}20`; // 20% opacity
+    const typeBorder = typeMain;
 
     return (
         <div className="fade-in" style={{
@@ -191,9 +200,9 @@ export const NoteEditor = () => {
                 {/* Header */}
                 <div style={{
                     padding: 'var(--spacing-6)',
-                    borderBottom: '1px solid var(--neutral-200)',
-                    backgroundColor: typeInfo.bg,
-                    borderLeft: `4px solid ${typeInfo.border}`
+                    borderBottom: '1px solid var(--theme-border)',
+                    backgroundColor: typeBg,
+                    borderLeft: `4px solid ${typeBorder}`
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
@@ -211,7 +220,7 @@ export const NoteEditor = () => {
                                     fontWeight: 600,
                                     border: 'none',
                                     backgroundColor: 'transparent',
-                                    color: 'var(--neutral-800)',
+                                    color: 'var(--theme-text)',
                                     cursor: 'pointer'
                                 }}
                             >
@@ -246,7 +255,8 @@ export const NoteEditor = () => {
                             fontSize: 'var(--text-xl)',
                             fontWeight: 600,
                             border: 'none',
-                            backgroundColor: 'white',
+                            backgroundColor: 'transparent',
+                            color: 'var(--theme-text)',
                             marginBottom: 'var(--spacing-3)'
                         }}
                         autoFocus
@@ -267,7 +277,7 @@ export const NoteEditor = () => {
                             display: 'block',
                             fontSize: 'var(--text-sm)',
                             fontWeight: 600,
-                            color: 'var(--neutral-700)',
+                            color: 'var(--theme-text-secondary)',
                             marginBottom: 'var(--spacing-2)'
                         }}>
                             Content
@@ -283,7 +293,9 @@ export const NoteEditor = () => {
                                 minHeight: '200px',
                                 fontFamily: 'var(--font-sans)',
                                 lineHeight: 1.6,
-                                resize: 'vertical'
+                                resize: 'vertical',
+                                color: 'var(--theme-text)',
+                                backgroundColor: 'transparent'
                             }}
                         />
 
@@ -295,7 +307,7 @@ export const NoteEditor = () => {
                                 left: 0,
                                 right: 0,
                                 marginTop: 'var(--spacing-2)',
-                                backgroundColor: 'white',
+                                backgroundColor: 'var(--theme-bg)',
                                 borderRadius: 'var(--radius-lg)',
                                 boxShadow: 'var(--shadow-xl)',
                                 overflow: 'hidden',
@@ -310,14 +322,14 @@ export const NoteEditor = () => {
                                         style={{
                                             padding: 'var(--spacing-3)',
                                             cursor: 'pointer',
-                                            backgroundColor: index === selectedSuggestionIndex ? 'var(--primary-50)' : 'transparent',
+                                            backgroundColor: index === selectedSuggestionIndex ? 'var(--theme-border)' : 'transparent',
                                             fontSize: 'var(--text-sm)',
-                                            color: 'var(--neutral-900)',
+                                            color: 'var(--theme-text)',
                                             transition: 'background-color var(--transition-fast)'
                                         }}
                                         onMouseEnter={(e) => {
                                             if (index !== selectedSuggestionIndex) {
-                                                e.currentTarget.style.backgroundColor = 'var(--neutral-100)';
+                                                e.currentTarget.style.backgroundColor = 'var(--theme-border)';
                                             }
                                         }}
                                         onMouseLeave={(e) => {
@@ -385,7 +397,7 @@ export const NoteEditor = () => {
                         }}>
                             Tags
                         </label>
-                        <TagInput tags={tags} setTags={setTags} allTags={allTags} />
+                        <TagInput tags={tags} onChange={setTags} existingTags={allTags} />
                     </div>
 
                     {/* Backlinks */}
@@ -420,10 +432,10 @@ export const NoteEditor = () => {
                                             borderRadius: 'var(--radius-md)',
                                             cursor: 'pointer',
                                             fontSize: 'var(--text-sm)',
-                                            color: 'var(--neutral-700)',
+                                            color: 'var(--theme-text)',
                                             transition: 'background-color var(--transition-fast)'
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--neutral-100)'}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-border)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
                                         → {backlink.title}
@@ -437,7 +449,7 @@ export const NoteEditor = () => {
                 {/* Footer */}
                 <div style={{
                     padding: 'var(--spacing-6)',
-                    borderTop: '1px solid var(--neutral-200)',
+                    borderTop: '1px solid var(--theme-border)',
                     display: 'flex',
                     gap: 'var(--spacing-3)',
                     justifyContent: 'space-between'

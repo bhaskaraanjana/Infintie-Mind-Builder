@@ -44,7 +44,7 @@ export const TagFilter = () => {
                 style={{
                     padding: 'var(--spacing-2) var(--spacing-4)',
                     backgroundColor: selectedTags.length > 0 ? 'var(--primary-600)' : 'var(--glass-bg)',
-                    color: selectedTags.length > 0 ? 'white' : 'var(--neutral-700)',
+                    color: selectedTags.length > 0 ? 'white' : 'var(--theme-text)',
                     border: selectedTags.length > 0 ? 'none' : '1px solid var(--glass-border)',
                     borderRadius: 'var(--radius-xl)',
                     fontWeight: 500,
@@ -57,7 +57,7 @@ export const TagFilter = () => {
                 }}
                 onMouseEnter={(e) => {
                     if (selectedTags.length === 0) {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                        e.currentTarget.style.backgroundColor = 'var(--theme-bg)';
                     }
                 }}
                 onMouseLeave={(e) => {
@@ -154,7 +154,7 @@ export const TagFilter = () => {
                     position: 'absolute',
                     top: 'calc(100% + var(--spacing-2))',
                     left: 0,
-                    backgroundColor: 'var(--glass-bg)',
+                    backgroundColor: 'var(--theme-canvas-bg)',
                     borderRadius: 'var(--radius-xl)',
                     boxShadow: 'var(--shadow-xl)',
                     minWidth: '280px',
@@ -172,7 +172,7 @@ export const TagFilter = () => {
                         alignItems: 'center',
                         position: 'sticky',
                         top: 0,
-                        backgroundColor: 'var(--glass-bg)',
+                        backgroundColor: 'var(--theme-canvas-bg)',
                         backdropFilter: 'blur(var(--glass-blur))',
                         zIndex: 1
                     }}>
@@ -181,14 +181,14 @@ export const TagFilter = () => {
                             alignItems: 'center',
                             gap: 'var(--spacing-2)'
                         }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neutral-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                                 <line x1="7" y1="7" x2="7.01" y2="7" />
                             </svg>
                             <span style={{
                                 fontWeight: 600,
                                 fontSize: 'var(--text-sm)',
-                                color: 'var(--neutral-800)'
+                                color: 'var(--theme-text)'
                             }}>
                                 Filter by Tags
                             </span>
@@ -228,7 +228,7 @@ export const TagFilter = () => {
                             <div style={{
                                 padding: 'var(--spacing-6)',
                                 textAlign: 'center',
-                                color: 'var(--neutral-500)',
+                                color: 'var(--theme-text-secondary)',
                                 fontSize: 'var(--text-sm)'
                             }}>
                                 No tags found. Add tags to your notes to filter them.
@@ -285,7 +285,7 @@ export const TagFilter = () => {
                                     <span style={{
                                         flex: 1,
                                         fontSize: 'var(--text-sm)',
-                                        color: 'var(--neutral-900)',
+                                        color: 'var(--theme-text)',
                                         fontWeight: selectedTags.includes(tag) ? 500 : 400
                                     }}>
                                         #{tag}

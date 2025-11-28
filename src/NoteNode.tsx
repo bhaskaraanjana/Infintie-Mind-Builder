@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import { Group, Rect, Text, Circle } from 'react-konva';
 import type { Note } from './types';
+import { themes, type ThemeName } from './themes';
 
 interface Props {
     note: Note;
     scale: number;
     updateNotePosition: (id: string, x: number, y: number) => void;
     setEditingNoteId: (id: string | null) => void;
+    themeName: ThemeName;
 }
 
-const COLORS = {
-    fleeting: { main: '#FFD700', glow: '#FFD70040' },
-    literature: { main: '#4FC3F7', glow: '#4FC3F740' },  // Cyan blue like Obsidian
-    permanent: { main: '#81C784', glow: '#81C78440' },
-    hub: { main: '#64B5F6', glow: '#64B5F640' }  // Brighter blue for hubs
-};
-
-export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, setEditingNoteId }) => {
+export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, setEditingNoteId, themeName }) => {
     const [hover, setHover] = useState(false);
-    const colorScheme = COLORS[note.type];
+    const theme = themes[themeName];
+    // Fallback if theme or color is missing
+    const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
+
+    const colorScheme = {
+        main: noteColor.main,
+        glow: `${noteColor.main}40`
+    };
 
     const handleDblClick = (e: any) => {
         e.cancelBubble = true;
@@ -58,7 +60,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 {/* Floating text label */}
                 <Text
                     text={note.title}
-                    fill="#E0E0E0"
+                    fill={theme.colors.text}
                     fontSize={11}
                     fontStyle={note.type === 'hub' ? 'bold' : 'normal'}
                     x={dotSize + 8}
@@ -70,7 +72,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 {hover && note.content && (
                     <Text
                         text={note.content.substring(0, 50) + '...'}
-                        fill="#999"
+                        fill={theme.colors.text}
                         fontSize={9}
                         x={dotSize + 8}
                         y={8}
@@ -87,12 +89,12 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     const hasTags = note.tags && note.tags.length > 0;
     const contentPreview = note.content.substring(0, 100);
     const cardHeight = 140;
+
     const cardColorScheme = {
-        fleeting: { main: '#FFD700', light: '#FFF9E6', dark: '#CC9900' },
-        literature: { main: '#87CEEB', light: '#E6F7FF', dark: '#5BA3C7' },
-        permanent: { main: '#90EE90', light: '#E6FFE6', dark: '#6BC46B' },
-        hub: { main: '#D8BFD8', light: '#F5E6FF', dark: '#B896B8' }
-    }[note.type];
+        main: noteColor.main,
+        light: `${noteColor.main}20`, // Use 20% opacity as light variant
+        dark: noteColor.main // Use main as dark variant
+    };
 
     return (
         <Group
@@ -127,7 +129,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             <Rect
                 width={280}
                 height={cardHeight}
-                fill="white"
+                fill={theme.colors.canvasBg}
                 cornerRadius={16}
                 shadowColor="black"
                 shadowBlur={hover ? 20 : 12}
@@ -139,7 +141,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 height={cardHeight}
                 fillLinearGradientStartPoint={{ x: 0, y: 0 }}
                 fillLinearGradientEndPoint={{ x: 0, y: cardHeight }}
-                fillLinearGradientColorStops={[0, cardColorScheme.light, 0.3, 'rgba(255,255,255,0.95)', 1, 'white']}
+                fillLinearGradientColorStops={[0, cardColorScheme.light, 0.3, theme.colors.canvasBg, 1, theme.colors.canvasBg]}
                 cornerRadius={16}
                 opacity={0.6}
                 listening={false}
@@ -163,7 +165,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             />
             <Text
                 text={note.title}
-                fill="#171717"
+                fill={theme.colors.text}
                 fontSize={18}
                 fontStyle="bold"
                 x={20}
@@ -175,7 +177,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             {contentPreview && (
                 <Text
                     text={contentPreview + (note.content.length > 100 ? '...' : '')}
-                    fill="#525252"
+                    fill={theme.colors.text}
                     fontSize={13}
                     lineHeight={1.4}
                     x={20}
@@ -184,6 +186,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                     height={50}
                     ellipsis={true}
                     listening={false}
+                    opacity={0.8}
                 />
             )}
             {hasTags && (

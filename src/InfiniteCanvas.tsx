@@ -29,6 +29,7 @@ export const InfiniteCanvas = () => {
     const updateNotePosition = useStore((state) => state.updateNotePosition);
     const setEditingNoteId = useStore((state) => state.setEditingNoteId);
     const updateClusterPosition = useStore((state) => state.updateClusterPosition);
+    const theme = useStore((state) => state.theme);
 
     const stageRef = useRef<any>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; options: MenuOption[] } | null>(null);
@@ -346,7 +347,7 @@ export const InfiniteCanvas = () => {
                     }
                 }}
                 ref={stageRef}
-                style={{ backgroundColor: '#FAF9F6' }}
+                style={{ backgroundColor: 'var(--theme-canvas-bg)' }}
             >
                 <Layer>
                     {Object.values(clusters).map((cluster) => (
@@ -356,6 +357,7 @@ export const InfiniteCanvas = () => {
                             scale={viewport.scale}
                             notes={notes}
                             updateClusterPosition={updateClusterPosition}
+                            themeName={theme}
                         />
                     ))}
 
@@ -382,6 +384,7 @@ export const InfiniteCanvas = () => {
                             scale={viewport.scale}
                             updateNotePosition={updateNotePosition}
                             setEditingNoteId={setEditingNoteId}
+                            themeName={theme}
                         />
                     ))}
                 </Layer>

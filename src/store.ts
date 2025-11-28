@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import type { Note, Cluster, Link, ViewportState } from './types';
 import { db } from './db';
+import { type ThemeName } from './themes';
 
 interface AppState {
     notes: Record<string, Note>;
@@ -10,12 +11,14 @@ interface AppState {
     viewport: ViewportState;
     editingNoteId: string | null;
     selectedTags: string[]; // Active tag filter
+    theme: ThemeName;
 
     setViewport: (v: Partial<ViewportState>) => void;
     setEditingNoteId: (id: string | null) => void;
     setSelectedTags: (tags: string[]) => void;
     toggleTagFilter: (tag: string) => void;
     clearTagFilter: () => void;
+    setTheme: (theme: ThemeName) => void;
 
     // Actions
     loadData: () => Promise<void>;
@@ -72,6 +75,7 @@ export const useStore = create<AppState>((set, get) => ({
     viewport: { x: 0, y: 0, scale: 1 },
     editingNoteId: null,
     selectedTags: [],
+    theme: (localStorage.getItem('infinite-mind-theme') as ThemeName) || 'light',
 
     setViewport: (update) => set((state) => ({
         viewport: { ...state.viewport, ...update }
@@ -91,6 +95,11 @@ export const useStore = create<AppState>((set, get) => ({
     }),
 
     clearTagFilter: () => set({ selectedTags: [] }),
+
+    setTheme: (theme) => {
+        localStorage.setItem('infinite-mind-theme', theme);
+        set({ theme });
+    },
 
     loadData: async () => {
         const notesArray = await db.notes.toArray();
