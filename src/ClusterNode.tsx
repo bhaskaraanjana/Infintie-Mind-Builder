@@ -11,10 +11,13 @@ interface Props {
     themeName: ThemeName;
 }
 
+import { useStore } from './store';
+
 export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClusterPosition, themeName }) => {
     const [hover, setHover] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const theme = themes[themeName];
+    const ui = useStore((state) => state.ui); // Reactive state access
 
     const childrenNotes = cluster.children.map(id => notes[id]).filter(Boolean);
     if (childrenNotes.length === 0) return null;
@@ -27,8 +30,10 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
     const width = maxX - minX + 350;
     const height = maxY - minY + 250;
 
+    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 1.2);
+
     // LEVEL 1: Far Out View - "The Orb"
-    if (scale < 0.4) {
+    if (isOrbView) {
         return (
             <Group
                 x={cluster.x}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Group, Rect, Text, Circle } from 'react-konva';
 import type { Note } from './types';
 import { themes, type ThemeName } from './themes';
+import { useStore } from './store';
 
 interface Props {
     note: Note;
@@ -14,6 +15,8 @@ interface Props {
 export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, setEditingNoteId, themeName }) => {
     const [hover, setHover] = useState(false);
     const theme = themes[themeName];
+    const ui = useStore((state) => state.ui); // Reactive state access
+
     // Fallback if theme or color is missing
     const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
 
@@ -27,10 +30,14 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
         setEditingNoteId(note.id);
     };
 
+    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 1.2);
+
     // LEVEL 1 & 2: Far and Medium View - Obsidian Style Dots with Labels
-    if (scale < 0.8) {
+    if (isOrbView) {
         const dotSize = note.type === 'hub' ? 12 : 8;
         const glowSize = hover ? dotSize + 8 : dotSize + 4;
+        const showLabel = ui.showOrbLabels || hover;
+        const showDetails = ui.showOrbDetails || hover;
 
         return (
             <Group
@@ -65,11 +72,11 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                     fontStyle={note.type === 'hub' ? 'bold' : 'normal'}
                     x={dotSize + 8}
                     y={-6}
-                    opacity={hover ? 1 : 0.85}
+                    opacity={showLabel ? 1 : 0}
                     listening={false}
                 />
-                {/* Small preview text on hover */}
-                {hover && note.content && (
+                {/* Small preview text on hover or toggle */}
+                {showDetails && note.content && (
                     <Text
                         text={note.content.substring(0, 50) + '...'}
                         fill={theme.colors.text}

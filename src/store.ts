@@ -20,6 +20,15 @@ interface AppState {
     clearTagFilter: () => void;
     setTheme: (theme: ThemeName) => void;
 
+    // UI State
+    ui: {
+        minimapVisible: boolean;
+        lodMode: 'auto' | 'orb' | 'card';
+        showOrbLabels: boolean;
+        showOrbDetails: boolean;
+    };
+    setUi: (updates: Partial<AppState['ui']>) => void;
+
     // Actions
     loadData: () => Promise<void>;
     addNote: (note: Omit<Note, 'id' | 'created' | 'modified'>) => Promise<void>;
@@ -76,6 +85,16 @@ export const useStore = create<AppState>((set, get) => ({
     editingNoteId: null,
     selectedTags: [],
     theme: (localStorage.getItem('infinite-mind-theme') as ThemeName) || 'light',
+    ui: {
+        minimapVisible: true,
+        lodMode: 'auto',
+        showOrbLabels: false,
+        showOrbDetails: false
+    },
+
+    setUi: (updates) => set((state) => ({
+        ui: { ...state.ui, ...updates }
+    })),
 
     setViewport: (update) => set((state) => ({
         viewport: { ...state.viewport, ...update }

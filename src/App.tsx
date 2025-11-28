@@ -5,6 +5,7 @@ import { SearchBar } from './SearchBar';
 import { Minimap } from './Minimap';
 import { TagFilter } from './TagFilter';
 import { Settings } from './Settings';
+import { ViewControls } from './ViewControls';
 import { useStore } from './store';
 import { themes } from './themes';
 
@@ -47,6 +48,7 @@ function App() {
                 <TagFilter />
             </div>
             <Minimap />
+            <ViewControls />
             <Settings />
         </div>
     );
