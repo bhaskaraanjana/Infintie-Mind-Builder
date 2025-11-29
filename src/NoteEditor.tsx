@@ -22,6 +22,7 @@ export const NoteEditor = () => {
     const [content, setContent] = useState('');
     const [type, setType] = useState<NoteType>('fleeting');
     const [tags, setTags] = useState<string[]>([]);
+    const [source, setSource] = useState('');
     const [showAutocomplete, setShowAutocomplete] = useState(false);
     const [autocompleteQuery, setAutocompleteQuery] = useState('');
     const [autocompletePosition, setAutocompletePosition] = useState(0);
@@ -46,6 +47,7 @@ export const NoteEditor = () => {
             setContent(note.content);
             setType(note.type);
             setTags(note.tags || []);
+            setSource(note.source || '');
         }
     }, [note]);
 
@@ -150,7 +152,7 @@ export const NoteEditor = () => {
 
     const handleSave = () => {
         if (!note) return;
-        updateNote(note.id, { title, content, type, tags });
+        updateNote(note.id, { title, content, type, tags, source });
         setEditingNoteId(null);
     };
 
@@ -262,6 +264,31 @@ export const NoteEditor = () => {
                         autoFocus
                     />
                 </div>
+
+                {/* Reference Input (Literature only) */}
+                {type === 'literature' && (
+                    <div style={{
+                        padding: '0 var(--spacing-6)',
+                        marginBottom: 'var(--spacing-4)'
+                    }}>
+                        <input
+                            type="text"
+                            value={source}
+                            onChange={(e) => setSource(e.target.value)}
+                            placeholder="Reference (e.g. Book Title, URL)..."
+                            className="input"
+                            style={{
+                                width: '100%',
+                                fontSize: 'var(--text-sm)',
+                                padding: 'var(--spacing-2)',
+                                backgroundColor: 'rgba(0,0,0,0.03)',
+                                border: '1px solid var(--theme-border)',
+                                borderRadius: 'var(--radius-md)',
+                                color: 'var(--theme-text)'
+                            }}
+                        />
+                    </div>
+                )}
 
                 {/* Content */}
                 <div style={{

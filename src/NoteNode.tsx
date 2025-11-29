@@ -196,6 +196,20 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                     opacity={0.8}
                 />
             )}
+            {note.type === 'literature' && note.source && (
+                <Text
+                    text={`Ref: ${note.source}`}
+                    fill={theme.colors.text}
+                    fontSize={10}
+                    fontStyle="italic"
+                    x={20}
+                    y={95}
+                    width={250}
+                    ellipsis={true}
+                    listening={false}
+                    opacity={0.6}
+                />
+            )}
             {hasTags && (
                 <>
                     {note.tags!.slice(0, 4).map((tag, idx) => (
