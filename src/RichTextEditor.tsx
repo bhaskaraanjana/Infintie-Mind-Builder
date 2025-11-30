@@ -1,0 +1,268 @@
+import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import Youtube from '@tiptap/extension-youtube';
+import { useEffect, useCallback } from 'react';
+import {
+    Bold, Italic, Strikethrough, Code,
+    Heading1, Heading2, List, ListOrdered,
+    Image as ImageIcon, Youtube as YoutubeIcon, Quote
+} from 'lucide-react';
+
+interface Props {
+    content: string;
+    onChange: (content: string) => void;
+    editable?: boolean;
+    isExpanded?: boolean;
+}
+
+export const RichTextEditor = ({ content, onChange, editable = true, isExpanded = false }: Props) => {
+    const editor = useEditor({
+        extensions: [
+            StarterKit,
+            Placeholder.configure({
+                placeholder: 'Write something amazing...',
+            }),
+            Image.configure({
+                inline: true,
+                allowBase64: true,
+            }),
+            Youtube.configure({
+                controls: false,
+            }),
+        ],
+        content: content,
+        editable: editable,
+        onUpdate: ({ editor }) => {
+            onChange(editor.getHTML());
+        },
+        editorProps: {
+            attributes: {
+                class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[200px] p-4 ${isExpanded ? 'max-w-none' : ''}`,
+            },
+            handlePaste: (view, event, slice) => {
+                const items = Array.from(event.clipboardData?.items || []);
+                const images = items.filter(item => item.type.indexOf('image') === 0);
+
+                if (images.length > 0) {
+                    event.preventDefault();
+                    images.forEach(item => {
+                        const blob = item.getAsFile();
+                        if (blob) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                const result = e.target?.result;
+                                if (typeof result === 'string') {
+                                    view.dispatch(view.state.tr.replaceSelectionWith(
+                                        view.state.schema.nodes.image.create({ src: result })
+                                    ));
+                                }
+                            };
+                            reader.readAsDataURL(blob);
+                        }
+                    });
+                    return true;
+                }
+                return false;
+            }
+        },
+    });
+
+    // Update editor content if external content changes (and is different)
+    useEffect(() => {
+        if (editor && content !== editor.getHTML()) {
+            if (editor.getText() === '' && content) {
+                editor.commands.setContent(content);
+            }
+        }
+    }, [content, editor]);
+
+    const addYoutubeVideo = useCallback(() => {
+        const url = prompt('Enter YouTube URL');
+        if (url && editor) {
+            editor.commands.setYoutubeVideo({ src: url });
+        }
+    }, [editor]);
+
+    const addImage = useCallback(() => {
+        const url = prompt('Enter Image URL');
+        if (url && editor) {
+            editor.chain().focus().setImage({ src: url }).run();
+        }
+    }, [editor]);
+
+    if (!editor) {
+        return null;
+    }
+
+    return (
+        <div className={`rich-text-editor ${isExpanded ? 'expanded' : ''}`}>
+            {editor && (
+                <BubbleMenu className="bubble-menu glass" tippyOptions={{ duration: 100 }} editor={editor}>
+                    <button
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                        className={editor.isActive('bold') ? 'is-active' : ''}
+                        title="Bold"
+                    >
+                        <Bold size={16} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                        className={editor.isActive('italic') ? 'is-active' : ''}
+                        title="Italic"
+                    >
+                        <Italic size={16} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleStrike().run()}
+                        className={editor.isActive('strike') ? 'is-active' : ''}
+                        title="Strike"
+                    >
+                        <Strikethrough size={16} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleCode().run()}
+                        className={editor.isActive('code') ? 'is-active' : ''}
+                        title="Code"
+                    >
+                        <Code size={16} />
+                    </button>
+                </BubbleMenu>
+            )}
+
+            {editor && (
+                <FloatingMenu className="floating-menu glass" tippyOptions={{ duration: 100 }} editor={editor}>
+                    <button
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                        className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+                        title="Heading 1"
+                    >
+                        <Heading1 size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                        className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+                        title="Heading 2"
+                    >
+                        <Heading2 size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleBulletList().run()}
+                        className={editor.isActive('bulletList') ? 'is-active' : ''}
+                        title="Bullet List"
+                    >
+                        <List size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                        className={editor.isActive('orderedList') ? 'is-active' : ''}
+                        title="Ordered List"
+                    >
+                        <ListOrdered size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                        className={editor.isActive('blockquote') ? 'is-active' : ''}
+                        title="Quote"
+                    >
+                        <Quote size={18} />
+                    </button>
+                    <div className="separator" />
+                    <button onClick={addImage} title="Add Image">
+                        <ImageIcon size={18} />
+                    </button>
+                    <button onClick={addYoutubeVideo} title="Add YouTube Video">
+                        <YoutubeIcon size={18} />
+                    </button>
+                </FloatingMenu>
+            )}
+
+            <EditorContent editor={editor} />
+
+            <style>{`
+                .rich-text-editor {
+                    position: relative;
+                }
+                .ProseMirror {
+                    outline: none;
+                    min-height: 200px;
+                    color: var(--theme-text);
+                }
+                .ProseMirror p.is-editor-empty:first-child::before {
+                    color: var(--theme-text-secondary);
+                    content: attr(data-placeholder);
+                    float: left;
+                    height: 0;
+                    pointer-events: none;
+                }
+                .bubble-menu, .floating-menu {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    padding: 0.5rem;
+                    border-radius: 0.75rem;
+                    background-color: var(--glass-bg);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid var(--glass-border);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                    animation: fadeIn 0.2s ease-out;
+                }
+                .bubble-menu button, .floating-menu button {
+                    background: transparent;
+                    border: none;
+                    color: var(--theme-text-secondary);
+                    cursor: pointer;
+                    padding: 6px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                }
+                .bubble-menu button:hover, .floating-menu button:hover,
+                .bubble-menu button.is-active, .floating-menu button.is-active {
+                    background-color: var(--theme-primary);
+                    color: white;
+                    transform: translateY(-1px);
+                }
+                .separator {
+                    width: 1px;
+                    height: 20px;
+                    background-color: var(--theme-border);
+                    margin: 0 4px;
+                }
+                
+                /* Image Styling */
+                .ProseMirror img {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                    margin: 1rem 0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .ProseMirror img.ProseMirror-selectednode {
+                    outline: 2px solid var(--theme-primary);
+                }
+
+                /* YouTube Styling */
+                .ProseMirror div[data-youtube-video] {
+                    cursor: move;
+                    padding-right: 24px;
+                }
+                .ProseMirror iframe {
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    margin: 1rem 0;
+                    width: 100%;
+                    aspect-ratio: 16/9;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(5px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
+        </div>
+    );
+};

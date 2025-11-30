@@ -27,6 +27,7 @@ function App() {
             root.style.setProperty('--theme-text', theme.colors.text);
             root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
             root.style.setProperty('--theme-border', theme.colors.border);
+            root.style.setProperty('--theme-primary', theme.colors.primary);
 
             // Glassmorphism variables
             if (theme.name === 'light') {

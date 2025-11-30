@@ -78,7 +78,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 {/* Small preview text on hover or toggle */}
                 {showDetails && note.content && (
                     <Text
-                        text={note.content.substring(0, 50) + '...'}
+                        text={note.content.replace(/<[^>]*>?/gm, '').substring(0, 50) + '...'}
                         fill={theme.colors.text}
                         fontSize={9}
                         x={dotSize + 8}
@@ -94,7 +94,9 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
 
     // LEVEL 3: Close View - Full Card (keep existing design)
     const hasTags = note.tags && note.tags.length > 0;
-    const contentPreview = note.content.substring(0, 100);
+    // Strip HTML tags for preview
+    const plainTextContent = (note.content || '').replace(/<[^>]*>?/gm, '');
+    const contentPreview = plainTextContent.substring(0, 100);
     const cardHeight = 140;
 
     const cardColorScheme = {
@@ -183,7 +185,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             />
             {contentPreview && (
                 <Text
-                    text={contentPreview + (note.content.length > 100 ? '...' : '')}
+                    text={contentPreview + (note.content && note.content.length > 100 ? '...' : '')}
                     fill={theme.colors.text}
                     fontSize={13}
                     lineHeight={1.4}

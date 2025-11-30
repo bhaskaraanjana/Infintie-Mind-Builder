@@ -145,9 +145,8 @@ export const useStore = create<AppState>((set, get) => ({
             created: now,
             modified: now,
         };
-        set(state => ({ notes: { ...state.notes, [newNote.id]: newNote } }));
+        set(state => ({ notes: { ...state.notes, [newNote.id]: newNote }, editingNoteId: newNote.id }));
         await db.notes.add(newNote);
-        set({ editingNoteId: newNote.id });
     },
 
     updateNote: async (id, updates) => {
