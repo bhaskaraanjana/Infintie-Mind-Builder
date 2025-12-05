@@ -140,7 +140,12 @@
     opacity: 0.6;
 }
 
-.contentArea {`r`n    flex: 1;`r`n    overflow-y: auto;`r`n    margin-bottom: 1rem;`r`n    min-height: 0;`r`n}
+.contentArea {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    min-height: 0;
+}
 
 .contentArea::-webkit-scrollbar {
     width: 8px;
