@@ -19,6 +19,7 @@ interface Props {
     onStatsChange?: (stats: { words: number; characters: number }) => void;
     editable?: boolean;
     isExpanded?: boolean;
+    showToolbar?: boolean; // Control toolbar visibility
 }
 
 // Helper to count words
@@ -29,7 +30,7 @@ const countWords = (text: string): number => {
 // Create lowlight instance with all languages
 const lowlight = createLowlight(all);
 
-export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false }: Props) => {
+export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false, showToolbar = true }: Props) => {
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -123,8 +124,8 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
 
     return (
         <div className={`rich-text-editor ${isExpanded ? 'expanded' : ''}`}>
-            {/* Always-visible formatting toolbar */}
-            {editor && (
+            {/* Always-visible formatting toolbar (only in expanded mode) */}
+            {editor && showToolbar && (
                 <div className="formatting-toolbar">
                     {/* Undo/Redo */}
                     <button

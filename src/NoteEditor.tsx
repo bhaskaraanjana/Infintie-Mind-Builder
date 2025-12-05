@@ -124,25 +124,29 @@ export const NoteEditor = () => {
             </div>
 
             <div className={styles.typeSelector}>
-                <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    className={styles.select}
-                >
-                    <option value="fleeting">Fleeting</option>
-                    <option value="literature">Literature</option>
-                    <option value="permanent">Permanent</option>
-                    <option value="hub">Hub</option>
-                </select>
+                {isExpanded && (
+                    <>
+                        <select
+                            value={type}
+                            onChange={(e) => setType(e.target.value as any)}
+                            className={styles.select}
+                        >
+                            <option value="fleeting">Fleeting</option>
+                            <option value="literature">Literature</option>
+                            <option value="permanent">Permanent</option>
+                            <option value="hub">Hub</option>
+                        </select>
 
-                {type === 'literature' && (
-                    <input
-                        type="text"
-                        value={source}
-                        onChange={(e) => setSource(e.target.value)}
-                        placeholder="Source (URL, Book, etc.)"
-                        className={styles.sourceInput}
-                    />
+                        {type === 'literature' && (
+                            <input
+                                type="text"
+                                value={source}
+                                onChange={(e) => setSource(e.target.value)}
+                                placeholder="Source (URL, Book, etc.)"
+                                className={styles.sourceInput}
+                            />
+                        )}
+                    </>
                 )}
             </div>
 
@@ -152,6 +156,7 @@ export const NoteEditor = () => {
                     onChange={setContent}
                     onStatsChange={setEditorStats}
                     isExpanded={isExpanded}
+                    showToolbar={isExpanded}
                 />
             </div>
 
