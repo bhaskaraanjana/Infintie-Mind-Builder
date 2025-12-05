@@ -93,6 +93,88 @@ export const Settings: React.FC = () => {
                             </p>
                         </div>
 
+
+                        {/* Export/Import Section */}
+                        <div style={{ marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--neutral-200)', paddingBottom: 'var(--spacing-6)' }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: 'var(--text-lg)',
+                                fontWeight: 600,
+                                color: 'var(--neutral-900)',
+                                marginBottom: 'var(--spacing-4)'
+                            }}>
+                                Backup & Restore
+                            </h3>
+                            <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
+                                <button
+                                    onClick={() => useStore.getState().exportData?.()}
+                                    style={{
+                                        flex: 1,
+                                        padding: 'var(--spacing-3)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        border: 'none',
+                                        backgroundColor: 'var(--primary-500)',
+                                        color: 'white',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all var(--transition-base)'
+                                    }}
+                                >
+                                    Export Notes
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = '.json';
+                                        input.onchange = (e) => {
+                                            const file = (e.target as HTMLInputElement).files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (evt) => {
+                                                    try {
+                                                        const data = JSON.parse(evt.target?.result as string);
+                                                        const result = useStore.getState().importData?.(data);
+                                                        alert(result?.message || 'Import successful');
+                                                    } catch (err) {
+                                                        alert('Failed to import: Invalid file format');
+                                                    }
+                                                };
+                                                reader.readAsText(file);
+                                            }
+                                        };
+                                        input.click();
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        padding: 'var(--spacing-3)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        border: '2px solid var(--primary-500)',
+                                        backgroundColor: 'white',
+                                        color: 'var(--primary-500)',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all var(--transition-base)'
+                                    }}
+                                >
+                                    Import Notes
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Theme Section */}
+                        <div style={{ marginBottom: 'var(--spacing-6)' }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: 'var(--text-lg)',
+                                fontWeight: 600,
+                                color: 'var(--neutral-900)',
+                                marginBottom: 'var(--spacing-4)'
+                            }}>
+                                Theme
+                            </h3>
+                        </div>
+
                         {/* Theme Grid */}
                         <div style={{
                             display: 'grid',

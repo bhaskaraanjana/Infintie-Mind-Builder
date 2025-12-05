@@ -50,6 +50,10 @@ interface AppState {
     updateLink: (id: string, updates: Partial<Link>) => Promise<void>;
 
     generateRandomNotes: () => Promise<void>;
+
+    // Export/Import
+    exportData: () => void;
+    importData: (data: any) => { success: boolean; message: string };
 }
 
 // Helper to recalculate cluster center
@@ -531,7 +535,61 @@ export const useStore = create<AppState>((set, get) => ({
 
         await db.notes.bulkPut(newNotes);
         get().loadData();
-    }
+    },
+
+    // Export/Import functionality
+    exportData: () => {
+        const state = get();
+        const exportData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            data: {
+                notes: state.notes,
+                clusters: state.clusters,
+                links: state.links,
+            }
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+            type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `infinite-mind-backup-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    importData: (data: any) => {
+        try {
+            // Validate structure
+            if (!data.data || !data.data.notes) {
+                throw new Error('Invalid backup file format');
+            }
+
+            const { notes, clusters, links } = data.data;
+
+            set({
+                notes: notes || {},
+                clusters: clusters || {},
+                links: links || {},
+            });
+
+            // Save to database
+            get().saveData();
+
+            return { success: true, message: 'Data imported successfully!' };
+        } catch (error) {
+            console.error('Import error:', error);
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : 'Import failed'
+            };
+        }
+    },
 }));
 
 // Expose store for debugging
