@@ -280,3 +280,26 @@
     user-select: none;
     flex: 1;
 }
+
+
+.autoSaveIndicator {
+    font-size: 0.75rem;
+    color: var(--theme-text-secondary);
+    user-select: none;
+    flex: 1;
+    text-align: center;
+}
+
+.saving {
+    color: var(--theme-primary);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.saved {
+    color: #10b981;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

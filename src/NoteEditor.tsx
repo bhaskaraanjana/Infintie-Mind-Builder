@@ -54,6 +54,29 @@ export const NoteEditor = () => {
         setIsExpanded(false);
     };
 
+    // Autosave with 2-second debounce
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    useEffect(() => {
+        if (!editingNoteId) return;
+
+        setIsSaving(true);
+        const timer = setTimeout(() => {
+            updateNote(editingNoteId, {
+                title,
+                content,
+                tags: noteTags,
+                type,
+                source: type === 'literature' ? source : undefined
+            });
+            setIsSaving(false);
+            setLastSaved(new Date());
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [title, content, noteTags, type, source, editingNoteId, updateNote]);
+
     const handleAddTag = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && tagInput.trim()) {
             const newTag = tagInput.trim();
@@ -160,18 +183,21 @@ export const NoteEditor = () => {
                 <div className={styles.footerStats}>
                     {editorStats.words}w • {editorStats.characters}c
                 </div>
+                <div className={styles.autoSaveIndicator}>
+                    {isSaving ? (
+                        <span className={styles.saving}>Saving...</span>
+                    ) : lastSaved ? (
+                        <span className={styles.saved}>
+                            Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    ) : null}
+                </div>
                 <button
                     onClick={handleDelete}
                     className={styles.deleteButton}
                     title="Delete Note"
                 >
-                    <Trash2 size={20} />
-                </button>
-                <button
-                    onClick={handleSave}
-                    className={styles.saveButton}
-                >
-                    Save
+                    <Trash2 size={18} />
                 </button>
             </div>
         </div>

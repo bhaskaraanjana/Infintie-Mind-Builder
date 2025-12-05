@@ -1,5 +1,7 @@
 import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { createLowlight, all } from 'lowlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
@@ -24,10 +26,18 @@ const countWords = (text: string): number => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
+// Create lowlight instance with all languages
+const lowlight = createLowlight(all);
+
 export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false }: Props) => {
     const editor = useEditor({
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                codeBlock: false, // Disable default to use lowlight version
+            }),
+            CodeBlockLowlight.configure({
+                lowlight,
+            }),
             Placeholder.configure({
                 placeholder: 'Write something amazing...',
             }),
@@ -56,7 +66,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             attributes: {
                 class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[200px] p-4 ${isExpanded ? 'max-w-none' : ''}`,
             },
-            handlePaste: (view, event, slice) => {
+            handlePaste: (view, event) => {
                 const items = Array.from(event.clipboardData?.items || []);
                 const images = items.filter(item => item.type.indexOf('image') === 0);
 
@@ -113,6 +123,121 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
 
     return (
         <div className={`rich-text-editor ${isExpanded ? 'expanded' : ''}`}>
+            {/* Always-visible formatting toolbar */}
+            {editor && (
+                <div className="formatting-toolbar">
+                    {/* Undo/Redo */}
+                    <button
+                        onClick={() => editor.chain().focus().undo().run()}
+                        disabled={!editor.can().undo()}
+                        className="toolbar-btn"
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo2 size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().redo().run()}
+                        disabled={!editor.can().redo()}
+                        className="toolbar-btn"
+                        title="Redo (Ctrl+Y)"
+                    >
+                        <Redo2 size={18} />
+                    </button>
+
+                    <div className="toolbar-divider" />
+
+                    {/* Text formatting */}
+                    <button
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                        className={`toolbar-btn ${editor.isActive('bold') ? 'is-active' : ''}`}
+                        title="Bold (Ctrl+B)"
+                    >
+                        <Bold size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                        className={`toolbar-btn ${editor.isActive('italic') ? 'is-active' : ''}`}
+                        title="Italic (Ctrl+I)"
+                    >
+                        <Italic size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleStrike().run()}
+                        className={`toolbar-btn ${editor.isActive('strike') ? 'is-active' : ''}`}
+                        title="Strikethrough"
+                    >
+                        <Strikethrough size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleCode().run()}
+                        className={`toolbar-btn ${editor.isActive('code') ? 'is-active' : ''}`}
+                        title="Inline Code"
+                    >
+                        <Code size={18} />
+                    </button>
+
+                    <div className="toolbar-divider" />
+
+                    {/* Headings */}
+                    <button
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                        className={`toolbar-btn ${editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}`}
+                        title="Heading 1"
+                    >
+                        <Heading1 size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                        className={`toolbar-btn ${editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}`}
+                        title="Heading 2"
+                    >
+                        <Heading2 size={18} />
+                    </button>
+
+                    <div className="toolbar-divider" />
+
+                    {/* Lists */}
+                    <button
+                        onClick={() => editor.chain().focus().toggleBulletList().run()}
+                        className={`toolbar-btn ${editor.isActive('bulletList') ? 'is-active' : ''}`}
+                        title="Bullet List"
+                    >
+                        <List size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                        className={`toolbar-btn ${editor.isActive('orderedList') ? 'is-active' : ''}`}
+                        title="Numbered List"
+                    >
+                        <ListOrdered size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                        className={`toolbar-btn ${editor.isActive('blockquote') ? 'is-active' : ''}`}
+                        title="Quote"
+                    >
+                        <Quote size={18} />
+                    </button>
+
+                    <div className="toolbar-divider" />
+
+                    {/* Media */}
+                    <button
+                        onClick={addImage}
+                        className="toolbar-btn"
+                        title="Add Image"
+                    >
+                        <ImageIcon size={18} />
+                    </button>
+                    <button
+                        onClick={addYoutubeVideo}
+                        className="toolbar-btn"
+                        title="Add YouTube Video"
+                    >
+                        <YoutubeIcon size={18} />
+                    </button>
+                </div>
+            )}
             {editor && (
                 <BubbleMenu className="bubble-menu glass" tippyOptions={{ duration: 100 }} editor={editor}>
                     <button
@@ -211,6 +336,71 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     height: 0;
                     pointer-events: none;
                 }
+                
+                /* Formatting Toolbar - Touch Optimized */
+                .formatting-toolbar {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    padding: 0.5rem;
+                    background: var(--glass-bg);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid var(--theme-border);
+                    border-radius: 0.5rem;
+                    margin-bottom: 0.75rem;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    flex-wrap: wrap;
+                }
+                
+                .toolbar-btn {
+                    min-width: 44px;
+                    min-height: 44px;
+                    padding: 12px;
+                    background: transparent;
+                    border: none;
+                    color: var(--theme-text-secondary);
+                    cursor: pointer;
+                    border-radius: 0.375rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    flex-shrink: 0;
+                }
+                
+                .toolbar-btn:hover:not(:disabled) {
+                    background: var(--glass-border);
+                    color: var(--theme-text);
+                }
+                
+                .toolbar-btn.is-active {
+                    background: var(--theme-primary);
+                    color: white;
+                }
+                
+                .toolbar-btn:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                }
+                
+                .toolbar-divider {
+                    width: 1px;
+                    height: 24px;
+                    background: var(--theme-border);
+                    margin: 0 0.25rem;
+                    flex-shrink: 0;
+                }
+                
+                /* Responsive toolbar */
+                @media (max-width: 768px) {
+                    .formatting-toolbar {
+                        flex-wrap: nowrap;
+                        overflow-x: scroll;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                }
+                
                 .bubble-menu, .floating-menu {
                     display: flex;
                     align-items: center;
