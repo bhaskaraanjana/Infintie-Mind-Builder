@@ -46,9 +46,9 @@
 }
 
 .expandedEditorContent {
-    max-width: 56rem;
-    margin: 0 auto;
+    padding: 0 2rem;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .header {
