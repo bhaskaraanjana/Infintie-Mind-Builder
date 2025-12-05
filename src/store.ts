@@ -579,7 +579,7 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             // Save to database
-            get().saveData();
+            // Save to IndexedDB`r`n            if (notes) {`r`n                Object.values(notes).forEach((note: any) => db.notes.put(note));`r`n            }`r`n            if (clusters) {`r`n                Object.values(clusters).forEach((cluster: any) => db.clusters.put(cluster));`r`n            }`r`n            if (links) {`r`n                Object.values(links).forEach((link: any) => db.links.put(link));`r`n            }
 
             return { success: true, message: 'Data imported successfully!' };
         } catch (error) {
@@ -594,3 +594,4 @@ export const useStore = create<AppState>((set, get) => ({
 
 // Expose store for debugging
 (window as any).store = useStore;
+

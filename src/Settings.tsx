@@ -160,6 +160,41 @@ export const Settings: React.FC = () => {
                                     Import Notes
                                 </button>
                             </div>
+                            <button
+                                onClick={() => {
+                                    if (confirm('⚠️ Delete ALL notes, clusters, and links? This cannot be undone!')) {
+                                        // Clear Zustand state
+                                        useStore.setState({
+                                            notes: {},
+                                            clusters: {},
+                                            links: {}
+                                        });
+                                        // Clear database
+                                        import('./db').then(({ db }) => {
+                                            db.notes.clear();
+                                            db.clusters.clear();
+                                            db.links.clear();
+                                        });
+                                        alert('All data cleared!');
+                                        setIsOpen(false);
+                                    }
+                                }}
+                                style={{
+                                    marginTop: 'var(--spacing-3)',
+                                    width: '100%',
+                                    padding: 'var(--spacing-2)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: '2px solid var(--error)',
+                                    backgroundColor: 'white',
+                                    color: 'var(--error)',
+                                    fontSize: 'var(--text-sm)',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all var(--transition-base)'
+                                }}
+                            >
+                                🗑️ Clear All Data (Debug)
+                            </button>
                         </div>
 
                         {/* Theme Section */}
