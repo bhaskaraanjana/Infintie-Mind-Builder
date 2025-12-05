@@ -10,8 +10,12 @@ import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
     Image as ImageIcon, Youtube as YoutubeIcon, Quote,
-    Undo2, Redo2
+    Undo2, Redo2, Table as TableIcon
 } from 'lucide-react';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 
 interface Props {
     content: string;
@@ -49,6 +53,12 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             Youtube.configure({
                 controls: false,
             }),
+            Table.configure({
+                resizable: true,
+            }),
+            TableRow,
+            TableCell,
+            TableHeader,
         ],
         content: content,
         editable: editable,
@@ -218,6 +228,13 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                         title="Quote"
                     >
                         <Quote size={18} />
+                    </button>
+                    <button
+                        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                        className="toolbar-btn"
+                        title="Insert Table"
+                    >
+                        <TableIcon size={18} />
                     </button>
 
                     <div className="toolbar-divider" />
@@ -462,6 +479,43 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     margin: 1rem 0;
                     width: 100%;
                     aspect-ratio: 16/9;
+                }
+
+                /* Table Styling */
+                .ProseMirror table {
+                    border-collapse: collapse;
+                    table-layout: auto;
+                    width: 100%;
+                    margin: 1rem 0;
+                    overflow: hidden;
+                }
+
+                .ProseMirror table td,
+                .ProseMirror table th {
+                    min-width: 100px;
+                    border: 2px solid var(--theme-border);
+                    padding: 0.5rem;
+                    vertical-align: top;
+                    position: relative;
+                }
+
+                .ProseMirror table th {
+                    font-weight: bold;
+                    text-align: left;
+                    background-color: var(--theme-canvas-bg);
+                }
+
+                .ProseMirror table .selectedCell {
+                    background-color: rgba(14, 165, 233, 0.1);
+                }
+
+                /* Mobile responsive table scroll */
+                @media (max-width: 768px) {
+                    .ProseMirror table {
+                        display: block;
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
                 }
 
                 @keyframes fadeIn {
