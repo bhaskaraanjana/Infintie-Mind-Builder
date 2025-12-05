@@ -41,7 +41,7 @@ function App() {
     }, [themeName]);
 
     return (
-        <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--theme-bg)' }}>
+        <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--theme-bg)' }}>
             <Canvas />
             <NoteEditor />
             <div style={{ position: 'absolute', top: 20, left: 20, display: 'flex', gap: '10px', zIndex: 10 }}>
