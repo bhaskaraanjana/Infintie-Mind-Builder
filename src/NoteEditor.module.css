@@ -40,6 +40,9 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .expandedEditorContent {
@@ -137,11 +140,7 @@
     opacity: 0.6;
 }
 
-.contentArea {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 1rem;
-}
+.contentArea {`r`n    flex: 1;`r`n    overflow-y: auto;`r`n    margin-bottom: 1rem;`r`n    min-height: 0;`r`n}
 
 .contentArea::-webkit-scrollbar {
     width: 8px;
