@@ -18,6 +18,7 @@ export const NoteEditor = () => {
     const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>('fleeting');
     const [source, setSource] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
+    const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
 
     const note = editingNoteId ? notes[editingNoteId] : null;
 
@@ -126,6 +127,7 @@ export const NoteEditor = () => {
                 <RichTextEditor
                     content={content}
                     onChange={setContent}
+                    onStatsChange={setEditorStats}
                     isExpanded={isExpanded}
                 />
             </div>
@@ -155,6 +157,9 @@ export const NoteEditor = () => {
             </div>
 
             <div className={styles.footer}>
+                <div className={styles.footerStats}>
+                    {editorStats.words}w • {editorStats.characters}c
+                </div>
                 <button
                     onClick={handleDelete}
                     className={styles.deleteButton}

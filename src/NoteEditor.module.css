@@ -273,3 +273,10 @@
         opacity: 1;
     }
 }
+.footerStats {
+    font-size: 0.75rem;
+    color: var(--theme-text-secondary);
+    font-weight: 500;
+    user-select: none;
+    flex: 1;
+}

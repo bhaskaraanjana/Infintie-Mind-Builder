@@ -7,17 +7,24 @@ import { useEffect, useCallback } from 'react';
 import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
-    Image as ImageIcon, Youtube as YoutubeIcon, Quote
+    Image as ImageIcon, Youtube as YoutubeIcon, Quote,
+    Undo2, Redo2
 } from 'lucide-react';
 
 interface Props {
     content: string;
     onChange: (content: string) => void;
+    onStatsChange?: (stats: { words: number; characters: number }) => void;
     editable?: boolean;
     isExpanded?: boolean;
 }
 
-export const RichTextEditor = ({ content, onChange, editable = true, isExpanded = false }: Props) => {
+// Helper to count words
+const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+};
+
+export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false }: Props) => {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -35,7 +42,15 @@ export const RichTextEditor = ({ content, onChange, editable = true, isExpanded 
         content: content,
         editable: editable,
         onUpdate: ({ editor }) => {
-            onChange(editor.getHTML());
+            const html = editor.getHTML();
+            onChange(html);
+            if (onStatsChange) {
+                const text = editor.getText();
+                onStatsChange({
+                    words: countWords(text),
+                    characters: text.length,
+                });
+            }
         },
         editorProps: {
             attributes: {
