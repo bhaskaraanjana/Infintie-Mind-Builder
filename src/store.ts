@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Note, Cluster, Link, ViewportState } from './types';
 import { db } from './db';
 import { type ThemeName } from './themes';
+import { syncService } from './services/firebaseSyncService';
 
 interface AppState {
     notes: Record<string, Note>;
@@ -54,6 +55,12 @@ interface AppState {
     // Export/Import
     exportData: () => void;
     importData: (data: any) => { success: boolean; message: string };
+
+    // Cloud Sync
+    syncing: boolean;
+    initializeSync: (userId: string) => Promise<void>;
+    reconcileWithCloud: () => Promise<void>;
+    cleanupSync: () => void;
 }
 
 // Helper to recalculate cluster center
@@ -95,6 +102,7 @@ export const useStore = create<AppState>((set, get) => ({
         showOrbLabels: false,
         showOrbDetails: false
     },
+    syncing: false,
 
     setUi: (updates) => set((state) => ({
         ui: { ...state.ui, ...updates }
@@ -231,6 +239,17 @@ export const useStore = create<AppState>((set, get) => ({
         await Promise.all(notesToUpdate.map(({ id: noteId, refs }) =>
             db.notes.update(noteId, { references: refs })
         ));
+
+        // Sync deletion to cloud
+        try {
+            await syncService.deleteNote(id);
+            // Also delete associated links from cloud
+            for (const link of linksToDelete) {
+                await syncService.deleteLink(link.id);
+            }
+        } catch (error) {
+            console.error('Failed to sync note deletion to cloud:', error);
+        }
     },
 
     updateNotePosition: (id, x, y) => {
@@ -590,8 +609,79 @@ export const useStore = create<AppState>((set, get) => ({
             };
         }
     },
+
+    // ===== CLOUD SYNC =====
+
+    initializeSync: async (userId: string) => {
+        console.log('🚀 Initializing cloud sync for user:', userId);
+        set({ syncing: true });
+
+        try {
+            await syncService.initialize(userId);
+
+            const localNotes = Object.values(get().notes);
+            const localClusters = Object.values(get().clusters);
+            const localLinks = Object.values(get().links);
+
+            await syncService.migrateLocalData(localNotes, localClusters, localLinks);
+
+            syncService.onNotesChanged((cloudNotes) => {
+                console.log('📝 Notes updated from cloud:', Object.keys(cloudNotes).length);
+                set(state => {
+                    const mergedNotes = { ...state.notes };
+                    Object.entries(cloudNotes).forEach(([id, cloudNote]) => {
+                        const localNote = mergedNotes[id];
+                        if (!localNote || cloudNote.modified >= localNote.modified) {
+                            mergedNotes[id] = cloudNote;
+                        }
+                    });
+                    return { notes: mergedNotes };
+                });
+                Object.values(cloudNotes).forEach(note => db.notes.put(note));
+            });
+
+            syncService.onClustersChanged((clusters) => {
+                console.log('📦 Clusters updated from cloud:', Object.keys(clusters).length);
+                set({ clusters });
+                Object.values(clusters).forEach(cluster => db.clusters.put(cluster));
+            });
+
+            syncService.onLinksChanged((links) => {
+                console.log('🔗 Links updated from cloud:', Object.keys(links).length);
+                set({ links });
+                Object.values(links).forEach(link => db.links.put(link));
+            });
+
+            console.log('✅ Cloud sync initialized');
+        } catch (error) {
+            console.error('❌ Error initializing sync:', error);
+        } finally {
+            set({ syncing: false });
+        }
+    },
+
+    reconcileWithCloud: async () => {
+        console.log('🔄 Reconciling with cloud...');
+        try {
+            const notes = Object.values(get().notes);
+            const clusters = Object.values(get().clusters);
+            const links = Object.values(get().links);
+
+            for (const note of notes) await syncService.syncNote(note);
+            for (const cluster of clusters) await syncService.syncCluster(cluster);
+            for (const link of links) await syncService.syncLink(link);
+
+            console.log('✅ Reconciliation complete');
+        } catch (error) {
+            console.error('❌ Reconciliation failed:', error);
+        }
+    },
+
+    cleanupSync: () => {
+        console.log('🧹 Cleaning up sync');
+        syncService.cleanup();
+    },
 }));
 
 // Expose store for debugging
 (window as any).store = useStore;
-

@@ -10,6 +10,7 @@ import { useStore } from './store';
 import { themes } from './themes';
 import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './LoginModal';
+import { DebugMenu } from './DebugMenu';
 
 function App() {
     const { user } = useAuth();
@@ -21,6 +22,24 @@ function App() {
 
     const loadData = useStore((state) => state.loadData);
     const themeName = useStore((state) => state.theme);
+    const initializeSync = useStore((state) => state.initializeSync);
+    const reconcileWithCloud = useStore((state) => state.reconcileWithCloud);
+    const cleanupSync = useStore((state) => state.cleanupSync);
+
+    // Initialize cloud sync when user logs in
+    useEffect(() => {
+        if (user) {
+            (async () => {
+                await initializeSync(user.uid);
+                // After sync is initialized, reconcile any local changes
+                await reconcileWithCloud();
+            })();
+        }
+
+        return () => {
+            cleanupSync();
+        };
+    }, [user, initializeSync, reconcileWithCloud, cleanupSync]);
 
     useEffect(() => {
         loadData();
@@ -55,6 +74,7 @@ function App() {
             <Canvas />
             <NoteEditor />
             <Minimap />
+            <DebugMenu />
             <Settings />
             <ViewControls />
         </div>
