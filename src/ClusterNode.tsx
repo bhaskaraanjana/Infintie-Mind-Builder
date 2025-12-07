@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Group, Circle, Text, Rect, Arc } from 'react-konva';
+import { Group, Circle, Text, Rect, Arc, Line } from 'react-konva';
 import type { Cluster, Note } from './types';
 import { themes, type ThemeName } from './themes';
 
@@ -48,6 +48,19 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
             >
+                {/* Connections to notes */}
+                {childrenNotes.map(note => (
+                    <Line
+                        key={`link-${cluster.id}-${note.id}`}
+                        points={[0, 0, note.x - cluster.x, note.y - cluster.y]}
+                        stroke={cluster.color}
+                        strokeWidth={1}
+                        opacity={0.3}
+                        dash={[5, 5]}
+                        listening={false}
+                    />
+                ))}
+
                 {/* Orbit Ring */}
                 <Circle
                     radius={hover || isDragging ? 160 : 130}

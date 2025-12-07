@@ -221,18 +221,7 @@ export const InfiniteCanvas = () => {
                 })
             });
 
-            options.push({
-                label: 'Create Hub Note',
-                action: () => addNote({
-                    type: 'hub',
-                    x,
-                    y,
-                    title: 'Central Hub',
-                    content: 'A central point for connecting ideas.',
-                    tags: ['hub'],
-                    references: []
-                })
-            });
+
 
             options.push({
                 label: 'Reset View',
