@@ -5,7 +5,7 @@ import {
     signOut,
     onAuthStateChanged as firebaseOnAuthStateChanged,
     sendPasswordResetEmail,
-    User as FirebaseUser
+    type User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import type { AuthService, User } from './authService';
@@ -50,3 +50,4 @@ class FirebaseAuthService implements AuthService {
 
 // Export singleton instance
 export const authService = new FirebaseAuthService();
+

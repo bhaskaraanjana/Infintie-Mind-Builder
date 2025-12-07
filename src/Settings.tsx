@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { themes, type ThemeName } from './themes';
 import { useStore } from './store';
+import { useAuth } from './contexts/AuthContext';
 
 export const Settings: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const { theme: currentTheme, setTheme } = useStore();
+    const { logout, user } = useAuth();
 
     const handleThemeChange = (themeName: ThemeName) => {
         setTheme(themeName);
@@ -89,8 +91,29 @@ export const Settings: React.FC = () => {
                                 fontSize: 'var(--text-sm)',
                                 color: 'var(--neutral-600)'
                             }}>
-                                Choose your preferred theme
+                                Logged in as: {user?.email}
                             </p>
+                            <button
+                                onClick={async () => {
+                                    if (confirm('Log out?')) {
+                                        await logout();
+                                    }
+                                }}
+                                style={{
+                                    marginTop: 'var(--spacing-3)',
+                                    padding: 'var(--spacing-2) var(--spacing-4)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: '2px solid var(--primary-500)',
+                                    backgroundColor: 'white',
+                                    color: 'var(--primary-500)',
+                                    fontSize: 'var(--text-sm)',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all var(--transition-base)'
+                                }}
+                            >
+                                Logout
+                            </button>
                         </div>
 
 

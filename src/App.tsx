@@ -4,12 +4,21 @@ import { NoteEditor } from './NoteEditor';
 import { SearchBar } from './SearchBar';
 import { Minimap } from './Minimap';
 import { TagFilter } from './TagFilter';
-import { Settings } from './Settings';\nimport { useAuth } from './contexts/AuthContext';\nimport { LoginModal } from './LoginModal';
+import { Settings } from './Settings';
 import { ViewControls } from './ViewControls';
 import { useStore } from './store';
 import { themes } from './themes';
+import { useAuth } from './contexts/AuthContext';
+import { LoginModal } from './LoginModal';
 
-function App() {\n  const { user } = useAuth();\n\n  // Show login modal if not authenticated\n  if (!user) {\n    return <LoginModal />;\n  }
+function App() {
+    const { user } = useAuth();
+
+    // Show login modal if not authenticated
+    if (!user) {
+        return <LoginModal />;
+    }
+
     const loadData = useStore((state) => state.loadData);
     const themeName = useStore((state) => state.theme);
 
@@ -28,32 +37,28 @@ function App() {\n  const { user } = useAuth();\n\n  // Show login modal if not 
             root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
             root.style.setProperty('--theme-border', theme.colors.border);
             root.style.setProperty('--theme-primary', theme.colors.primary);
-
-            // Glassmorphism variables
-            if (theme.name === 'light') {
-                root.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.7)');
-                root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.3)');
-            } else {
-                root.style.setProperty('--glass-bg', 'rgba(30, 30, 30, 0.7)');
-                root.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.1)');
-            }
         }
     }, [themeName]);
 
     return (
-        <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--theme-bg)' }}>
+        <div
+            style={{
+                width: '100%',
+                height: '100vh',
+                display: 'flex',
+                overflow: 'hidden',
+                backgroundColor: 'var(--theme-bg)',
+            }}
+        >
+            <SearchBar />
+            <TagFilter />
             <Canvas />
             <NoteEditor />
-            <div style={{ position: 'absolute', top: 20, left: 20, display: 'flex', gap: '10px', zIndex: 10 }}>
-                <SearchBar />
-                <TagFilter />
-            </div>
             <Minimap />
-            <ViewControls />
             <Settings />
+            <ViewControls />
         </div>
     );
 }
 
 export default App;
-
