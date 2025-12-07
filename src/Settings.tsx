@@ -116,6 +116,98 @@ export const Settings: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* Debug Tools */}
+                        <div style={{ marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--neutral-200)', paddingBottom: 'var(--spacing-6)' }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: 'var(--text-lg)',
+                                fontWeight: 600,
+                                color: 'var(--neutral-900)',
+                                marginBottom: 'var(--spacing-4)'
+                            }}>
+                                🛠️ Debug Tools
+                            </h3>
+
+                            <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--spacing-3)', color: 'var(--neutral-600)' }}>
+                                <div>Local Notes: {Object.keys(useStore.getState().notes).length}</div>
+                                <div>Syncing: {useStore.getState().syncing ? 'Yes' : 'No'}</div>
+                                <div>User ID: {user?.uid.slice(0, 8)}...</div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
+                                <button
+                                    onClick={() => {
+                                        console.clear();
+                                        console.log('=== DEBUG INFO ===');
+                                        console.log('Notes:', useStore.getState().notes);
+                                        console.log('Clusters:', useStore.getState().clusters);
+                                        console.log('Links:', useStore.getState().links);
+                                        console.log('User:', user);
+                                        alert('Check browser console (F12)');
+                                    }}
+                                    style={{
+                                        padding: 'var(--spacing-2) var(--spacing-3)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        border: '1px solid var(--neutral-300)',
+                                        backgroundColor: 'white',
+                                        fontSize: 'var(--text-xs)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    📊 Log State
+                                </button>
+
+                                <button
+                                    onClick={async () => {
+                                        const notes = Object.values(useStore.getState().notes);
+                                        if (notes.length === 0) {
+                                            alert('No notes to sync');
+                                            return;
+                                        }
+                                        console.log('🔄 Manually syncing', notes.length, 'notes...');
+                                        try {
+                                            const { syncService } = await import('./services/firebaseSyncService');
+                                            for (const note of notes) {
+                                                await syncService.syncNote(note);
+                                            }
+                                            alert(`✅ Synced ${notes.length} notes!`);
+                                        } catch (error) {
+                                            console.error('Sync failed:', error);
+                                            alert('❌ Sync failed - check console');
+                                        }
+                                    }}
+                                    style={{
+                                        padding: 'var(--spacing-2) var(--spacing-3)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        border: '1px solid var(--primary-500)',
+                                        backgroundColor: 'var(--primary-500)',
+                                        color: 'white',
+                                        fontSize: 'var(--text-xs)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    🔄 Force Sync All
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        const url = `https://console.firebase.google.com/project/infinite-mind-8f29c/firestore/databases/-default-/data/~2Fusers~2F${user?.uid}~2Fnotes`;
+                                        window.open(url, '_blank');
+                                    }}
+                                    style={{
+                                        padding: 'var(--spacing-2) var(--spacing-3)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        border: '1px solid var(--neutral-300)',
+                                        backgroundColor: 'white',
+                                        fontSize: 'var(--text-xs)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    🔥 Open Firestore
+                                </button>
+                            </div>
+                        </div>
+
 
                         {/* Export/Import Section */}
                         <div style={{ marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--neutral-200)', paddingBottom: 'var(--spacing-6)' }}>
@@ -331,3 +423,4 @@ export const Settings: React.FC = () => {
         </>
     );
 };
+

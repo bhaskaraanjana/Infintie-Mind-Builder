@@ -300,6 +300,16 @@ export const useStore = create<AppState>((set, get) => ({
 
         await db.clusters.add(newCluster);
         await Promise.all(noteIds.map(id => db.notes.update(id, { clusterId: newCluster.id })));
+
+        try {
+            await syncService.syncCluster(newCluster);
+            for (const id of noteIds) {
+                const updatedNote = get().notes[id];
+                if (updatedNote) await syncService.syncNote(updatedNote);
+            }
+        } catch (error) {
+            console.error('Failed to sync new cluster:', error);
+        }
     },
 
     deleteCluster: async (id) => {
@@ -326,6 +336,16 @@ export const useStore = create<AppState>((set, get) => ({
 
         await db.clusters.delete(id);
         await Promise.all(childrenIds.map(childId => db.notes.update(childId, { clusterId: undefined })));
+
+        try {
+            await syncService.deleteCluster(id);
+            for (const childId of childrenIds) {
+                const note = get().notes[childId];
+                if (note) await syncService.syncNote(note);
+            }
+        } catch (error) {
+            console.error('Failed to sync cluster deletion:', error);
+        }
     },
 
     addToCluster: async (clusterId, noteIds) => {
@@ -352,6 +372,18 @@ export const useStore = create<AppState>((set, get) => ({
         await db.clusters.update(clusterId, { children: newChildren });
         await Promise.all(noteIds.map(id => db.notes.update(id, { clusterId })));
         recalculateClusterCenter(clusterId, get, set);
+
+        try {
+            const updatedCluster = get().clusters[clusterId];
+            if (updatedCluster) await syncService.syncCluster(updatedCluster);
+
+            for (const id of noteIds) {
+                const updatedNote = get().notes[id];
+                if (updatedNote) await syncService.syncNote(updatedNote);
+            }
+        } catch (error) {
+            console.error('Failed to sync addToCluster:', error);
+        }
     },
 
     removeFromCluster: async (noteId) => {
@@ -385,6 +417,17 @@ export const useStore = create<AppState>((set, get) => ({
 
         if (clusterId) {
             recalculateClusterCenter(clusterId, get, set);
+        }
+
+        try {
+            if (clusterId) {
+                const updatedCluster = get().clusters[clusterId];
+                if (updatedCluster) await syncService.syncCluster(updatedCluster);
+            }
+            const updatedNote = get().notes[noteId];
+            if (updatedNote) await syncService.syncNote(updatedNote);
+        } catch (error) {
+            console.error('Failed to sync removeFromCluster:', error);
         }
     },
 
@@ -431,6 +474,12 @@ export const useStore = create<AppState>((set, get) => ({
         }));
 
         await db.clusters.update(id, updatedCluster);
+
+        try {
+            await syncService.syncCluster(updatedCluster);
+        } catch (error) {
+            console.error('Failed to sync cluster update:', error);
+        }
     },
 
     // --- Link Actions ---
@@ -477,6 +526,16 @@ export const useStore = create<AppState>((set, get) => ({
         await db.links.add(newLink);
         await db.notes.update(sourceId, { references: sourceRefs });
         await db.notes.update(targetId, { references: targetRefs });
+
+        try {
+            await syncService.syncLink(newLink);
+            const sNote = get().notes[sourceId];
+            const tNote = get().notes[targetId];
+            if (sNote) await syncService.syncNote(sNote);
+            if (tNote) await syncService.syncNote(tNote);
+        } catch (error) {
+            console.error('Failed to sync new link:', error);
+        }
     },
 
     deleteLink: async (id) => {
@@ -517,6 +576,16 @@ export const useStore = create<AppState>((set, get) => ({
         await Promise.all(updates.map(({ id: noteId, refs }) =>
             db.notes.update(noteId, { references: refs })
         ));
+
+        try {
+            await syncService.deleteLink(id);
+            for (const { id: noteId } of updates) {
+                const note = get().notes[noteId];
+                if (note) await syncService.syncNote(note);
+            }
+        } catch (error) {
+            console.error('Failed to sync link deletion:', error);
+        }
     },
 
     updateLink: async (id, updates) => {
@@ -530,6 +599,12 @@ export const useStore = create<AppState>((set, get) => ({
         }));
 
         await db.links.update(id, updatedLink);
+
+        try {
+            await syncService.syncLink(updatedLink);
+        } catch (error) {
+            console.error('Failed to sync link update:', error);
+        }
     },
 
     generateRandomNotes: async () => {

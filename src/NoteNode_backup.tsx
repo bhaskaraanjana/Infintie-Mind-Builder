@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Group, Rect, Text, Circle } from 'react-konva';
 import type { Note } from './types';
 import { themes, type ThemeName } from './themes';
@@ -40,9 +40,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
         const showDetails = ui.showOrbDetails || hover;
 
         return (
-            <Group
-                name={`note-${note.id}`}
-                x={note.x}
+            `<Group
+                x={note.x}`nname={`note-${note.id}`}
                 y={note.y}
                 draggable
                 onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
@@ -107,10 +106,10 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     };
 
     return (
-        <Group
-            name={`note-${note.id}`}
-            x={note.x}
+        `<Group
+            x={note.x}`nname={`note-${note.id}`}
             y={note.y}
+            name={`note-${note.id}`}
             draggable
             onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
             onDblClick={handleDblClick}
@@ -232,7 +231,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                             <Text
                                 x={20 + idx * 62}
                                 y={115}
-                                text={`#${tag.length > 7 ? tag.substring(0, 6) + '…' : tag}`}
+                                text={`#${tag.length > 7 ? tag.substring(0, 6) + 'ΓÇª' : tag}`}
                                 fill={cardColorScheme.dark}
                                 fontSize={11}
                                 fontStyle="600"
