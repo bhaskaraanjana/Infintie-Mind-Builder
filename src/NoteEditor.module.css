@@ -56,6 +56,21 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.dragHandle {
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    border-radius: 4px;
+    touch-action: none;
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+    background-color: var(--glass-border);
 }
 
 .titleInput {

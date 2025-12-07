@@ -38,6 +38,90 @@ export const InfiniteCanvas = () => {
     const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
     const [mousePos, setMousePos] = useState<{ x: number, y: number } | null>(null);
 
+    const lastDistRef = useRef<number>(0);
+    const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
+
+    const getDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
+        return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    };
+
+    const getCenter = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
+        return {
+            x: (p1.x + p2.x) / 2,
+            y: (p1.y + p2.y) / 2,
+        };
+    };
+
+    const handleTouchMove = (e: KonvaEventObject<TouchEvent>) => {
+        const touch1 = e.evt.touches[0];
+        const touch2 = e.evt.touches[1];
+
+        if (touch1 && touch2) {
+            e.evt.preventDefault();
+            const stage = stageRef.current;
+            if (stage.isDragging()) {
+                stage.stopDrag();
+            }
+
+            const p1 = { x: touch1.clientX, y: touch1.clientY };
+            const p2 = { x: touch2.clientX, y: touch2.clientY };
+
+            if (!lastCenterRef.current) {
+                lastCenterRef.current = getCenter(p1, p2);
+                return;
+            }
+
+            const newCenter = getCenter(p1, p2);
+            const dist = getDistance(p1, p2);
+
+            if (!lastDistRef.current) {
+                lastDistRef.current = dist;
+            }
+
+            const pointTo = {
+                x: (newCenter.x - stage.x()) / stage.scaleX(),
+                y: (newCenter.y - stage.y()) / stage.scaleX(),
+            };
+
+            let scale = stage.scaleX() * (dist / lastDistRef.current);
+            // Limit zoom
+            if (scale < 0.05) scale = 0.05;
+            if (scale > 5) scale = 5;
+
+            const dx = newCenter.x - lastCenterRef.current.x;
+            const dy = newCenter.y - lastCenterRef.current.y;
+
+            const newPos = {
+                x: newCenter.x - pointTo.x * scale + dx,
+                y: newCenter.y - pointTo.y * scale + dy,
+            };
+
+            // Update refs immediately for next frame
+            lastDistRef.current = dist;
+            lastCenterRef.current = newCenter;
+
+            // Direct update for performance, verified via setViewport on end
+            stage.scale({ x: scale, y: scale });
+            stage.position(newPos);
+            stage.batchDraw();
+        }
+    };
+
+    const handleTouchEnd = () => {
+        lastDistRef.current = 0;
+        lastCenterRef.current = null;
+
+        // Sync state
+        const stage = stageRef.current;
+        if (stage) {
+            setViewport({
+                x: stage.x(),
+                y: stage.y(),
+                scale: stage.scaleX()
+            });
+        }
+    };
+
     const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
         setContextMenu(null);
@@ -320,6 +404,8 @@ export const InfiniteCanvas = () => {
                 height={window.innerHeight}
                 draggable
                 onWheel={handleWheel}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 onDblClick={handleStageDblClick}
                 onContextMenu={handleContextMenu}
                 onMouseDown={handleMouseDown}

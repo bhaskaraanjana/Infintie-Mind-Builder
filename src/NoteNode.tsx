@@ -16,9 +16,16 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     const [hover, setHover] = useState(false);
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
+    const editingNoteId = useStore((state) => state.editingNoteId);
+    const isEditing = editingNoteId === note.id;
 
     // Fallback if theme or color is missing
-    const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
+    const getNoteColor = (t: typeof theme, type: string) => {
+        const c = t.colors[type as keyof typeof t.colors];
+        if (c && typeof c === 'object' && 'main' in c) return c;
+        return t.colors.fleeting;
+    };
+    const noteColor = getNoteColor(theme, note.type);
 
     const colorScheme = {
         main: noteColor.main,
@@ -36,8 +43,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     if (isOrbView) {
         const dotSize = note.type === 'hub' ? 12 : 8;
         const glowSize = hover ? dotSize + 8 : dotSize + 4;
-        const showLabel = ui.showOrbLabels || hover;
-        const showDetails = ui.showOrbDetails || hover;
+        const showLabel = ui.showOrbLabels || hover || isEditing;
+        const showDetails = ui.showOrbDetails || hover || isEditing;
 
         return (
             <Group
@@ -50,11 +57,22 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
             >
+                {/* Editing Indicator Ring */}
+                {isEditing && (
+                    <Circle
+                        radius={glowSize + 4}
+                        stroke={theme.colors.text}
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                        opacity={0.6}
+                    />
+                )}
                 {/* Outer glow */}
                 <Circle
                     radius={glowSize}
                     fill={colorScheme.glow}
-                    opacity={hover ? 0.4 : 0.25}
+                    opacity={hover || isEditing ? 0.4 : 0.25}
                     listening={false}
                 />
                 {/* Main dot */}
@@ -62,7 +80,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                     radius={dotSize}
                     fill={colorScheme.main}
                     shadowColor={colorScheme.main}
-                    shadowBlur={hover ? 15 : 8}
+                    shadowBlur={hover || isEditing ? 15 : 8}
                     shadowOpacity={0.6}
                 />
                 {/* Floating text label */}
@@ -117,6 +135,21 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
         >
+            {/* Editing Selection Glow */}
+            {isEditing && (
+                <Rect
+                    y={-4}
+                    x={-4}
+                    width={288}
+                    height={cardHeight + 8}
+                    stroke={theme.colors.text}
+                    strokeWidth={1}
+                    dash={[6, 6]}
+                    cornerRadius={20}
+                    opacity={0.5}
+                    listening={false}
+                />
+            )}
             {/* Shadow layers */}
             <Rect
                 y={6}
@@ -141,10 +174,10 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 height={cardHeight}
                 fill={theme.colors.canvasBg}
                 cornerRadius={16}
-                shadowColor="black"
-                shadowBlur={hover ? 20 : 12}
-                shadowOpacity={hover ? 0.3 : 0.2}
-                shadowOffsetY={hover ? 8 : 4}
+                shadowColor={isEditing ? "black" : "black"}
+                shadowBlur={hover || isEditing ? 25 : 12}
+                shadowOpacity={hover || isEditing ? 0.4 : 0.2}
+                shadowOffsetY={hover || isEditing ? 10 : 4}
             />
             <Rect
                 width={280}

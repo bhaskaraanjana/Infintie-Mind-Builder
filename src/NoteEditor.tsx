@@ -1,101 +1,62 @@
 import { useState, useEffect } from 'react';
 import { useStore } from './store';
-import { X, Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Trash2, Maximize2, Minimize2, GripHorizontal } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import styles from './NoteEditor.module.css';
+import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
-export const NoteEditor = () => {
-    const editingNoteId = useStore((state) => state.editingNoteId);
-    const notes = useStore((state) => state.notes);
-    const updateNote = useStore((state) => state.updateNote);
-    const deleteNote = useStore((state) => state.deleteNote);
-    const setEditingNoteId = useStore((state) => state.setEditingNoteId);
+const DraggableEditorContent = ({
+    coordinates,
+    handleSave,
+    handleDelete,
+    isExpanded,
+    setIsExpanded,
+    editorStats,
+    setEditorStats,
+    title,
+    setTitle,
+    content,
+    setContent,
+    noteTags,
+    removeTag,
+    tagInput,
+    setTagInput,
+    handleAddTag,
+    type,
+    setType,
+    source,
+    setSource,
+    isSaving,
+    lastSaved,
+    setEditingNoteId
+}: any) => {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: 'note-editor-window',
+    });
 
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [noteTags, setNoteTags] = useState<string[]>([]);
-    const [tagInput, setTagInput] = useState('');
-    const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>('fleeting');
-    const [source, setSource] = useState('');
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
-
-    const note = editingNoteId ? notes[editingNoteId] : null;
-
-    useEffect(() => {
-        if (note) {
-            setTitle(note.title);
-            setContent(note.content || '');
-            setNoteTags(note.tags || []);
-            setType(note.type);
-            setSource(note.source || '');
-        }
-    }, [editingNoteId, note]);
-
-    const handleSave = () => {
-        if (editingNoteId) {
-            updateNote(editingNoteId, {
-                title,
-                content,
-                tags: noteTags,
-                type,
-                source: type === 'literature' ? source : undefined
-            });
-        }
-        setEditingNoteId(null);
-        setIsExpanded(false);
+    const style = {
+        transform: CSS.Translate.toString(transform) ?
+            `translate(-50%, -50%) translate3d(${coordinates.x + (transform?.x || 0)}px, ${coordinates.y + (transform?.y || 0)}px, 0)` :
+            `translate(-50%, -50%) translate3d(${coordinates.x}px, ${coordinates.y}px, 0)`,
     };
 
-    const handleDelete = () => {
-        if (editingNoteId) {
-            deleteNote(editingNoteId);
-        }
-        setEditingNoteId(null);
-        setIsExpanded(false);
-    };
-
-    // Autosave with 2-second debounce
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-    useEffect(() => {
-        if (!editingNoteId) return;
-
-        setIsSaving(true);
-        const timer = setTimeout(() => {
-            updateNote(editingNoteId, {
-                title,
-                content,
-                tags: noteTags,
-                type,
-                source: type === 'literature' ? source : undefined
-            });
-            setIsSaving(false);
-            setLastSaved(new Date());
-        }, 2000);
-
-        return () => clearTimeout(timer);
-    }, [title, content, noteTags, type, source, editingNoteId, updateNote]);
-
-    const handleAddTag = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && tagInput.trim()) {
-            const newTag = tagInput.trim();
-            if (!noteTags.includes(newTag)) {
-                setNoteTags([...noteTags, newTag]);
-            }
-            setTagInput('');
-        }
-    };
-
-    const removeTag = (tagToRemove: string) => {
-        setNoteTags(noteTags.filter((tag) => tag !== tagToRemove));
-    };
-
-    if (!editingNoteId) return null;
+    // If expanded, disable custom transform and use fixed inset
+    const panelStyle = isExpanded ? {} : style;
+    const panelClass = isExpanded ? styles.expandedPanel : styles.editorPanel;
 
     const editorContent = (
         <div className={`${styles.editorContent} ${isExpanded ? styles.expandedEditorContent : ''}`}>
             <div className={styles.header}>
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className={styles.dragHandle}
+                    title="Drag to move"
+                >
+                    <GripHorizontal size={20} color="var(--theme-text-secondary)" />
+                </div>
                 <input
                     type="text"
                     value={title}
@@ -162,7 +123,7 @@ export const NoteEditor = () => {
 
             <div className={styles.tagsSection}>
                 <div className={styles.tagsList}>
-                    {noteTags.map((tag) => (
+                    {noteTags.map((tag: string) => (
                         <span key={tag} className={styles.tag}>
                             {tag}
                             <button
@@ -210,7 +171,7 @@ export const NoteEditor = () => {
 
     if (isExpanded) {
         return (
-            <div className={styles.expandedPanel}>
+            <div className={panelClass}>
                 <div className={styles.expandedContent}>
                     {editorContent}
                     <button
@@ -226,8 +187,152 @@ export const NoteEditor = () => {
     }
 
     return (
-        <div className={styles.editorPanel}>
+        <div
+            ref={setNodeRef}
+            style={panelStyle}
+            className={panelClass}
+        >
             {editorContent}
         </div>
+    );
+};
+
+export const NoteEditor = () => {
+    const editingNoteId = useStore((state) => state.editingNoteId);
+    const notes = useStore((state) => state.notes);
+    const updateNote = useStore((state) => state.updateNote);
+    const deleteNote = useStore((state) => state.deleteNote);
+    const setEditingNoteId = useStore((state) => state.setEditingNoteId);
+
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [noteTags, setNoteTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
+    const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>('fleeting');
+    const [source, setSource] = useState('');
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
+
+    const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
+
+    const note = editingNoteId ? notes[editingNoteId] : null;
+
+    useEffect(() => {
+        if (note) {
+            setTitle(note.title);
+            setContent(note.content || '');
+            setNoteTags(note.tags || []);
+            setType(note.type);
+            setSource(note.source || '');
+            // Reset position when opening a new note (optional, maybe keep it?)
+            // setCoordinates({ x: 0, y: 0 }); 
+        }
+    }, [editingNoteId, note]);
+
+    // Autosave with 2-second debounce
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    useEffect(() => {
+        if (!editingNoteId) return;
+
+        setIsSaving(true);
+        const timer = setTimeout(() => {
+            updateNote(editingNoteId, {
+                title,
+                content,
+                tags: noteTags,
+                type,
+                source: type === 'literature' ? source : undefined
+            });
+            setIsSaving(false);
+            setLastSaved(new Date());
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [title, content, noteTags, type, source, editingNoteId, updateNote]);
+
+    const handleSave = () => {
+        if (editingNoteId) {
+            updateNote(editingNoteId, {
+                title,
+                content,
+                tags: noteTags,
+                type,
+                source: type === 'literature' ? source : undefined
+            });
+        }
+        setEditingNoteId(null);
+        setIsExpanded(false);
+    };
+
+    const handleDelete = () => {
+        if (editingNoteId) {
+            deleteNote(editingNoteId);
+        }
+        setEditingNoteId(null);
+        setIsExpanded(false);
+    };
+
+    const handleAddTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && tagInput.trim()) {
+            const newTag = tagInput.trim();
+            if (!noteTags.includes(newTag)) {
+                setNoteTags([...noteTags, newTag]);
+            }
+            setTagInput('');
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setNoteTags(noteTags.filter((tag) => tag !== tagToRemove));
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { delta } = event;
+        setCoordinates(({ x, y }) => ({
+            x: x + delta.x,
+            y: y + delta.y,
+        }));
+    };
+
+    if (!editingNoteId) return null;
+
+    return (
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <DraggableEditorContent
+                coordinates={coordinates}
+                handleSave={handleSave}
+                handleDelete={handleDelete}
+                isExpanded={isExpanded}
+                setIsExpanded={setIsExpanded}
+                editorStats={editorStats}
+                setEditorStats={setEditorStats}
+                title={title}
+                setTitle={setTitle}
+                content={content}
+                setContent={setContent}
+                noteTags={noteTags}
+                removeTag={removeTag}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                handleAddTag={handleAddTag}
+                type={type}
+                setType={setType}
+                source={source}
+                setSource={setSource}
+                isSaving={isSaving}
+                lastSaved={lastSaved}
+                setEditingNoteId={setEditingNoteId}
+            />
+        </DndContext>
     );
 };
