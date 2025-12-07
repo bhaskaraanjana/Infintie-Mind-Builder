@@ -6,6 +6,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     width: 28rem;
+    max-width: 90vw;
     max-height: 85vh;
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
@@ -18,6 +19,14 @@
     display: flex;
     flex-direction: column;
     animation: fadeInScale 300ms ease-out;
+}
+
+@media (max-width: 768px) {
+    .editorPanel {
+        width: 95vw;
+        max-height: 90vh;
+        padding: 1rem;
+    }
 }
 
 .expandedPanel {

@@ -59,6 +59,7 @@ export const InfiniteCanvas = () => {
         if (touch1 && touch2) {
             e.evt.preventDefault();
             const stage = stageRef.current;
+            stage.draggable(false); // Disable drag during zoom
             if (stage.isDragging()) {
                 stage.stopDrag();
             }
@@ -119,6 +120,8 @@ export const InfiniteCanvas = () => {
                 y: stage.y(),
                 scale: stage.scaleX()
             });
+            // Re-enable dragging if it was stopped
+            stage.draggable(true);
         }
     };
 
