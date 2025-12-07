@@ -40,8 +40,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
         const showDetails = ui.showOrbDetails || hover;
 
         return (
-            <Group
-                x={note.x}
+            `<Group
+                x={note.x}`nname={`note-${note.id}`}
                 y={note.y}
                 draggable
                 onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
@@ -106,8 +106,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     };
 
     return (
-        <Group
-            x={note.x}
+        `<Group
+            x={note.x}`nname={`note-${note.id}`}
             y={note.y}
             name={`note-${note.id}`}
             draggable
