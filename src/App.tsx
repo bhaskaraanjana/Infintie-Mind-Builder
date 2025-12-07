@@ -4,12 +4,12 @@ import { NoteEditor } from './NoteEditor';
 import { SearchBar } from './SearchBar';
 import { Minimap } from './Minimap';
 import { TagFilter } from './TagFilter';
-import { Settings } from './Settings';
+import { Settings } from './Settings';\nimport { useAuth } from './contexts/AuthContext';\nimport { LoginModal } from './LoginModal';
 import { ViewControls } from './ViewControls';
 import { useStore } from './store';
 import { themes } from './themes';
 
-function App() {
+function App() {\n  const { user } = useAuth();\n\n  // Show login modal if not authenticated\n  if (!user) {\n    return <LoginModal />;\n  }
     const loadData = useStore((state) => state.loadData);
     const themeName = useStore((state) => state.theme);
 
@@ -56,3 +56,4 @@ function App() {
 }
 
 export default App;
+
