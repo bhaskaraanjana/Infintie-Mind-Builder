@@ -27,8 +27,13 @@ const DraggableEditorContent = ({
     handleAddTag,
     type,
     setType,
-    source,
-    setSource,
+
+    sources,
+    setSources, // Array handler
+    sourceInput,
+    setSourceInput,
+    handleAddSource,
+    removeSource,
     isSaving,
     lastSaved,
     setEditingNoteId,
@@ -109,15 +114,7 @@ const DraggableEditorContent = ({
                             <option value="hub">Hub</option>
                         </select>
 
-                        {type === 'literature' && (
-                            <input
-                                type="text"
-                                value={source}
-                                onChange={(e) => setSource(e.target.value)}
-                                placeholder="Source (URL, Book, etc.)"
-                                className={styles.sourceInput}
-                            />
-                        )}
+                        {/* Legacy Source Input Removed */}
                     </div>
                 )}
                 {/* External Toolbar */}
@@ -138,6 +135,33 @@ const DraggableEditorContent = ({
             </div>
 
             <div className={styles.tagsSection}>
+                {type === 'literature' && (
+                    <div className={styles.sourceSection} style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--neutral-600)' }}>Sources</div>
+                        <div className={styles.tagsList}>
+                            {sources.map((src: string, i: number) => (
+                                <span key={i} className={styles.tag} style={{ background: 'var(--primary-100)', color: 'var(--primary-700)' }}>
+                                    {src}
+                                    <button
+                                        onClick={() => removeSource(i)}
+                                        className={styles.tagRemoveButton}
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                        <input
+                            type="text"
+                            value={sourceInput}
+                            onChange={(e) => setSourceInput(e.target.value)}
+                            onKeyDown={handleAddSource}
+                            placeholder="Add source (Press Enter)..."
+                            className={styles.tagInput} // Reuse tag input style
+                        />
+                    </div>
+                )}
+
                 <div className={styles.tagsList}>
                     {noteTags.map((tag: string) => (
                         <span key={tag} className={styles.tag}>
@@ -225,7 +249,8 @@ export const NoteEditor = () => {
     const [noteTags, setNoteTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
     const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>('fleeting');
-    const [source, setSource] = useState('');
+    const [sources, setSources] = useState<string[]>([]);
+    const [sourceInput, setSourceInput] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
 
@@ -266,7 +291,8 @@ export const NoteEditor = () => {
             setContent(note.content || '');
             setNoteTags(note.tags || []);
             setType(note.type);
-            setSource(note.source || '');
+            // Initialize sources: prefer 'sources', fallback to 'source' legacy, or empty
+            setSources(note.sources || (note.source ? [note.source] : []));
         }
     }, [editingNoteId, note]);
 
@@ -284,14 +310,15 @@ export const NoteEditor = () => {
                 content,
                 tags: noteTags,
                 type,
-                source: type === 'literature' ? source : undefined
+                sources: type === 'literature' ? sources : undefined,
+                source: type === 'literature' ? (sources[0] || '') : undefined // Legacy sync
             });
             setIsSaving(false);
             setLastSaved(new Date());
         }, 2000);
 
         return () => clearTimeout(timer);
-    }, [title, content, noteTags, type, source, editingNoteId, updateNote]);
+    }, [title, content, noteTags, type, sources, editingNoteId, updateNote]);
 
     const handleSave = () => {
         if (editingNoteId) {
@@ -345,37 +372,60 @@ export const NoteEditor = () => {
         }));
     };
 
+    const handleAddSource = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = sourceInput.trim();
+            if (val) {
+                setSources([...sources, val]);
+                setSourceInput('');
+            }
+        }
+    };
+
+    const removeSource = (index: number) => {
+        setSources(sources.filter((_, i) => i !== index));
+    };
+
     if (!editingNoteId) return null;
+
+    const dragContent = (
+        <DraggableEditorContent
+            coordinates={coordinates}
+            handleSave={handleSave}
+            handleDelete={handleDelete}
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            editorStats={editorStats}
+            setEditorStats={setEditorStats}
+            title={title}
+            setTitle={setTitle}
+            content={content}
+            setContent={setContent}
+            noteTags={noteTags}
+            removeTag={removeTag}
+            tagInput={tagInput}
+            setTagInput={setTagInput}
+            handleAddTag={handleAddTag}
+            type={type}
+            setType={setType}
+            sources={sources}
+            setSources={setSources}
+            sourceInput={sourceInput}
+            setSourceInput={setSourceInput}
+            handleAddSource={handleAddSource}
+            removeSource={removeSource}
+            isSaving={isSaving}
+            lastSaved={lastSaved}
+            setEditingNoteId={setEditingNoteId}
+            viewportHeight={viewportHeight}
+            keyboardOpen={keyboardOpen}
+        />
+    );
 
     return (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <DraggableEditorContent
-                coordinates={coordinates}
-                handleSave={handleSave}
-                handleDelete={handleDelete}
-                isExpanded={isExpanded}
-                setIsExpanded={setIsExpanded}
-                editorStats={editorStats}
-                setEditorStats={setEditorStats}
-                title={title}
-                setTitle={setTitle}
-                content={content}
-                setContent={setContent}
-                noteTags={noteTags}
-                removeTag={removeTag}
-                tagInput={tagInput}
-                setTagInput={setTagInput}
-                handleAddTag={handleAddTag}
-                type={type}
-                setType={setType}
-                source={source}
-                setSource={setSource}
-                isSaving={isSaving}
-                lastSaved={lastSaved}
-                setEditingNoteId={setEditingNoteId}
-                viewportHeight={viewportHeight}
-                keyboardOpen={keyboardOpen}
-            />
+            {dragContent}
         </DndContext>
     );
 };

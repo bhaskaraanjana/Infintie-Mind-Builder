@@ -8,7 +8,8 @@ export interface Note {
     title: string;
     content: string;
     tags: string[];
-    source?: string;
+    source?: string; // Legacy
+    sources?: string[]; // New List of sources
     spaceId?: string;
     clusterId?: string;
     created: number; // Timestamp
