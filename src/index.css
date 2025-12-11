@@ -2,7 +2,8 @@
    GLOBAL RESETS
    ========================================== */
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -272,6 +273,20 @@ select {
 ::selection {
     background: var(--primary-200);
     color: var(--primary-900);
+}
+
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+
+    /* Make touch targets larger on mobile */
+    button,
+    input[type="checkbox"],
+    input[type="range"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
 }
 
 /* Focus Visible */

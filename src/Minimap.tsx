@@ -43,7 +43,7 @@ export const Minimap: React.FC = () => {
     const viewportY = ((-viewport.y / viewport.scale + worldSize / 2) * scale);
 
     return (
-        <>
+        <div className="hide-on-mobile">
             {/* Toggle Button */}
             <button
                 onClick={() => setUi({ minimapVisible: !ui.minimapVisible })}
@@ -258,6 +258,6 @@ export const Minimap: React.FC = () => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };

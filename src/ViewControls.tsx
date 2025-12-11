@@ -17,15 +17,18 @@ export const ViewControls: React.FC = () => {
                 bottom: '20px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                padding: 'var(--spacing-3) var(--spacing-4)',
+                padding: 'var(--spacing-2) var(--spacing-4)', // Reduced padding
                 borderRadius: 'var(--radius-full)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--spacing-4)',
+                gap: 'var(--spacing-2)', // Reduced gap
                 zIndex: 'var(--z-sticky)',
                 boxShadow: 'var(--shadow-xl)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid var(--glass-border)'
+                border: '1px solid var(--glass-border)',
+                width: 'max-content',
+                maxWidth: '95vw', // Ensure it fits screen
+                overflowX: 'auto' // Allow scroll if needed
             }}
         >
             {/* Zoom Slider */}
@@ -74,35 +77,37 @@ export const ViewControls: React.FC = () => {
                 ))}
             </div>
 
-            <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
 
-            {/* Label Toggle */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
-                <input
-                    type="checkbox"
-                    checked={ui.showOrbLabels}
-                    onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
-                    style={{ accentColor: 'var(--primary-500)' }}
-                />
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
-                    Labels
-                </span>
-            </label>
+                {/* Label Toggle */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        checked={ui.showOrbLabels}
+                        onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
+                        style={{ accentColor: 'var(--primary-500)' }}
+                    />
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
+                        Labels
+                    </span>
+                </label>
 
-            <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
 
-            {/* Details Toggle */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
-                <input
-                    type="checkbox"
-                    checked={ui.showOrbDetails}
-                    onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
-                    style={{ accentColor: 'var(--primary-500)' }}
-                />
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
-                    Details
-                </span>
-            </label>
+                {/* Details Toggle */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        checked={ui.showOrbDetails}
+                        onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
+                        style={{ accentColor: 'var(--primary-500)' }}
+                    />
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
+                        Details
+                    </span>
+                </label>
+            </div>
         </div>
     );
 };
