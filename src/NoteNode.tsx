@@ -8,17 +8,22 @@ interface Props {
     note: Note;
     scale: number;
     updateNotePosition: (id: string, x: number, y: number) => void;
+    onDragStart?: (id: string, x: number, y: number) => void;
+    onDragMove?: (id: string, x: number, y: number) => void;
     setEditingNoteId: (id: string | null) => void;
     themeName: ThemeName;
 }
 
-export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, setEditingNoteId, themeName }) => {
+export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onDragStart, onDragMove, setEditingNoteId, themeName }) => {
     const [hover, setHover] = useState(false);
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
     const editingNoteId = useStore((state) => state.editingNoteId);
     const selectionMode = useStore((state) => state.selectionMode);
+    const selectedNoteIds = useStore((state) => state.selectedNoteIds);
+    const toggleNoteSelection = useStore((state) => state.toggleNoteSelection);
     const isEditing = editingNoteId === note.id;
+    const isSelected = selectedNoteIds.includes(note.id);
 
     // Fallback if theme or color is missing
     const getNoteColor = (t: typeof theme, type: string) => {
@@ -34,10 +39,12 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     };
 
     const handleClick = (e: any) => {
-        if (selectionMode) return; // Don't open if in selection mode
-
         e.cancelBubble = true;
-        setEditingNoteId(note.id);
+        if (selectionMode) {
+            toggleNoteSelection(note.id);
+        } else {
+            setEditingNoteId(note.id);
+        }
     };
 
     const handleDblClick = (e: any) => {
@@ -51,8 +58,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     if (isOrbView) {
         const dotSize = note.type === 'hub' ? 12 : 8;
         const glowSize = hover ? dotSize + 8 : dotSize + 4;
-        const showLabel = ui.showOrbLabels || hover || isEditing;
-        const showDetails = ui.showOrbDetails || hover || isEditing;
+        const showLabel = ui.showOrbLabels || hover || isEditing || isSelected;
+        const showDetails = ui.showOrbDetails || hover || isEditing || isSelected;
 
         return (
             <Group
@@ -60,6 +67,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 x={note.x}
                 y={note.y}
                 draggable
+                onDragStart={(e) => onDragStart?.(note.id, e.target.x(), e.target.y())}
+                onDragMove={(e) => onDragMove?.(note.id, e.target.x(), e.target.y())}
                 onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
                 onClick={handleClick}
                 onTap={handleClick}
@@ -76,6 +85,16 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                         dash={[4, 4]}
                         listening={false}
                         opacity={0.6}
+                    />
+                )}
+                {/* Selection Indicator Ring */}
+                {isSelected && (
+                    <Circle
+                        radius={glowSize + 4}
+                        stroke="#00a1ff"
+                        strokeWidth={2}
+                        listening={false}
+                        opacity={0.8}
                     />
                 )}
                 {/* Outer glow */}
@@ -140,6 +159,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             x={note.x}
             y={note.y}
             draggable
+            onDragStart={(e) => onDragStart?.(note.id, e.target.x(), e.target.y())}
+            onDragMove={(e) => onDragMove?.(note.id, e.target.x(), e.target.y())}
             onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
             onClick={handleClick}
             onTap={handleClick}
@@ -159,6 +180,20 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                     dash={[6, 6]}
                     cornerRadius={20}
                     opacity={0.5}
+                    listening={false}
+                />
+            )}
+            {/* Selection Glow */}
+            {isSelected && (
+                <Rect
+                    y={-4}
+                    x={-4}
+                    width={288}
+                    height={cardHeight + 8}
+                    stroke="#00a1ff"
+                    strokeWidth={2}
+                    cornerRadius={20}
+                    opacity={0.8}
                     listening={false}
                 />
             )}

@@ -13,6 +13,7 @@ import { LoginModal } from './LoginModal';
 import { DebugMenu } from './DebugMenu';
 import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
+import { SelectionToolbar } from './components/SelectionToolbar';
 
 function App() {
     const { user } = useAuth();
@@ -80,6 +81,7 @@ function App() {
             <Settings />
             <ViewControls />
             <SelectionToggle />
+            <SelectionToolbar />
             <MobileContextMenu />
         </div>
     );

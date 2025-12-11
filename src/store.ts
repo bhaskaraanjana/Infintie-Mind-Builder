@@ -26,6 +26,9 @@ interface AppState {
     selectionMode: boolean; // For mobile toggle (Pan vs Select)
     setSelectedNoteIds: (ids: string[]) => void;
     toggleSelectionMode: () => void;
+    toggleNoteSelection: (id: string) => void;
+    deleteNotes: (ids: string[]) => Promise<void>;
+    updateNotesPosition: (updates: { id: string, x: number, y: number }[]) => Promise<void>;
 
     // UI State
     ui: {
@@ -154,6 +157,57 @@ export const useStore = create<AppState>((set, get) => ({
     selectionMode: false,
     setSelectedNoteIds: (ids) => set({ selectedNoteIds: ids }),
     toggleSelectionMode: () => set((state) => ({ selectionMode: !state.selectionMode })),
+    toggleNoteSelection: (id) => set((state) => {
+        const selected = new Set(state.selectedNoteIds);
+        if (selected.has(id)) {
+            selected.delete(id);
+        } else {
+            selected.add(id);
+        }
+        return { selectedNoteIds: Array.from(selected) };
+    }),
+    deleteNotes: async (ids) => {
+        // Delete locally
+        set((state) => {
+            const newNotes = { ...state.notes };
+            ids.forEach(id => delete newNotes[id]);
+            return { notes: newNotes, selectedNoteIds: [] }; // Clear selection after delete
+        });
+
+        // Delete from DB and Cloud
+        await db.notes.bulkDelete(ids);
+
+        // Sync deletions to cloud
+        ids.forEach(id => {
+            firebaseSyncService.deleteNote(id);
+        });
+    },
+    updateNotesPosition: async (updates) => {
+        set((state) => {
+            const newNotes = { ...state.notes };
+            updates.forEach(({ id, x, y }) => {
+                if (newNotes[id]) {
+                    newNotes[id] = { ...newNotes[id], x, y };
+                }
+            });
+            return { notes: newNotes };
+        });
+
+        // Update DB
+        const dbUpdates = updates.map(({ id, x, y }) => ({
+            key: id,
+            changes: { x, y, updatedAt: Date.now() }
+        }));
+
+        // Use bulk update if possible, or Promise.all for now since Dexie update is single
+        await Promise.all(dbUpdates.map(u => db.notes.update(u.key, u.changes)));
+
+        // Sync to cloud (debounced usually, but explicit here)
+        updates.forEach(({ id, x, y }) => {
+            const note = get().notes[id];
+            if (note) firebaseSyncService.saveNote(note);
+        });
+    },
 
     loadData: async () => {
         const notesArray = await db.notes.toArray();

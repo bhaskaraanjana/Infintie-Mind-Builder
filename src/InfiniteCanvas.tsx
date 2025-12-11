@@ -37,7 +37,10 @@ export const InfiniteCanvas = () => {
 
     // Selection State
     const selectionMode = useStore((state) => state.selectionMode);
+    const selectedNoteIds = useStore((state) => state.selectedNoteIds);
     const setSelectedNoteIds = useStore((state) => state.setSelectedNoteIds);
+    const deleteNotes = useStore((state) => state.deleteNotes);
+    const updateNotesPosition = useStore((state) => state.updateNotesPosition);
     const [selectionBox, setSelectionBox] = useState<{ startX: number, startY: number, width: number, height: number } | null>(null);
 
     // Linking State
@@ -437,6 +440,90 @@ export const InfiniteCanvas = () => {
         }
     };
 
+    // Batch Dragging State
+    const dragStartRef = useRef<{
+        noteId: string,
+        startX: number,
+        startY: number,
+        selectionSnapshot: Record<string, { x: number, y: number }>
+    } | null>(null);
+
+    const handleNoteDragStart = (id: string, x: number, y: number) => {
+        // Only trigger batch drag if the dragged note is part of the selection
+        if (selectedNoteIds.includes(id)) {
+            const snapshot: Record<string, { x: number, y: number }> = {};
+            selectedNoteIds.forEach(selectedId => {
+                if (notes[selectedId]) {
+                    snapshot[selectedId] = { x: notes[selectedId].x, y: notes[selectedId].y };
+                }
+            });
+            dragStartRef.current = {
+                noteId: id,
+                startX: x,
+                startY: y,
+                selectionSnapshot: snapshot
+            };
+        } else {
+            dragStartRef.current = null;
+        }
+    };
+
+    const handleNoteDragMove = (id: string, x: number, y: number) => {
+        if (!dragStartRef.current || dragStartRef.current.noteId !== id) return;
+
+        const { startX, startY, selectionSnapshot } = dragStartRef.current;
+        const deltaX = x - startX;
+        const deltaY = y - startY;
+
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        // Move other selected notes visually (without store update for perf)
+        selectedNoteIds.forEach(selectedId => {
+            if (selectedId === id) return; // Skip self (already moved by Konva drag)
+
+            const node = stage.findOne(`.note-${selectedId}`);
+            const initialPos = selectionSnapshot[selectedId];
+
+            if (node && initialPos) {
+                node.position({
+                    x: initialPos.x + deltaX,
+                    y: initialPos.y + deltaY
+                });
+            }
+        });
+    };
+
+    const handleNoteDragEnd = (id: string, x: number, y: number) => {
+        if (dragStartRef.current && dragStartRef.current.noteId === id) {
+            // Commit batch update
+            const { startX, startY, selectionSnapshot } = dragStartRef.current;
+            const deltaX = x - startX;
+            const deltaY = y - startY;
+
+            const updates = selectedNoteIds.map(selectedId => {
+                const initialPos = selectionSnapshot[selectedId];
+                // For the dragged note itself, use current x/y (which theoretically is initial + delta, but exact from event is safer)
+                if (selectedId === id) return { id, x, y };
+
+                if (initialPos) {
+                    return {
+                        id: selectedId,
+                        x: initialPos.x + deltaX,
+                        y: initialPos.y + deltaY
+                    };
+                }
+                return null;
+            }).filter(Boolean) as { id: string, x: number, y: number }[];
+
+            updateNotesPosition(updates);
+            dragStartRef.current = null;
+        } else {
+            // Standard single note update
+            updateNotePosition(id, x, y);
+        }
+    };
+
     const visibleNotes = useMemo(() => {
         const buffer = 500;
         const visibleLeft = -viewport.x / viewport.scale - buffer;
@@ -465,42 +552,21 @@ export const InfiniteCanvas = () => {
         onTouchEnd: onLongPressTouchEnd,
         onMouseDown: onLongPressMouseDown,
         onMouseMove: onLongPressMouseMove,
-        onMouseUp: onLongPressMouseUp
+        onMouseUp: onLongPressMouseUp,
+        cancel: cancelLongPress
     } = useLongPress({
         onLongPress: (e) => {
-            // Trigger context menu at event position
-            const pos = 'touches' in e
-                ? { x: (e as any).touches[0].clientX, y: (e as any).touches[0].clientY }
-                : { x: (e as any).clientX, y: (e as any).clientY };
-
-            // Re-use logic from handleContextMenu but with explicit coordinates
-            // We need to construct a fake Konva event or adapt handleContextMenu
-            // Actually, handleContextMenu relies on e.target. 
-            // For Konva touch events, e.target is available in the KonvaEventObject
-            // But useLongPress gives us the React/Native event usually?
-            // Wait, passing Konva events to useLongPress might work if signatures match enough
-            // or we pass the Konva event as 'any'
-            // Let's assume we pass the Konva event.
-
-            // To properly identify target, we need the Konva event `e`
-            // But onLongPress might fire asynchronously. Konva event might be stale or pooled (react)?
-            // We need to use `stage.getPointerPosition()` or verify target.
-
+            // Context Menu Logic
             const stage = stageRef.current;
             if (!stage) return;
 
-            // Find target under pointer
             const pointerPos = stage.getPointerPosition();
             if (!pointerPos) return;
 
             const shape = stage.getIntersection(pointerPos);
-
-            // Create a synthetic event object or just allow handleContextMenu to run with logic
-            // We can refactor handleContextMenu to take (target, x, y)
-
             const target = shape || stage;
 
-            // Logic extracted from handleContextMenu
+            // Determine if Note or Cluster
             const noteGroup = target.findAncestor?.((node: any) => node.name() && node.name().startsWith('note-'))
                 || (target.name()?.startsWith('note-') ? target : null);
 
@@ -511,20 +577,24 @@ export const InfiniteCanvas = () => {
 
             if (noteGroup) {
                 const noteId = noteGroup.name().replace('note-', '');
+
+                // Note Options
                 const clusterOptions = Object.values(clusters).map(c => ({
                     label: c.title,
                     action: () => addToCluster(c.id, [noteId])
                 }));
+
                 const typeOptions = [
                     { label: 'Fleeting (Gold)', action: () => updateNote(noteId, { type: 'fleeting' }) },
                     { label: 'Literature (Blue)', action: () => updateNote(noteId, { type: 'literature' }) },
                     { label: 'Permanent (Green)', action: () => updateNote(noteId, { type: 'permanent' }) },
                     { label: 'Hub (Purple)', action: () => updateNote(noteId, { type: 'hub' }) },
                 ];
+
                 options.push({ label: 'Create Cluster', action: () => createCluster([noteId], 'New Cluster') });
                 if (clusterOptions.length > 0) options.push({ label: 'Assign to Cluster', submenu: clusterOptions });
                 options.push({ label: 'Change Type', submenu: typeOptions });
-                options.push({ label: 'Delete Note', action: () => deleteNote(noteId), danger: true });
+                options.push({ label: 'Delete Note', action: () => deleteNotes([noteId]), danger: true });
             } else if (clusterGroup) {
                 const clusterId = clusterGroup.name().replace('cluster-', '');
                 options.push({
@@ -546,13 +616,22 @@ export const InfiniteCanvas = () => {
                 });
                 options.push({ label: 'Delete Cluster', action: () => deleteCluster(clusterId), danger: true });
             } else {
-                // Canvas
+                // Canvas Options
                 const scale = stage.scaleX();
                 const x = (pointerPos.x - stage.x()) / scale;
                 const y = (pointerPos.y - stage.y()) / scale;
+
                 options.push({
                     label: 'Create Note Here',
-                    action: () => addNote({ type: 'fleeting', x, y, title: 'New Thought', content: 'Double-click to edit...', tags: [], references: [] })
+                    action: () => addNote({
+                        type: 'fleeting',
+                        x,
+                        y,
+                        title: 'New Thought',
+                        content: 'Double-click to edit...',
+                        tags: [],
+                        references: []
+                    })
                 });
                 options.push({ label: 'Reset View', action: () => setViewport({ x: 0, y: 0, scale: 1 }) });
             }
@@ -560,9 +639,7 @@ export const InfiniteCanvas = () => {
             setContextMenu({
                 x: pointerPos.x,
                 y: pointerPos.y,
-                options,
-                itemType: noteGroup ? 'note' : clusterGroup ? 'cluster' : 'canvas',
-                itemId: noteGroup ? noteGroup.name().replace('note-', '') : clusterGroup ? clusterGroup.name().replace('cluster-', '') : undefined
+                options
             });
         },
         onClick: (e) => setContextMenu(null),
@@ -576,9 +653,12 @@ export const InfiniteCanvas = () => {
                 height={window.innerHeight}
                 draggable={!selectionMode}
                 onWheel={handleWheel}
+                onDragStart={() => cancelLongPress()}
                 onTouchStart={(e) => {
-                    const pos = { x: e.evt.touches[0].clientX, y: e.evt.touches[0].clientY };
-                    handleSelectionStart(pos);
+                    if (e.target === stageRef.current) {
+                        const pos = { x: e.evt.touches[0].clientX, y: e.evt.touches[0].clientY };
+                        handleSelectionStart(pos);
+                    }
                     onLongPressTouchStart(e.evt as any);
                 }}
                 onTouchMove={(e) => {
@@ -595,8 +675,10 @@ export const InfiniteCanvas = () => {
                 onDblClick={handleStageDblClick}
                 onContextMenu={handleContextMenu}
                 onMouseDown={(e) => {
-                    const pos = { x: e.evt.clientX, y: e.evt.clientY };
-                    handleSelectionStart(pos);
+                    if (e.target === stageRef.current) {
+                        const pos = { x: e.evt.clientX, y: e.evt.clientY };
+                        handleSelectionStart(pos);
+                    }
                     handleMouseDown(e);
                     onLongPressMouseDown(e.evt as any);
                 }}
@@ -657,7 +739,9 @@ export const InfiniteCanvas = () => {
                             key={note.id}
                             note={note}
                             scale={viewport.scale}
-                            updateNotePosition={updateNotePosition}
+                            updateNotePosition={handleNoteDragEnd}
+                            onDragStart={handleNoteDragStart}
+                            onDragMove={handleNoteDragMove}
                             setEditingNoteId={setEditingNoteId}
                             themeName={theme}
                         />
@@ -674,7 +758,7 @@ export const InfiniteCanvas = () => {
                         />
                     )}
                 </Layer>
-            </Stage>
+            </Stage >
 
             {contextMenu && (
                 <ContextMenu

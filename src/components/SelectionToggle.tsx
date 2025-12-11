@@ -12,7 +12,7 @@ export const SelectionToggle = () => {
         <button
             onClick={toggleSelectionMode}
             className={`selection-toggle ${selectionMode ? 'active' : ''}`}
-            title={selectionMode ? "Switch to Pan Mode" : "Switch to Selection Mode"}
+            title={selectionMode ? "Exit Multi-select Mode" : "Enter Multi-select Mode"}
             style={{
                 position: 'fixed',
                 top: '14rem', // Below Settings
