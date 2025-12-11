@@ -46,13 +46,17 @@ export const InfiniteCanvas = () => {
 
     // Linking State
     const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
-    const linkingIdRef = useRef<string | null>(null);
+    const linkingIdRef = useRef<string | null>(null); // This one is for linkingSourceId
     useEffect(() => { linkingIdRef.current = linkingSourceId; }, [linkingSourceId]);
 
     const [mousePos, setMousePos] = useState<{ x: number, y: number } | null>(null);
 
+    // Refs for gestures
     const lastDistRef = useRef<number>(0);
-    const lastCenterRef = useRef<{ x: number; y: number } | null>(null);
+    const lastCenterRef = useRef<{ x: number, y: number } | null>(null);
+    const dragStartRef = useRef<{ startX: number, startY: number, noteId: string, selectionSnapshot: Record<string, { x: number, y: number }> } | null>(null);
+    // Removed unused linkingDragRef
+    const ignoreClickRef = useRef(false); // To prevent click after long press
 
     const getDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
         return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -449,12 +453,7 @@ export const InfiniteCanvas = () => {
     };
 
     // Batch Dragging State
-    const dragStartRef = useRef<{
-        noteId: string,
-        startX: number,
-        startY: number,
-        selectionSnapshot: Record<string, { x: number, y: number }>
-    } | null>(null);
+
 
     const handleNoteDragStart = (id: string, x: number, y: number) => {
         // Only trigger batch drag if the dragged note is part of the selection
@@ -575,6 +574,7 @@ export const InfiniteCanvas = () => {
         cancel: cancelLongPress
     } = useLongPress({
         onLongPress: (e) => {
+            ignoreClickRef.current = true; // Prevent subsequent click/tap handling
             // Context Menu Logic
             const stage = stageRef.current;
             if (!stage) return;
@@ -713,7 +713,20 @@ export const InfiniteCanvas = () => {
                     handleMouseUp(e);
                     onLongPressMouseUp(e.evt as any);
                 }}
-                onClick={() => setContextMenu(null)}
+                onClick={() => {
+                    if (ignoreClickRef.current) {
+                        setTimeout(() => { ignoreClickRef.current = false; }, 50);
+                        return;
+                    }
+                    setContextMenu(null);
+                }}
+                onTap={() => {
+                    if (ignoreClickRef.current) {
+                        setTimeout(() => { ignoreClickRef.current = false; }, 50);
+                        return;
+                    }
+                    setContextMenu(null);
+                }}
                 scaleX={viewport.scale}
                 scaleY={viewport.scale}
                 x={viewport.x}
@@ -766,6 +779,7 @@ export const InfiniteCanvas = () => {
                             themeName={theme}
                             isLinking={!!linkingSourceId}
                             onNoteClick={handleNoteClick}
+                            ignoreClick={ignoreClickRef}
                         />
                     ))}
                     {selectionBox && (

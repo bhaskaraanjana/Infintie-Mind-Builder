@@ -3,11 +3,16 @@ import { themes, type ThemeName } from './themes';
 import { useStore } from './store';
 import { useAuth } from './contexts/AuthContext';
 
+import { useModalHistory } from './hooks/useModalHistory';
+
 export const Settings: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt, setInstallPrompt] = useState<any>(null);
     const { theme: currentTheme, setTheme } = useStore();
     const { logout, user } = useAuth();
+
+    // Enable Back Button navigation for Settings logic
+    useModalHistory(isOpen, () => setIsOpen(false), 'settings');
 
     React.useEffect(() => {
         const handler = (e: any) => {

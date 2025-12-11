@@ -14,9 +14,10 @@ interface Props {
     themeName: ThemeName;
     isLinking?: boolean;
     onNoteClick?: (id: string) => void;
+    ignoreClick: React.MutableRefObject<boolean>;
 }
 
-export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onDragStart, onDragMove, setEditingNoteId, themeName, isLinking, onNoteClick }) => {
+export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onDragStart, onDragMove, setEditingNoteId, themeName, isLinking, onNoteClick, ignoreClick }) => {
     const [hover, setHover] = useState(false);
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
@@ -41,6 +42,12 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
     };
 
     const handleClick = (e: any) => {
+        if (ignoreClick && ignoreClick.current) {
+            setTimeout(() => { ignoreClick.current = false; }, 50);
+            e.cancelBubble = true;
+            return;
+        }
+
         // Strict Left Click check for Mouse events
         if (e.type === 'click' && e.evt.button !== 0) return;
 

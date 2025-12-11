@@ -14,6 +14,7 @@ import { DebugMenu } from './DebugMenu';
 import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
 import { SelectionToolbar } from './components/SelectionToolbar';
+import { useModalHistory } from './hooks/useModalHistory';
 
 function App() {
     const { user } = useAuth();
@@ -28,6 +29,22 @@ function App() {
     const initializeSync = useStore((state) => state.initializeSync);
     const reconcileWithCloud = useStore((state) => state.reconcileWithCloud);
     const cleanupSync = useStore((state) => state.cleanupSync);
+
+    // Navigation History
+    const editingNoteId = useStore((state) => state.editingNoteId);
+    const setEditingNoteId = useStore((state) => state.setEditingNoteId);
+
+    // Using a custom hook to manage back button support for the editor
+    // We import it dynamically or just assume it is available from correct path
+    // Since App.tsx is in src/, hooks is in src/hooks
+    // We need to add imports at top
+
+    // Note: The hook call must be inside the component body
+    // We can't conditionally call hooks, so check editingNoteId boolean
+    // But we need to IMPORT the hook first. I will add import in separate replacement if needed, 
+    // or assume I can do it here if I include imports.
+    // I will use a separate replacement for imports.
+
 
     // Initialize cloud sync when user logs in
     useEffect(() => {
@@ -61,6 +78,8 @@ function App() {
             root.style.setProperty('--theme-primary', theme.colors.primary);
         }
     }, [themeName]);
+
+    useModalHistory(!!editingNoteId, () => setEditingNoteId(null), 'editor');
 
     return (
         <div
