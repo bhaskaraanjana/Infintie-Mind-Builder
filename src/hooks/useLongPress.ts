@@ -1,4 +1,5 @@
 import { useRef, useCallback } from 'react';
+import { triggerHaptic } from '../utils/haptics';
 
 interface LongPressOptions {
     onLongPress: (e: React.MouseEvent | React.TouchEvent) => void;
@@ -41,6 +42,7 @@ export const useLongPress = ({ onLongPress, onClick, ms = 500, threshold = 5 }: 
 
         timerRef.current = setTimeout(() => {
             isLongPress.current = true;
+            triggerHaptic('medium');
             onLongPress(e);
         }, ms) as unknown as number;
     }, [onLongPress, ms, cancel]);

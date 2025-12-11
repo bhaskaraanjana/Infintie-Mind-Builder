@@ -41,8 +41,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
     };
 
     const handleClick = (e: any) => {
-        // Only allow left click (button 0)
-        if (e.evt.button !== 0) return;
+        // Strict Left Click check for Mouse events
+        if (e.type === 'click' && e.evt.button !== 0) return;
 
         e.cancelBubble = true;
         if (selectionMode) {

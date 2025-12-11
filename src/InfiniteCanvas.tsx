@@ -2,6 +2,7 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 import { Stage, Layer, Line, Rect } from 'react-konva';
 import { useStore } from './store';
 import { useLongPress } from './hooks/useLongPress';
+import { triggerHaptic } from './utils/haptics';
 import { NoteNode } from './NoteNode';
 import { ClusterNode } from './ClusterNode';
 import { ContextMenu } from './ContextMenu';
@@ -426,6 +427,7 @@ export const InfiniteCanvas = () => {
                 const targetId = noteGroup.name().replace('note-', '');
                 if (linkingIdRef.current && targetId !== linkingIdRef.current) {
                     addLink(linkingIdRef.current, targetId);
+                    triggerHaptic('success');
                     linkingIdRef.current = null; // Prevent double firing
                 }
             }

@@ -1,0 +1,16 @@
+{
+    "name": "Infinite Mind",
+    "short_name": "InfiniteMind",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "description": "Infinite Canvas for your thoughts",
+    "icons": [
+        {
+            "src": "/vite.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}
