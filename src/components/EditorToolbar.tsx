@@ -2,11 +2,12 @@ import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
     Image as ImageIcon, Youtube as YoutubeIcon, Quote,
-    Undo2, Redo2, Table as TableIcon
+    Undo2, Redo2, Table as TableIcon, Upload
 } from 'lucide-react';
 import { type Editor } from '@tiptap/react';
 import './EditorToolbar.css';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import { uploadFile } from '../services/storageService';
 
 interface EditorToolbarProps {
     editor: Editor | null;
@@ -15,6 +16,8 @@ interface EditorToolbarProps {
 
 export const EditorToolbar = ({ editor, className = '' }: EditorToolbarProps) => {
     if (!editor) return null;
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const addYoutubeVideo = useCallback(() => {
         const url = prompt('Enter YouTube URL');
@@ -30,8 +33,44 @@ export const EditorToolbar = ({ editor, className = '' }: EditorToolbarProps) =>
         }
     }, [editor]);
 
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            try {
+                // Determine path based on type
+                const path = file.type.startsWith('video/') ? 'note-videos' : 'note-images';
+                const url = await uploadFile(file, path);
+
+                if (file.type.startsWith('image/')) {
+                    editor.chain().focus().setImage({ src: url }).run();
+                } else if (file.type.startsWith('video/')) {
+                    editor.chain().focus().setVideo({ src: url }).run();
+                }
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Failed to upload media");
+            } finally {
+                // Reset input
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            }
+        }
+    };
+
     return (
         <div className={`editor-toolbar ${className}`}>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*,video/*"
+                style={{ display: 'none' }}
+            />
             {/* Undo/Redo */}
             <button
                 onClick={() => editor.chain().focus().undo().run()}
@@ -138,9 +177,16 @@ export const EditorToolbar = ({ editor, className = '' }: EditorToolbarProps) =>
             <button
                 onClick={addImage}
                 className="toolbar-btn"
-                title="Add Image"
+                title="Add Image from URL"
             >
                 <ImageIcon size={18} />
+            </button>
+            <button
+                onClick={handleUploadClick}
+                className="toolbar-btn"
+                title="Insert Media"
+            >
+                <Upload size={18} />
             </button>
             <button
                 onClick={addYoutubeVideo}

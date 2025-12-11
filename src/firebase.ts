@@ -20,3 +20,7 @@ export const auth = getAuth(app);
 
 // Initialize Cloud Firestore and get a reference to the service (for Phase 3)
 export const firestore = getFirestore(app);
+
+// Initialize Cloud Storage
+import { getStorage } from 'firebase/storage';
+export const storage = getStorage(app);

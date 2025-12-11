@@ -3,19 +3,23 @@ import StarterKit from '@tiptap/starter-kit';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { createLowlight, all } from 'lowlight';
 import Placeholder from '@tiptap/extension-placeholder';
-import Image from '@tiptap/extension-image';
+// import Image from '@tiptap/extension-image'; // Replaced by custom extension
+import { ImageExtension } from './components/extensions/ImageExtension';
+import { VideoExtension } from './components/extensions/VideoExtension';
 import Youtube from '@tiptap/extension-youtube';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
     Image as ImageIcon, Youtube as YoutubeIcon, Quote,
-    Undo2, Redo2, Table as TableIcon
+    Undo2, Redo2, Table as TableIcon,
+    Upload
 } from 'lucide-react';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import { uploadFile } from './services/storageService';
 
 interface Props {
     content: string;
@@ -23,7 +27,7 @@ interface Props {
     onStatsChange?: (stats: { words: number; characters: number }) => void;
     editable?: boolean;
     isExpanded?: boolean;
-    showToolbar?: boolean; // Legacy prop, can be ignored if external toolbar starts used
+    showToolbar?: boolean;
     onEditorReady?: (editor: any) => void;
 }
 
@@ -36,10 +40,31 @@ const countWords = (text: string): number => {
 const lowlight = createLowlight(all);
 
 export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false, showToolbar = true, onEditorReady }: Props) => {
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileUpload = async (file: File, view: any, pos?: number) => {
+        setIsUploading(true);
+        try {
+            const url = await uploadFile(file, 'note-images');
+            if (view && !view.isDestroyed) {
+                const transactions = view.state.tr.insert(
+                    pos ?? view.state.selection.from,
+                    view.state.schema.nodes.image.create({ src: url })
+                );
+                view.dispatch(transactions);
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Failed to upload image.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
-                codeBlock: false, // Disable default to use lowlight version
+                codeBlock: false,
             }),
             CodeBlockLowlight.configure({
                 lowlight,
@@ -47,10 +72,11 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             Placeholder.configure({
                 placeholder: 'Write something amazing...',
             }),
-            Image.configure({
+            ImageExtension.configure({
                 inline: true,
                 allowBase64: true,
             }),
+            VideoExtension,
             Youtube.configure({
                 controls: false,
             }),
@@ -78,25 +104,31 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             attributes: {
                 class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[200px] p-4 ${isExpanded ? 'max-w-none' : ''}`,
             },
+            handleDrop: (view, event, slice, moved) => {
+                if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+                    const files = Array.from(event.dataTransfer.files);
+                    const images = files.filter(file => file.type.startsWith('image/'));
+                    if (images.length > 0) {
+                        event.preventDefault();
+                        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+                        images.forEach(image => {
+                            handleFileUpload(image, view, pos);
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            },
             handlePaste: (view, event) => {
                 const items = Array.from(event.clipboardData?.items || []);
-                const images = items.filter(item => item.type.indexOf('image') === 0);
+                const images = items.filter(item => item.type.startsWith('image/'));
 
                 if (images.length > 0) {
                     event.preventDefault();
                     images.forEach(item => {
-                        const blob = item.getAsFile();
-                        if (blob) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                const result = e.target?.result;
-                                if (typeof result === 'string') {
-                                    view.dispatch(view.state.tr.replaceSelectionWith(
-                                        view.state.schema.nodes.image.create({ src: result })
-                                    ));
-                                }
-                            };
-                            reader.readAsDataURL(blob);
+                        const file = item.getAsFile();
+                        if (file) {
+                            handleFileUpload(file, view);
                         }
                     });
                     return true;
