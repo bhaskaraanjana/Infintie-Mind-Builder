@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from './store';
 import { X, Trash2, Maximize2, Minimize2, GripHorizontal } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
+import { EditorToolbar } from './components/EditorToolbar';
 import styles from './NoteEditor.module.css';
 import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -34,6 +35,8 @@ const DraggableEditorContent = ({
     viewportHeight,
     keyboardOpen
 }: any) => {
+    const [editorInstance, setEditorInstance] = useState<any>(null);
+
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: 'note-editor-window',
     });
@@ -92,9 +95,9 @@ const DraggableEditorContent = ({
                 </div>
             </div>
 
-            <div className={styles.typeSelector}>
+            <div className={styles.controlsBar}>
                 {isExpanded && (
-                    <>
+                    <div className={styles.typeSelector}>
                         <select
                             value={type}
                             onChange={(e) => setType(e.target.value as any)}
@@ -115,7 +118,11 @@ const DraggableEditorContent = ({
                                 className={styles.sourceInput}
                             />
                         )}
-                    </>
+                    </div>
+                )}
+                {/* External Toolbar */}
+                {isExpanded && editorInstance && (
+                    <EditorToolbar editor={editorInstance} />
                 )}
             </div>
 
@@ -125,7 +132,8 @@ const DraggableEditorContent = ({
                     onChange={setContent}
                     onStatsChange={setEditorStats}
                     isExpanded={isExpanded}
-                    showToolbar={isExpanded}
+                    showToolbar={false} // Use external toolbar
+                    onEditorReady={setEditorInstance}
                 />
             </div>
 

@@ -1,0 +1,62 @@
+/* Editor Toolbar */
+.editor-toolbar {
+    /* Use position sticky only if not in flex container, or rely on parent */
+    /* Removed sticky default to allow flexibility */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: var(--spacing-1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+
+    /* Horizontal Scroll Logic */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+/* Hide scrollbar Chrome/Safari/Edge */
+.editor-toolbar::-webkit-scrollbar {
+    display: none;
+}
+
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--neutral-600);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+    background-color: var(--neutral-200);
+    color: var(--neutral-900);
+}
+
+.toolbar-btn.is-active {
+    background-color: var(--primary-100);
+    color: var(--primary-700);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--neutral-300);
+    margin: 4px;
+}

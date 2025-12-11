@@ -17,6 +17,7 @@
     padding: 1.5rem;
     z-index: 40;
     display: flex;
+    /* flex column for editor content layout */
     flex-direction: column;
     animation: fadeInScale 300ms ease-out;
 }
@@ -49,7 +50,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
+    /* Prevent double scroll */
     flex: 1;
     min-height: 0;
 }
@@ -58,6 +60,13 @@
     padding: 0 2rem;
     width: 100%;
     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .expandedEditorContent {
+        padding: 0 0.5rem;
+        /* Minimal padding on mobile */
+    }
 }
 
 .header {
@@ -95,6 +104,28 @@
 .titleInput::placeholder {
     color: var(--theme-text-secondary);
     opacity: 0.5;
+}
+
+/* New Controls Bar for Type Selector + Toolbar */
+.controlsBar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.controlsBar::-webkit-scrollbar {
+    display: none;
+}
+
+.typeSelector {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .headerButtons {
@@ -167,8 +198,11 @@
 .contentArea {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 1rem;
-    min-height: 0;
+    /* Make this the scroll container */
+    padding: 0.5rem;
+    min-height: 200px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-md);
 }
 
 .contentArea::-webkit-scrollbar {
