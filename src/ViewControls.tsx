@@ -9,6 +9,10 @@ export const ViewControls: React.FC = () => {
         setViewport({ scale: newScale });
     };
 
+    const selectionMode = useStore((state) => state.selectionMode);
+
+    if (selectionMode) return null; // Hide if selection toolbar is active
+
     return (
         <div
             className="glass"
@@ -31,8 +35,8 @@ export const ViewControls: React.FC = () => {
                 overflowX: 'auto' // Allow scroll if needed
             }}
         >
-            {/* Zoom Slider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+            {/* Zoom Slider - Desktop Only */}
+            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text-secondary)', fontWeight: 600 }}>
                     {(viewport.scale * 100).toFixed(0)}%
                 </span>
@@ -51,7 +55,7 @@ export const ViewControls: React.FC = () => {
                 />
             </div>
 
-            <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+            <div className="hide-on-mobile" style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
 
             {/* LOD Toggle */}
             <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--theme-canvas-bg)', padding: '2px', borderRadius: 'var(--radius-lg)' }}>
@@ -77,37 +81,39 @@ export const ViewControls: React.FC = () => {
                 ))}
             </div>
 
-            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
-                <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+            {/* Label & Details Toggles - Visible on Mobile now */}
+            {/* Label & Details Toggles - Only visible if Orb mode */}
+            {ui.lodMode === 'orb' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
 
-                {/* Label Toggle */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={ui.showOrbLabels}
-                        onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
-                        style={{ accentColor: 'var(--primary-500)' }}
-                    />
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
-                        Labels
-                    </span>
-                </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={ui.showOrbLabels}
+                            onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
+                            style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--theme-text)', fontWeight: 500 }}>
+                            Labels
+                        </span>
+                    </label>
 
-                <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
 
-                {/* Details Toggle */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={ui.showOrbDetails}
-                        onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
-                        style={{ accentColor: 'var(--primary-500)' }}
-                    />
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text)', fontWeight: 500 }}>
-                        Details
-                    </span>
-                </label>
-            </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={ui.showOrbDetails}
+                            onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
+                            style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--theme-text)', fontWeight: 500 }}>
+                            Details
+                        </span>
+                    </label>
+                </div>
+            )}
         </div>
     );
 };

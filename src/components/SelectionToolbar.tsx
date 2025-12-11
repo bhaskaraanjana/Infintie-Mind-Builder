@@ -12,8 +12,9 @@ export const SelectionToolbar: React.FC = () => {
     const createCluster = useStore((state) => state.createCluster);
     const addLink = useStore((state) => state.addLink);
     const toggleSelectionMode = useStore((state) => state.toggleSelectionMode); // To exit mode if needed
+    const selectionMode = useStore((state) => state.selectionMode);
 
-    if (selectedNoteIds.length === 0) return null;
+    if (selectedNoteIds.length === 0 && !selectionMode) return null;
 
     const handleDelete = () => {
         if (window.confirm(`Delete ${selectedNoteIds.length} notes?`)) {
@@ -69,23 +70,27 @@ export const SelectionToolbar: React.FC = () => {
                 color: '#333',
                 marginRight: '12px',
                 borderRight: '1px solid #ddd',
-                paddingRight: '12px'
+                paddingRight: '12px',
+                minWidth: '80px',
+                textAlign: 'center'
             }}>
-                {selectedNoteIds.length} selected
+                {selectedNoteIds.length > 0 ? `${selectedNoteIds.length} selected` : 'Select notes'}
             </div>
 
             <button
                 onClick={handleGroup}
+                disabled={selectedNoteIds.length === 0}
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: selectedNoteIds.length === 0 ? 'default' : 'pointer',
                     color: '#444',
                     fontSize: '11px',
-                    gap: '4px'
+                    gap: '4px',
+                    opacity: selectedNoteIds.length === 0 ? 0.5 : 1
                 }}
             >
                 <div style={{
@@ -134,16 +139,18 @@ export const SelectionToolbar: React.FC = () => {
 
             <button
                 onClick={handleDelete}
+                disabled={selectedNoteIds.length === 0}
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: selectedNoteIds.length === 0 ? 'default' : 'pointer',
                     color: '#ff4444',
                     fontSize: '11px',
-                    gap: '4px'
+                    gap: '4px',
+                    opacity: selectedNoteIds.length === 0 ? 0.5 : 1
                 }}
             >
                 <div style={{
