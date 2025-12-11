@@ -21,6 +21,12 @@ interface AppState {
     clearTagFilter: () => void;
     setTheme: (theme: ThemeName) => void;
 
+    // Selection State
+    selectedNoteIds: string[];
+    selectionMode: boolean; // For mobile toggle (Pan vs Select)
+    setSelectedNoteIds: (ids: string[]) => void;
+    toggleSelectionMode: () => void;
+
     // UI State
     ui: {
         minimapVisible: boolean;
@@ -143,6 +149,11 @@ export const useStore = create<AppState>((set, get) => ({
         localStorage.setItem('infinite-mind-theme', theme);
         set({ theme });
     },
+
+    selectedNoteIds: [],
+    selectionMode: false,
+    setSelectedNoteIds: (ids) => set({ selectedNoteIds: ids }),
+    toggleSelectionMode: () => set((state) => ({ selectionMode: !state.selectionMode })),
 
     loadData: async () => {
         const notesArray = await db.notes.toArray();

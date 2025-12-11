@@ -17,6 +17,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
     const editingNoteId = useStore((state) => state.editingNoteId);
+    const selectionMode = useStore((state) => state.selectionMode);
     const isEditing = editingNoteId === note.id;
 
     // Fallback if theme or color is missing
@@ -30,6 +31,13 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
     const colorScheme = {
         main: noteColor.main,
         glow: `${noteColor.main}40`
+    };
+
+    const handleClick = (e: any) => {
+        if (selectionMode) return; // Don't open if in selection mode
+
+        e.cancelBubble = true;
+        setEditingNoteId(note.id);
     };
 
     const handleDblClick = (e: any) => {
@@ -53,6 +61,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
                 y={note.y}
                 draggable
                 onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
+                onClick={handleClick}
+                onTap={handleClick}
                 onDblClick={handleDblClick}
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
@@ -131,6 +141,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, set
             y={note.y}
             draggable
             onDragEnd={(e) => updateNotePosition(note.id, e.target.x(), e.target.y())}
+            onClick={handleClick}
+            onTap={handleClick}
             onDblClick={handleDblClick}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}

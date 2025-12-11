@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState } from 'react';
-import { Stage, Layer, Line } from 'react-konva';
+import { Stage, Layer, Line, Rect } from 'react-konva';
 import { useStore } from './store';
 import { useLongPress } from './hooks/useLongPress';
 import { NoteNode } from './NoteNode';
@@ -34,6 +34,11 @@ export const InfiniteCanvas = () => {
 
     const stageRef = useRef<any>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; options: MenuOption[] } | null>(null);
+
+    // Selection State
+    const selectionMode = useStore((state) => state.selectionMode);
+    const setSelectedNoteIds = useStore((state) => state.setSelectedNoteIds);
+    const [selectionBox, setSelectionBox] = useState<{ startX: number, startY: number, width: number, height: number } | null>(null);
 
     // Linking State
     const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
@@ -183,6 +188,58 @@ export const InfiniteCanvas = () => {
             tags: [],
             references: []
         });
+    };
+
+    // Selection Logic
+    const handleSelectionStart = (pos: { x: number, y: number }) => {
+        if (!selectionMode) return;
+        const stage = stageRef.current;
+        const scale = stage.scaleX();
+        const x = (pos.x - stage.x()) / scale;
+        const y = (pos.y - stage.y()) / scale;
+        setSelectionBox({ startX: x, startY: y, width: 0, height: 0 });
+    };
+
+    const handleSelectionMove = (pos: { x: number, y: number }) => {
+        if (!selectionBox) return;
+        const stage = stageRef.current;
+        const scale = stage.scaleX();
+        const x = (pos.x - stage.x()) / scale;
+        const y = (pos.y - stage.y()) / scale;
+
+        setSelectionBox(prev => ({
+            ...prev!,
+            width: x - prev!.startX,
+            height: y - prev!.startY
+        }));
+    };
+
+    const handleSelectionEnd = () => {
+        if (!selectionBox) return;
+
+        // Normalize box (width/height can be negative)
+        const box = {
+            x: Math.min(selectionBox.startX, selectionBox.startX + selectionBox.width),
+            y: Math.min(selectionBox.startY, selectionBox.startY + selectionBox.height),
+            width: Math.abs(selectionBox.width),
+            height: Math.abs(selectionBox.height)
+        };
+
+        // Find intersecting notes
+        const selectedIds: string[] = [];
+        Object.values(notes).forEach(note => {
+            if (
+                note.x >= box.x &&
+                note.x <= box.x + box.width &&
+                note.y >= box.y &&
+                note.y <= box.y + box.height
+            ) {
+                selectedIds.push(note.id);
+            }
+        });
+
+        setSelectedNoteIds(selectedIds);
+        setSelectionBox(null);
     };
 
     const handleLinkContextMenu = (e: any, linkId: string) => {
@@ -517,30 +574,40 @@ export const InfiniteCanvas = () => {
             <Stage
                 width={window.innerWidth}
                 height={window.innerHeight}
-                draggable
+                draggable={!selectionMode}
                 onWheel={handleWheel}
                 onTouchStart={(e) => {
+                    const pos = { x: e.evt.touches[0].clientX, y: e.evt.touches[0].clientY };
+                    handleSelectionStart(pos);
                     onLongPressTouchStart(e.evt as any);
                 }}
                 onTouchMove={(e) => {
+                    const pos = { x: e.evt.touches[0].clientX, y: e.evt.touches[0].clientY };
+                    handleSelectionMove(pos);
                     handleTouchMove(e);
                     onLongPressTouchMove(e.evt as any);
                 }}
                 onTouchEnd={(e) => {
+                    handleSelectionEnd();
                     handleTouchEnd();
                     onLongPressTouchEnd(e.evt as any);
                 }}
                 onDblClick={handleStageDblClick}
                 onContextMenu={handleContextMenu}
                 onMouseDown={(e) => {
+                    const pos = { x: e.evt.clientX, y: e.evt.clientY };
+                    handleSelectionStart(pos);
                     handleMouseDown(e);
                     onLongPressMouseDown(e.evt as any);
                 }}
                 onMouseMove={(e) => {
+                    const pos = { x: e.evt.clientX, y: e.evt.clientY };
+                    handleSelectionMove(pos);
                     handleMouseMove();
                     onLongPressMouseMove(e.evt as any);
                 }}
                 onMouseUp={(e) => {
+                    handleSelectionEnd();
                     handleMouseUp(e);
                     onLongPressMouseUp(e.evt as any);
                 }}
@@ -595,6 +662,17 @@ export const InfiniteCanvas = () => {
                             themeName={theme}
                         />
                     ))}
+                    {selectionBox && (
+                        <Rect
+                            x={selectionBox.startX}
+                            y={selectionBox.startY}
+                            width={selectionBox.width}
+                            height={selectionBox.height}
+                            fill="rgba(0, 161, 255, 0.3)"
+                            stroke="#00a1ff"
+                            strokeWidth={1}
+                        />
+                    )}
                 </Layer>
             </Stage>
 

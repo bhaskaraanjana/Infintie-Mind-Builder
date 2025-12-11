@@ -12,6 +12,7 @@ import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './LoginModal';
 import { DebugMenu } from './DebugMenu';
 import { MobileContextMenu } from './components/MobileContextMenu';
+import { SelectionToggle } from './components/SelectionToggle';
 
 function App() {
     const { user } = useAuth();
@@ -78,6 +79,7 @@ function App() {
             <DebugMenu />
             <Settings />
             <ViewControls />
+            <SelectionToggle />
             <MobileContextMenu />
         </div>
     );

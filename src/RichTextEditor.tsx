@@ -411,11 +411,15 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                 }
                 
                 /* Responsive toolbar */
-                @media (max-width: 768px) {
                     .formatting-toolbar {
                         flex-wrap: nowrap;
                         overflow-x: scroll;
                         -webkit-overflow-scrolling: touch;
+                        scrollbar-width: none; /* Firefox */
+                        -ms-overflow-style: none; /* IE 10+ */
+                    }
+                    .formatting-toolbar::-webkit-scrollbar {
+                        display: none; /* Chrome/Safari */
                     }
                 }
                 

@@ -30,7 +30,9 @@ const DraggableEditorContent = ({
     setSource,
     isSaving,
     lastSaved,
-    setEditingNoteId
+    setEditingNoteId,
+    viewportHeight,
+    keyboardOpen
 }: any) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: 'note-editor-window',
@@ -40,10 +42,16 @@ const DraggableEditorContent = ({
         transform: CSS.Translate.toString(transform) ?
             `translate(-50%, -50%) translate3d(${coordinates.x + (transform?.x || 0)}px, ${coordinates.y + (transform?.y || 0)}px, 0)` :
             `translate(-50%, -50%) translate3d(${coordinates.x}px, ${coordinates.y}px, 0)`,
+        maxHeight: keyboardOpen ? `${viewportHeight - 20}px` : undefined, // Adjust for keyboard
+        top: keyboardOpen ? `${viewportHeight / 2}px` : '50%', // Keep centered in visible area
     };
 
     // If expanded, disable custom transform and use fixed inset
-    const panelStyle = isExpanded ? {} : style;
+    // When keyboard is open on mobile, visualViewport height shrinks
+    const panelStyle = isExpanded ? {
+        height: keyboardOpen ? `${viewportHeight}px` : '100%',
+        bottom: keyboardOpen ? 'auto' : 0 // Ensure it doesn't get covered
+    } : style;
     const panelClass = isExpanded ? styles.expandedPanel : styles.editorPanel;
 
     const editorContent = (
@@ -217,6 +225,33 @@ export const NoteEditor = () => {
 
     const note = editingNoteId ? notes[editingNoteId] : null;
 
+    // Virtual Keyboard Handling
+    const [viewportHeight, setViewportHeight] = useState(window.visualViewport?.height || window.innerHeight);
+    const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+    useEffect(() => {
+        if (!window.visualViewport) return;
+
+        const handleResize = () => {
+            const currentHeight = window.visualViewport?.height || window.innerHeight;
+            setViewportHeight(currentHeight);
+            setKeyboardOpen(currentHeight < window.innerHeight * 0.85); // Threshold for keyboard detection
+
+            // If editing and keyboard opens, ensure editor is visible
+            if (editingNoteId && currentHeight < window.innerHeight) {
+                // Optional: scroll into view or adjust position
+            }
+        };
+
+        window.visualViewport.addEventListener('resize', handleResize);
+        window.visualViewport.addEventListener('scroll', handleResize); // IOS sometimes fires scroll
+
+        return () => {
+            window.visualViewport?.removeEventListener('resize', handleResize);
+            window.visualViewport?.removeEventListener('scroll', handleResize);
+        };
+    }, [editingNoteId]);
+
     useEffect(() => {
         if (note) {
             setTitle(note.title);
@@ -224,8 +259,6 @@ export const NoteEditor = () => {
             setNoteTags(note.tags || []);
             setType(note.type);
             setSource(note.source || '');
-            // Reset position when opening a new note (optional, maybe keep it?)
-            // setCoordinates({ x: 0, y: 0 }); 
         }
     }, [editingNoteId, note]);
 
@@ -332,6 +365,8 @@ export const NoteEditor = () => {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 setEditingNoteId={setEditingNoteId}
+                viewportHeight={viewportHeight}
+                keyboardOpen={keyboardOpen}
             />
         </DndContext>
     );
