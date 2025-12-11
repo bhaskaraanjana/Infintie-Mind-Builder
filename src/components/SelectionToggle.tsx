@@ -15,11 +15,11 @@ export const SelectionToggle = () => {
             title={selectionMode ? "Exit Multi-select Mode" : "Enter Multi-select Mode"}
             style={{
                 position: 'fixed',
-                top: '14rem', // Below Settings
-                left: '1rem',
-                width: '44px',
-                height: '44px',
-                borderRadius: '50%',
+                top: '20px', // Aligned with Settings
+                right: '80px', // Left of Settings (20px margin + 48px width + 12px gap)
+                width: '48px', // Standardize size
+                height: '48px',
+                borderRadius: 'var(--radius-full)', // Match others
                 backgroundColor: selectionMode ? 'var(--theme-primary)' : 'var(--glass-bg)',
                 color: selectionMode ? 'white' : 'var(--theme-text)',
                 border: '1px solid var(--glass-border)',

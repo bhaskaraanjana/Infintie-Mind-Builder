@@ -45,8 +45,8 @@ export const Settings: React.FC = () => {
                 className="glass"
                 style={{
                     position: 'fixed',
-                    top: '140px', // Below filter button
-                    left: '20px',
+                    top: '20px', // Top right corner
+                    right: '20px',
                     width: '48px',
                     height: '48px',
                     borderRadius: 'var(--radius-full)',
