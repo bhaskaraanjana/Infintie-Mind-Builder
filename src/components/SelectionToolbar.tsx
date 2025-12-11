@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store';
-import { Trash2, BoxSelect, X } from 'lucide-react';
+import { Trash2, BoxSelect, X, Link2 } from 'lucide-react';
 import styles from '../NoteEditor.module.css'; // Reusing some styles or general atomic CSS? 
 // Actually let's just use inline or create a new module, but for consistency let's use inline for layout and standard classNames if possible.
 // Given previous components use CSS modules or inline, let's stick to inline style object + standard button classes.
@@ -10,6 +10,7 @@ export const SelectionToolbar: React.FC = () => {
     const setSelectedNoteIds = useStore((state) => state.setSelectedNoteIds);
     const deleteNotes = useStore((state) => state.deleteNotes);
     const createCluster = useStore((state) => state.createCluster);
+    const addLink = useStore((state) => state.addLink);
     const toggleSelectionMode = useStore((state) => state.toggleSelectionMode); // To exit mode if needed
 
     if (selectedNoteIds.length === 0) return null;
@@ -26,6 +27,16 @@ export const SelectionToolbar: React.FC = () => {
             createCluster(selectedNoteIds, title);
             setSelectedNoteIds([]); // Clear selection after grouping
         }
+    };
+
+    const handleLink = async () => {
+        if (selectedNoteIds.length < 2) return;
+
+        // Link sequentially: A-B, B-C...
+        for (let i = 0; i < selectedNoteIds.length - 1; i++) {
+            await addLink(selectedNoteIds[i], selectedNoteIds[i + 1]);
+        }
+        setSelectedNoteIds([]); // Clear selection after linking
     };
 
     const handleClear = () => {
@@ -89,6 +100,36 @@ export const SelectionToolbar: React.FC = () => {
                     <BoxSelect size={18} />
                 </div>
                 Group
+            </button>
+
+            <button
+                onClick={handleLink}
+                disabled={selectedNoteIds.length < 2}
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    background: 'none',
+                    border: 'none',
+                    cursor: selectedNoteIds.length < 2 ? 'not-allowed' : 'pointer',
+                    color: selectedNoteIds.length < 2 ? '#aaa' : '#444',
+                    fontSize: '11px',
+                    gap: '4px',
+                    opacity: selectedNoteIds.length < 2 ? 0.5 : 1
+                }}
+            >
+                <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <Link2 size={18} />
+                </div>
+                Link
             </button>
 
             <button

@@ -12,9 +12,11 @@ interface Props {
     onDragMove?: (id: string, x: number, y: number) => void;
     setEditingNoteId: (id: string | null) => void;
     themeName: ThemeName;
+    isLinking?: boolean;
+    onNoteClick?: (id: string) => void;
 }
 
-export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onDragStart, onDragMove, setEditingNoteId, themeName }) => {
+export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onDragStart, onDragMove, setEditingNoteId, themeName, isLinking, onNoteClick }) => {
     const [hover, setHover] = useState(false);
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
@@ -39,9 +41,14 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
     };
 
     const handleClick = (e: any) => {
+        // Only allow left click (button 0)
+        if (e.evt.button !== 0) return;
+
         e.cancelBubble = true;
         if (selectionMode) {
             toggleNoteSelection(note.id);
+        } else if (isLinking) {
+            onNoteClick?.(note.id);
         } else {
             setEditingNoteId(note.id);
         }

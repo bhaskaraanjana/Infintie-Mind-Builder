@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Stage, Layer, Line, Rect } from 'react-konva';
 import { useStore } from './store';
 import { useLongPress } from './hooks/useLongPress';
@@ -45,6 +45,9 @@ export const InfiniteCanvas = () => {
 
     // Linking State
     const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
+    const linkingIdRef = useRef<string | null>(null);
+    useEffect(() => { linkingIdRef.current = linkingSourceId; }, [linkingSourceId]);
+
     const [mousePos, setMousePos] = useState<{ x: number, y: number } | null>(null);
 
     const lastDistRef = useRef<number>(0);
@@ -301,6 +304,8 @@ export const InfiniteCanvas = () => {
                 { label: 'Hub (Purple)', action: () => updateNote(noteId, { type: 'hub' }) },
             ];
 
+            options.push({ label: 'Link to note', action: () => setLinkingSourceId(noteId) });
+
             options.push({
                 label: 'Create Cluster',
                 action: () => createCluster([noteId], 'New Cluster')
@@ -419,8 +424,9 @@ export const InfiniteCanvas = () => {
 
             if (noteGroup) {
                 const targetId = noteGroup.name().replace('note-', '');
-                if (targetId !== linkingSourceId) {
-                    addLink(linkingSourceId, targetId);
+                if (linkingIdRef.current && targetId !== linkingIdRef.current) {
+                    addLink(linkingIdRef.current, targetId);
+                    linkingIdRef.current = null; // Prevent double firing
                 }
             }
 
@@ -524,6 +530,17 @@ export const InfiniteCanvas = () => {
         }
     };
 
+    const handleNoteClick = (id: string) => {
+        if (linkingIdRef.current && linkingIdRef.current !== id) {
+            addLink(linkingIdRef.current, id);
+            linkingIdRef.current = null;
+            setLinkingSourceId(null);
+        } else if (linkingSourceId === id) {
+            // Cancel if clicking source
+            setLinkingSourceId(null);
+        }
+    };
+
     const visibleNotes = useMemo(() => {
         const buffer = 500;
         const visibleLeft = -viewport.x / viewport.scale - buffer;
@@ -591,6 +608,7 @@ export const InfiniteCanvas = () => {
                     { label: 'Hub (Purple)', action: () => updateNote(noteId, { type: 'hub' }) },
                 ];
 
+                options.push({ label: 'Link to note', action: () => setLinkingSourceId(noteId) });
                 options.push({ label: 'Create Cluster', action: () => createCluster([noteId], 'New Cluster') });
                 if (clusterOptions.length > 0) options.push({ label: 'Assign to Cluster', submenu: clusterOptions });
                 options.push({ label: 'Change Type', submenu: typeOptions });
@@ -704,7 +722,7 @@ export const InfiniteCanvas = () => {
                     }
                 }}
                 ref={stageRef}
-                style={{ backgroundColor: 'var(--theme-canvas-bg)' }}
+                style={{ backgroundColor: 'var(--theme-canvas-bg)', touchAction: 'none' }}
             >
                 <Layer>
                     {Object.values(clusters).map((cluster) => (
@@ -744,6 +762,8 @@ export const InfiniteCanvas = () => {
                             onDragMove={handleNoteDragMove}
                             setEditingNoteId={setEditingNoteId}
                             themeName={theme}
+                            isLinking={!!linkingSourceId}
+                            onNoteClick={handleNoteClick}
                         />
                     ))}
                     {selectionBox && (
