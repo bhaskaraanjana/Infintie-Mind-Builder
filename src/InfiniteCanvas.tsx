@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState } from 'react';
 import { Stage, Layer, Line } from 'react-konva';
 import { useStore } from './store';
+import { useLongPress } from './hooks/useLongPress';
 import { NoteNode } from './NoteNode';
 import { ClusterNode } from './ClusterNode';
 import { ContextMenu } from './ContextMenu';
@@ -400,6 +401,117 @@ export const InfiniteCanvas = () => {
         });
     }, [notes, viewport, selectedTags]);
 
+    // Long Press Logic
+    const {
+        onTouchStart: onLongPressTouchStart,
+        onTouchMove: onLongPressTouchMove,
+        onTouchEnd: onLongPressTouchEnd,
+        onMouseDown: onLongPressMouseDown,
+        onMouseMove: onLongPressMouseMove,
+        onMouseUp: onLongPressMouseUp
+    } = useLongPress({
+        onLongPress: (e) => {
+            // Trigger context menu at event position
+            const pos = 'touches' in e
+                ? { x: (e as any).touches[0].clientX, y: (e as any).touches[0].clientY }
+                : { x: (e as any).clientX, y: (e as any).clientY };
+
+            // Re-use logic from handleContextMenu but with explicit coordinates
+            // We need to construct a fake Konva event or adapt handleContextMenu
+            // Actually, handleContextMenu relies on e.target. 
+            // For Konva touch events, e.target is available in the KonvaEventObject
+            // But useLongPress gives us the React/Native event usually?
+            // Wait, passing Konva events to useLongPress might work if signatures match enough
+            // or we pass the Konva event as 'any'
+            // Let's assume we pass the Konva event.
+
+            // To properly identify target, we need the Konva event `e`
+            // But onLongPress might fire asynchronously. Konva event might be stale or pooled (react)?
+            // We need to use `stage.getPointerPosition()` or verify target.
+
+            const stage = stageRef.current;
+            if (!stage) return;
+
+            // Find target under pointer
+            const pointerPos = stage.getPointerPosition();
+            if (!pointerPos) return;
+
+            const shape = stage.getIntersection(pointerPos);
+
+            // Create a synthetic event object or just allow handleContextMenu to run with logic
+            // We can refactor handleContextMenu to take (target, x, y)
+
+            const target = shape || stage;
+
+            // Logic extracted from handleContextMenu
+            const noteGroup = target.findAncestor?.((node: any) => node.name() && node.name().startsWith('note-'))
+                || (target.name()?.startsWith('note-') ? target : null);
+
+            const clusterGroup = target.findAncestor?.((node: any) => node.name() && node.name().startsWith('cluster-'))
+                || (target.name()?.startsWith('cluster-') ? target : null);
+
+            const options: MenuOption[] = [];
+
+            if (noteGroup) {
+                const noteId = noteGroup.name().replace('note-', '');
+                const clusterOptions = Object.values(clusters).map(c => ({
+                    label: c.title,
+                    action: () => addToCluster(c.id, [noteId])
+                }));
+                const typeOptions = [
+                    { label: 'Fleeting (Gold)', action: () => updateNote(noteId, { type: 'fleeting' }) },
+                    { label: 'Literature (Blue)', action: () => updateNote(noteId, { type: 'literature' }) },
+                    { label: 'Permanent (Green)', action: () => updateNote(noteId, { type: 'permanent' }) },
+                    { label: 'Hub (Purple)', action: () => updateNote(noteId, { type: 'hub' }) },
+                ];
+                options.push({ label: 'Create Cluster', action: () => createCluster([noteId], 'New Cluster') });
+                if (clusterOptions.length > 0) options.push({ label: 'Assign to Cluster', submenu: clusterOptions });
+                options.push({ label: 'Change Type', submenu: typeOptions });
+                options.push({ label: 'Delete Note', action: () => deleteNote(noteId), danger: true });
+            } else if (clusterGroup) {
+                const clusterId = clusterGroup.name().replace('cluster-', '');
+                options.push({
+                    label: 'Rename Cluster',
+                    action: () => {
+                        const newTitle = window.prompt('Enter new cluster name:', clusters[clusterId]?.title);
+                        if (newTitle) updateCluster(clusterId, { title: newTitle });
+                    }
+                });
+                options.push({
+                    label: 'Change Color',
+                    submenu: [
+                        { label: 'Gold', action: () => updateCluster(clusterId, { color: '#FFD700' }) },
+                        { label: 'Blue', action: () => updateCluster(clusterId, { color: '#87CEEB' }) },
+                        { label: 'Green', action: () => updateCluster(clusterId, { color: '#90EE90' }) },
+                        { label: 'Purple', action: () => updateCluster(clusterId, { color: '#DDA0DD' }) },
+                        { label: 'Red', action: () => updateCluster(clusterId, { color: '#FF6B6B' }) },
+                    ]
+                });
+                options.push({ label: 'Delete Cluster', action: () => deleteCluster(clusterId), danger: true });
+            } else {
+                // Canvas
+                const scale = stage.scaleX();
+                const x = (pointerPos.x - stage.x()) / scale;
+                const y = (pointerPos.y - stage.y()) / scale;
+                options.push({
+                    label: 'Create Note Here',
+                    action: () => addNote({ type: 'fleeting', x, y, title: 'New Thought', content: 'Double-click to edit...', tags: [], references: [] })
+                });
+                options.push({ label: 'Reset View', action: () => setViewport({ x: 0, y: 0, scale: 1 }) });
+            }
+
+            setContextMenu({
+                x: pointerPos.x,
+                y: pointerPos.y,
+                options,
+                itemType: noteGroup ? 'note' : clusterGroup ? 'cluster' : 'canvas',
+                itemId: noteGroup ? noteGroup.name().replace('note-', '') : clusterGroup ? clusterGroup.name().replace('cluster-', '') : undefined
+            });
+        },
+        onClick: (e) => setContextMenu(null),
+        threshold: 10
+    });
+
     return (
         <>
             <Stage
@@ -407,13 +519,31 @@ export const InfiniteCanvas = () => {
                 height={window.innerHeight}
                 draggable
                 onWheel={handleWheel}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+                onTouchStart={(e) => {
+                    onLongPressTouchStart(e.evt as any);
+                }}
+                onTouchMove={(e) => {
+                    handleTouchMove(e);
+                    onLongPressTouchMove(e.evt as any);
+                }}
+                onTouchEnd={(e) => {
+                    handleTouchEnd();
+                    onLongPressTouchEnd(e.evt as any);
+                }}
                 onDblClick={handleStageDblClick}
                 onContextMenu={handleContextMenu}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
+                onMouseDown={(e) => {
+                    handleMouseDown(e);
+                    onLongPressMouseDown(e.evt as any);
+                }}
+                onMouseMove={(e) => {
+                    handleMouseMove();
+                    onLongPressMouseMove(e.evt as any);
+                }}
+                onMouseUp={(e) => {
+                    handleMouseUp(e);
+                    onLongPressMouseUp(e.evt as any);
+                }}
                 onClick={() => setContextMenu(null)}
                 scaleX={viewport.scale}
                 scaleY={viewport.scale}

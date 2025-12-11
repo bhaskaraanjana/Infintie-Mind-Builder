@@ -30,6 +30,15 @@ interface AppState {
     };
     setUi: (updates: Partial<AppState['ui']>) => void;
 
+    // Context Menu State
+    contextMenu: {
+        itemType: 'note' | 'canvas' | 'cluster' | 'link';
+        itemId?: string;
+        x: number;
+        y: number;
+    } | null;
+    setContextMenu: (menu: AppState['contextMenu']) => void;
+
     // Actions
     loadData: () => Promise<void>;
     addNote: (note: Omit<Note, 'id' | 'created' | 'modified'>) => Promise<void>;
@@ -107,6 +116,9 @@ export const useStore = create<AppState>((set, get) => ({
     setUi: (updates) => set((state) => ({
         ui: { ...state.ui, ...updates }
     })),
+
+    contextMenu: null,
+    setContextMenu: (menu) => set({ contextMenu: menu }),
 
     setViewport: (update) => set((state) => ({
         viewport: { ...state.viewport, ...update }

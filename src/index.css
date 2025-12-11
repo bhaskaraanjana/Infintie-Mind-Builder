@@ -114,6 +114,14 @@ body {
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.3);
     --glass-blur: 12px;
+
+    /* Z-Index Layers */
+    --z-canvas: 0;
+    --z-ui: 10;
+    --z-sticky: 20;
+    --z-popover: 30;
+    --z-modal: 40;
+    --z-tooltip: 50;
 }
 
 h1 {

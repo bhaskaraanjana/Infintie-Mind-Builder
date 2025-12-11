@@ -55,37 +55,33 @@ export const SearchBar: React.FC = () => {
 
     if (!isOpen) {
         return (
-            <div className="glass" style={{
-                position: 'fixed',
-                top: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 'var(--z-popover)',
-                padding: '10px 20px',
-                borderRadius: 'var(--radius-xl)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--spacing-2)',
-                cursor: 'pointer',
-                transition: 'all var(--transition-base)'
-            }}
+            <button
+                className="glass"
+                style={{
+                    position: 'fixed',
+                    top: '20px',
+                    left: '20px',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: 'var(--radius-full)',
+                    zIndex: 'var(--z-popover)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    border: 'none',
+                    boxShadow: 'var(--shadow-lg)',
+                    transition: 'all var(--transition-base)',
+                    color: 'var(--neutral-600)'
+                }}
                 onClick={() => setIsOpen(true)}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateX(-50%) translateY(-2px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateX(-50%)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                }}
+                title="Search (Cmd+K)"
             >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                 </svg>
-                <span style={{ color: 'var(--theme-text-secondary)', fontSize: 'var(--text-sm)' }}>Search notes...</span>
-                <kbd className="badge badge-neutral" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>⌘K</kbd>
-            </div>
+            </button>
         );
     }
 

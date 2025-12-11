@@ -11,6 +11,7 @@ import { themes } from './themes';
 import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './LoginModal';
 import { DebugMenu } from './DebugMenu';
+import { MobileContextMenu } from './components/MobileContextMenu';
 
 function App() {
     const { user } = useAuth();
@@ -69,14 +70,15 @@ function App() {
                 backgroundColor: 'var(--theme-bg)',
             }}
         >
+            <Canvas />
             <SearchBar />
             <TagFilter />
-            <Canvas />
             <NoteEditor />
             <Minimap />
             <DebugMenu />
             <Settings />
             <ViewControls />
+            <MobileContextMenu />
         </div>
     );
 }

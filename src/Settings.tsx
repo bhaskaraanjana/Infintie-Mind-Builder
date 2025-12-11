@@ -21,7 +21,7 @@ export const Settings: React.FC = () => {
                 className="glass"
                 style={{
                     position: 'fixed',
-                    bottom: '20px',
+                    top: '140px', // Below filter button
                     left: '20px',
                     width: '48px',
                     height: '48px',
@@ -32,7 +32,7 @@ export const Settings: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: 'var(--shadow-2xl)',
+                    boxShadow: 'var(--shadow-lg)', // Consistent shadow
                     transition: 'all var(--transition-base)'
                 }}
             >
