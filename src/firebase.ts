@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAwZJRBIEUVzZa54-CV1XwuusWaSa-iYrk",
-    authDomain: "infinite-mind-8f29c.firebaseapp.com",
-    projectId: "infinite-mind-8f29c",
-    storageBucket: "infinite-mind-8f29c.firebasestorage.app",
-    messagingSenderId: "292561651156",
-    appId: "1:292561651156:web:a7321c9d0051193006c241",
-    measurementId: "G-PTNSKQM72B"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
