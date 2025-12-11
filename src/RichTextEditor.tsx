@@ -144,87 +144,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
         <div className={`rich-text-editor ${isExpanded ? 'expanded' : ''}`}>
             {/* Internal Toolbar Removed - use <EditorToolbar /> externally */}
             <EditorContent editor={editor} />
-            {editor && (
-                <BubbleMenu className="bubble-menu glass" tippyOptions={{ duration: 100 }} editor={editor}>
-                    <button
-                        onClick={() => editor.chain().focus().toggleBold().run()}
-                        className={editor.isActive('bold') ? 'is-active' : ''}
-                        title="Bold"
-                    >
-                        <Bold size={16} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleItalic().run()}
-                        className={editor.isActive('italic') ? 'is-active' : ''}
-                        title="Italic"
-                    >
-                        <Italic size={16} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleStrike().run()}
-                        className={editor.isActive('strike') ? 'is-active' : ''}
-                        title="Strike"
-                    >
-                        <Strikethrough size={16} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleCode().run()}
-                        className={editor.isActive('code') ? 'is-active' : ''}
-                        title="Code"
-                    >
-                        <Code size={16} />
-                    </button>
-                </BubbleMenu>
-            )}
 
-            {editor && (
-                <FloatingMenu className="floating-menu glass" tippyOptions={{ duration: 100 }} editor={editor}>
-                    <button
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                        className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-                        title="Heading 1"
-                    >
-                        <Heading1 size={18} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                        className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
-                        title="Heading 2"
-                    >
-                        <Heading2 size={18} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleBulletList().run()}
-                        className={editor.isActive('bulletList') ? 'is-active' : ''}
-                        title="Bullet List"
-                    >
-                        <List size={18} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                        className={editor.isActive('orderedList') ? 'is-active' : ''}
-                        title="Ordered List"
-                    >
-                        <ListOrdered size={18} />
-                    </button>
-                    <button
-                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                        className={editor.isActive('blockquote') ? 'is-active' : ''}
-                        title="Quote"
-                    >
-                        <Quote size={18} />
-                    </button>
-                    <div className="separator" />
-                    <button onClick={addImage} title="Add Image">
-                        <ImageIcon size={18} />
-                    </button>
-                    <button onClick={addYoutubeVideo} title="Add YouTube Video">
-                        <YoutubeIcon size={18} />
-                    </button>
-                </FloatingMenu>
-            )}
-
-            <EditorContent editor={editor} />
 
             <style>{`
                 .rich-text-editor {
@@ -415,6 +335,6 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
