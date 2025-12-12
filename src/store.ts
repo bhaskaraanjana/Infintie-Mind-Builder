@@ -575,7 +575,10 @@ export const useStore = create<AppState>((set, get) => ({
             id: uuidv4(),
             sourceId,
             targetId,
-            type: 'related'
+            type: 'related',
+            style: 'dashed',
+            shape: 'straight',
+            arrowDirection: 'none'
         };
 
         // Update references in both notes

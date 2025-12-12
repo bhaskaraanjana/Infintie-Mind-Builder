@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
   - **Clean Defaults:** Links are now label-free by default; custom labels can be added via "Edit Label".
   - **Smart Rendering:** Refactored rendering engine (single component) for seamless animations and perfect arrow alignment.
 - **Drill-Down Context Menu:** Replaced expanding submenus with a mobile-native "Drill-Down" navigation (Stack-based) to prevent screen overflow.
+- **Minimap 2.0:** Completely rewritten minimap with infinite dynamic bounds and drag-to-pan viewport control.
+- **Default Link Style:** New links now default to "Dashed & Straight" for a cleaner initial look.
 
 ### Fixed
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.

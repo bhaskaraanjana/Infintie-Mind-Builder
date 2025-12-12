@@ -1,46 +1,206 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore } from './store';
-
 import { themes } from './themes';
 
 export const Minimap: React.FC = () => {
     const { notes, clusters, viewport, setViewport, theme: themeName, ui, setUi } = useStore();
     const theme = themes[themeName];
     const [hover, setHover] = useState(false);
-    const [, forceUpdate] = useState({});
 
-    // Force re-render when viewport changes to update minimap dynamically
+    // Drag State
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartRef = useRef<{ x: number, y: number, viewX: number, viewY: number } | null>(null);
+
+    // Force update when viewport changes
+    const [, forceUpdate] = useState({});
     useEffect(() => {
         forceUpdate({});
     }, [viewport.x, viewport.y, viewport.scale]);
 
-    const minimapWidth = 220;
-    const minimapHeight = 165;
-    const worldSize = 8000;
-    const scale = minimapWidth / worldSize;
+    const MINIMAP_WIDTH = 220;
+    const MINIMAP_HEIGHT = 165;
+    const PADDING = 2000; // Extra space around content in world pixels
 
-    const handleMinimapClick = (e: React.MouseEvent<SVGElement>) => {
+    // 1. Calculate Dynamic Bounds
+    const bounds = useMemo(() => {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        // Include Notes
+        const noteIds = Object.keys(notes);
+        if (noteIds.length === 0 && Object.keys(clusters).length === 0) {
+            return { minX: -4000, minY: -4000, width: 8000, height: 8000 }; // Default if empty
+        }
+
+        noteIds.forEach(id => {
+            const n = notes[id];
+            minX = Math.min(minX, n.x);
+            minY = Math.min(minY, n.y);
+            maxX = Math.max(maxX, n.x);
+            maxY = Math.max(maxY, n.y);
+        });
+
+        // Include Clusters
+        Object.values(clusters).forEach(c => {
+            minX = Math.min(minX, c.x - 100); // Approximate cluster size
+            minY = Math.min(minY, c.y - 100);
+            maxX = Math.max(maxX, c.x + 100);
+            maxY = Math.max(maxY, c.y + 100);
+        });
+
+        // Include Current Viewport (so we don't disappear if we scroll away)
+        // Viewport X/Y is top-left of screen in world coords * -1 (inverted by scale behavior of Konva usually, 
+        // strictly: stage.x = -viewportX * scale) -> viewportX = -stage.x / scale
+        const viewX = -viewport.x / viewport.scale;
+        const viewY = -viewport.y / viewport.scale;
+        const viewW = window.innerWidth / viewport.scale;
+        const viewH = window.innerHeight / viewport.scale;
+
+        minX = Math.min(minX, viewX);
+        minY = Math.min(minY, viewY);
+        maxX = Math.max(maxX, viewX + viewW);
+        maxY = Math.max(maxY, viewY + viewH);
+
+        // Apply Padding
+        minX -= PADDING;
+        minY -= PADDING;
+        maxX += PADDING;
+        maxY += PADDING;
+
+        return {
+            minX,
+            minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }, [notes, clusters, viewport.x, viewport.y, viewport.scale]); // Re-calc when content or view changes
+
+    // Scale Factor: Fits the world width/height into the minimap box
+    // specific logic: use "contain" fit
+    const scale = Math.min(
+        MINIMAP_WIDTH / bounds.width,
+        MINIMAP_HEIGHT / bounds.height
+    );
+
+    // Centering offsets (if aspect ratios differ)
+    const offsetX = (MINIMAP_WIDTH - bounds.width * scale) / 2;
+    const offsetY = (MINIMAP_HEIGHT - bounds.height * scale) / 2;
+
+    // --- Helpers ---
+    const worldToMinimap = (wx: number, wy: number) => {
+        return {
+            x: (wx - bounds.minX) * scale + offsetX,
+            y: (wy - bounds.minY) * scale + offsetY
+        };
+    };
+
+    const minimapToWorld = (mx: number, my: number) => {
+        return {
+            x: (mx - offsetX) / scale + bounds.minX,
+            y: (my - offsetY) / scale + bounds.minY
+        };
+    };
+
+    // --- Interaction ---
+
+    const handleBackgroundClick = (e: React.MouseEvent<SVGElement>) => {
+        if (isDragging) return;
         const rect = e.currentTarget.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
 
-        // Convert minimap coordinates to world coordinates
-        const worldX = (clickX / minimapWidth) * worldSize - worldSize / 2;
-        const worldY = (clickY / minimapHeight) * worldSize - worldSize / 2;
+        const worldPos = minimapToWorld(clickX, clickY);
 
-        // Center viewport on clicked location
+        // Center Viewport on this point
+        // target: worldPos is center of screen
+        // formula: viewport.x = -worldX * scale + screenWidth/2 ? No, store is x/y offset
+        // Store viewport x,y is usually stage position.
+        // stage.x = -worldX * scale + screenW/2
+        // viewport.x = -worldX * scale + screenW/2 ... wait.
+        // Let's check InfiniteCanvas: scaleX={viewport.scale} x={viewport.x}
+        // So viewport.x IS stage.x.
+
+        // We want world center to be at center of screen.
+        // Center of screen in local coords: screenW/2, screenH/2
+        // Center of screen in world coords: (screenW/2 - stage.x) / scale
+        // We want (screenW/2 - newStageX) / scale = targetWorldX
+        // screenW/2 - newStageX = targetWorldX * scale
+        // newStageX = screenW/2 - targetWorldX * scale
+
+        const newStageX = window.innerWidth / 2 - worldPos.x * viewport.scale;
+        const newStageY = window.innerHeight / 2 - worldPos.y * viewport.scale;
+
         setViewport({
-            x: -worldX + window.innerWidth / 2,
-            y: -worldY + window.innerHeight / 2,
+            x: newStageX,
+            y: newStageY,
             scale: viewport.scale
         });
     };
 
-    // Calculate viewport rectangle in minimap space
-    const viewportWidth = (window.innerWidth / viewport.scale) * scale;
-    const viewportHeight = (window.innerHeight / viewport.scale) * scale;
-    const viewportX = ((-viewport.x / viewport.scale + worldSize / 2) * scale);
-    const viewportY = ((-viewport.y / viewport.scale + worldSize / 2) * scale);
+    const handleDragStart = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setIsDragging(true);
+        dragStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            viewX: viewport.x,
+            viewY: viewport.y
+        };
+
+        // Add global listeners
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('mouseup', handleDragEnd);
+    };
+
+    const handleDragMove = (e: MouseEvent) => {
+        if (!dragStartRef.current) return;
+
+        const dx = e.clientX - dragStartRef.current.x;
+        const dy = e.clientY - dragStartRef.current.y;
+
+        // Convert pixel delta on screen to world delta
+        // 1px on minimap = 1/scale px in world
+        // But dx is in screen pixels, same as minimap pixels
+        const worldDx = dx / scale;
+        const worldDy = dy / scale;
+
+        // Apply to Viewport
+        // Moving box RIGHT -> Viewport moves LEFT (camera moves right)
+        // If box moves +10px (representing +1000 world units), camera must look at +1000 world units
+        // So stage.x must DECREASE by (1000 * viewport.scale)
+
+        const deltaStageX = -(worldDx * viewport.scale);
+        const deltaStageY = -(worldDy * viewport.scale);
+
+        setViewport({
+            x: dragStartRef.current.viewX + deltaStageX,
+            y: dragStartRef.current.viewY + deltaStageY,
+            scale: viewport.scale
+        });
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false);
+        dragStartRef.current = null;
+        window.removeEventListener('mousemove', handleDragMove);
+        window.removeEventListener('mouseup', handleDragEnd);
+    };
+
+    // Calculate Viewport Rect
+    // Viewport world rect:
+    const viewWorldX = -viewport.x / viewport.scale;
+    const viewWorldY = -viewport.y / viewport.scale;
+    const viewWorldW = window.innerWidth / viewport.scale;
+    const viewWorldH = window.innerHeight / viewport.scale;
+
+    const vpPos = worldToMinimap(viewWorldX, viewWorldY);
+    // Dimensions in minimap space: length * scale
+    const vpW = viewWorldW * scale;
+    const vpH = viewWorldH * scale;
+
 
     return (
         <div className="hide-on-mobile">
@@ -83,14 +243,14 @@ export const Minimap: React.FC = () => {
                     className="glass"
                     style={{
                         position: 'fixed',
-                        bottom: '70px', // Moved up to make room for toggle
+                        bottom: '70px',
                         right: '20px',
                         borderRadius: 'var(--radius-2xl)',
                         padding: 'var(--spacing-4)',
                         zIndex: 'var(--z-sticky)',
                         boxShadow: 'var(--shadow-2xl)',
-                        opacity: hover ? 1 : 0.85,
-                        transition: 'all var(--transition-base)'
+                        opacity: hover || isDragging ? 1 : 0.85,
+                        transition: 'opacity 0.2s'
                     }}
                     onMouseEnter={() => setHover(true)}
                     onMouseLeave={() => setHover(false)}
@@ -114,90 +274,24 @@ export const Minimap: React.FC = () => {
                         }}>
                             Map
                         </div>
-                        <div className="badge badge-neutral" style={{
-                            fontSize: '10px',
-                            marginLeft: 'auto'
-                        }}>
-                            {Object.keys(notes).length}
-                        </div>
                     </div>
 
                     {/* SVG Canvas */}
                     <svg
-                        width={minimapWidth}
-                        height={minimapHeight}
+                        width={MINIMAP_WIDTH}
+                        height={MINIMAP_HEIGHT}
                         style={{
                             display: 'block',
-                            cursor: 'pointer',
+                            cursor: 'crosshair',
                             borderRadius: 'var(--radius-lg)',
                             backgroundColor: 'var(--theme-canvas-bg)',
                             border: '1px solid var(--theme-border)'
                         }}
-                        onClick={handleMinimapClick}
+                        onClick={handleBackgroundClick}
                     >
-                        {/* Grid pattern */}
-                        <defs>
-                            <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--theme-border)" strokeWidth="0.5" opacity="0.3" />
-                            </pattern>
-                            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                                <rect width="50" height="50" fill="url(#smallGrid)" />
-                                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--theme-border)" strokeWidth="1" opacity="0.5" />
-                            </pattern>
-                        </defs>
-
-                        {/* Background grid */}
-                        <rect width={minimapWidth} height={minimapHeight} fill="url(#grid)" />
-
-                        {/* Center crosshair */}
-                        <line
-                            x1={minimapWidth / 2}
-                            y1={minimapHeight / 2 - 5}
-                            x2={minimapWidth / 2}
-                            y2={minimapHeight / 2 + 5}
-                            stroke="var(--theme-text-secondary)"
-                            strokeWidth="1"
-                            opacity="0.5"
-                        />
-                        <line
-                            x1={minimapWidth / 2 - 5}
-                            y1={minimapHeight / 2}
-                            x2={minimapWidth / 2 + 5}
-                            y2={minimapHeight / 2}
-                            stroke="var(--theme-text-secondary)"
-                            strokeWidth="1"
-                            opacity="0.5"
-                        />
-
-                        {/* Clusters */}
-                        {Object.values(clusters).map(cluster => {
-                            const x = ((cluster.x + worldSize / 2) * scale);
-                            const y = ((cluster.y + worldSize / 2) * scale);
-                            return (
-                                <g key={cluster.id}>
-                                    <circle
-                                        cx={x}
-                                        cy={y}
-                                        r={12}
-                                        fill={cluster.color}
-                                        opacity={0.15}
-                                    />
-                                    <circle
-                                        cx={x}
-                                        cy={y}
-                                        r={6}
-                                        fill={cluster.color}
-                                        opacity={0.5}
-                                    />
-                                </g>
-                            );
-                        })}
-
                         {/* Notes */}
                         {Object.values(notes).map(note => {
-                            const x = ((note.x + worldSize / 2) * scale);
-                            const y = ((note.y + worldSize / 2) * scale);
-
+                            const pos = worldToMinimap(note.x, note.y);
                             const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
                             // @ts-ignore
                             const fill = noteColor.main;
@@ -205,57 +299,49 @@ export const Minimap: React.FC = () => {
                             return (
                                 <circle
                                     key={note.id}
-                                    cx={x}
-                                    cy={y}
-                                    r={2.5}
+                                    cx={pos.x}
+                                    cy={pos.y}
+                                    r={3} // Slightly larger for visibility
                                     fill={fill}
-                                    opacity={0.9}
+                                    opacity={0.8}
                                 />
                             );
                         })}
 
-                        {/* Viewport indicator - dynamically updated */}
-                        <g>
-                            {/* Outer glow */}
+                        {/* Clusters */}
+                        {Object.values(clusters).map(cluster => {
+                            const pos = worldToMinimap(cluster.x, cluster.y);
+                            return (
+                                <circle
+                                    key={cluster.id}
+                                    cx={pos.x}
+                                    cy={pos.y}
+                                    r={8}
+                                    fill={cluster.color}
+                                    opacity={0.3}
+                                />
+                            );
+                        })}
+
+                        {/* Viewport Indicator (Draggable) */}
+                        <g
+                            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                            onMouseDown={handleDragStart}
+                        >
+                            {/* Outer glow/border */}
                             <rect
-                                x={viewportX}
-                                y={viewportY}
-                                width={viewportWidth}
-                                height={viewportHeight}
-                                fill="none"
-                                stroke="var(--primary-500)"
-                                strokeWidth="3"
-                                opacity="0.2"
-                                rx="2"
-                            />
-                            {/* Main rectangle */}
-                            <rect
-                                x={viewportX}
-                                y={viewportY}
-                                width={viewportWidth}
-                                height={viewportHeight}
+                                x={vpPos.x}
+                                y={vpPos.y}
+                                width={vpW}
+                                height={vpH}
                                 fill="var(--primary-500)"
-                                fillOpacity="0.1"
-                                stroke="var(--primary-600)"
+                                fillOpacity={isDragging ? "0.2" : "0.1"}
+                                stroke="var(--primary-500)"
                                 strokeWidth="2"
-                                opacity="0.9"
-                                rx="2"
+                                rx="4"
                             />
                         </g>
                     </svg>
-
-                    {/* Footer stats */}
-                    <div style={{
-                        marginTop: 'var(--spacing-2)',
-                        display: 'flex',
-                        gap: 'var(--spacing-3)',
-                        fontSize: '10px',
-                        color: 'var(--theme-text-secondary)'
-                    }}>
-                        <div>Zoom: {(viewport.scale * 100).toFixed(0)}%</div>
-                        <div>•</div>
-                        <div>Clusters: {Object.keys(clusters).length}</div>
-                    </div>
                 </div>
             )}
         </div>
