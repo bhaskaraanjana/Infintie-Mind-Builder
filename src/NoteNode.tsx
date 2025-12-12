@@ -135,7 +135,6 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                     x={dotSize + 8}
                     y={-6}
                     opacity={showLabel ? 1 : 0}
-                    listening={false}
                 />
                 {/* Small preview text on hover or toggle */}
                 {showDetails && note.content && (
@@ -147,7 +146,6 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                         y={8}
                         width={150}
                         opacity={0.7}
-                        listening={false}
                     />
                 )}
             </Group>

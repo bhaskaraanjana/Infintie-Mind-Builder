@@ -190,6 +190,7 @@ export const InfiniteCanvas = () => {
         const y = (pointer.y - stage.y()) / scale;
 
         console.log('Adding note at', x, y);
+        triggerHaptic('medium');
         addNote({
             type: 'fleeting',
             x,
@@ -636,24 +637,8 @@ export const InfiniteCanvas = () => {
                 });
                 options.push({ label: 'Delete Cluster', action: () => deleteCluster(clusterId), danger: true });
             } else {
-                // Canvas Options
-                const scale = stage.scaleX();
-                const x = (pointerPos.x - stage.x()) / scale;
-                const y = (pointerPos.y - stage.y()) / scale;
-
-                options.push({
-                    label: 'Create Note Here',
-                    action: () => addNote({
-                        type: 'fleeting',
-                        x,
-                        y,
-                        title: 'New Thought',
-                        content: 'Double-click to edit...',
-                        tags: [],
-                        references: []
-                    })
-                });
-                options.push({ label: 'Reset View', action: () => setViewport({ x: 0, y: 0, scale: 1 }) });
+                // Canvas long press disabled - return early, no context menu
+                return;
             }
 
             setContextMenu({
