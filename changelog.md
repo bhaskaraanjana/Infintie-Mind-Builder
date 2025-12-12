@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
 - **Minimap 2.0:** Completely rewritten minimap with infinite dynamic bounds and drag-to-pan viewport control.
 - **Default Link Style:** New links now default to "Dashed & Straight" for a cleaner initial look.
 - **Cluster Gravity:** Cluster-to-Orb connections now flow inward with a dashed animation.
+- **Search 2.0:** Completely overhauled search with mobile-responsive modal, arrow-key navigation, and smart text highlighting.
+- **Auto-Centering Clusters:** Clusters now magnetically recenter in real-time as you drag their child notes.
+- **Global Shortcuts:** Added `Delete`/`Backspace` to delete selected items and full keyboard shortcut documentation.
+- **Visual Polish:** Doubled the size of Orbs and adjusted zoom threshold so cards appear sooner (80% zoom).
 
 ### Fixed
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.

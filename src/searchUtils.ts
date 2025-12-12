@@ -41,15 +41,30 @@ export const searchNotes = (query: string, notes: Note[]): SearchResult[] => {
     }));
 };
 
-export const getHighlightedText = (text: string, matches?: FuseResult<Note>['matches']): string => {
-    if (!matches || matches.length === 0) return text;
+export const getSearchSnippet = (text: string, matches?: FuseResult<Note>['matches']): { pre: string; match: string; post: string } => {
+    // Determine the best match to show (prioritize content matches over title)
+    const contentMatch = matches?.find(m => m.key === 'content');
 
-    // Simple highlighting - just return the matched portion
-    const match = matches[0];
-    if (match && match.indices && match.indices.length > 0) {
-        const [start, end] = match.indices[0];
-        return text.slice(Math.max(0, start - 20), Math.min(text.length, end + 50));
+    if (!contentMatch || !contentMatch.indices.length) {
+        // Fallback: no highlight, just start of text
+        return { pre: text.slice(0, 85), match: '', post: text.length > 85 ? '...' : '' };
     }
 
-    return text.slice(0, 100);
+    const [start, end] = contentMatch.indices[0]; // Fuse indices are inclusive [start, end]
+
+    // Calculate context window
+    const contextStart = Math.max(0, start - 30);
+    const contextEnd = Math.min(text.length, end + 1 + 50);
+
+    return {
+        pre: (contextStart > 0 ? '...' : '') + text.slice(contextStart, start),
+        match: text.slice(start, end + 1),
+        post: text.slice(end + 1, contextEnd) + (contextEnd < text.length ? '...' : '')
+    };
+};
+
+// Legacy support if needed, or just remove
+export const getHighlightedText = (text: string, matches?: FuseResult<Note>['matches']): string => {
+    const snippet = getSearchSnippet(text, matches);
+    return `${snippet.pre}${snippet.match}${snippet.post}`;
 };
