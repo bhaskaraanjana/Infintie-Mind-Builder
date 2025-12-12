@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Group, Circle, Text, Rect, Arc, Line } from 'react-konva';
+import Konva from 'konva';
 import type { Cluster, Note } from './types';
 import { themes, type ThemeName } from './themes';
 
@@ -18,6 +19,54 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
     const [isDragging, setIsDragging] = useState(false);
     const theme = themes[themeName];
     const ui = useStore((state) => state.ui); // Reactive state access
+
+    // Animation Ref
+    const connectionsRef = useRef<Konva.Group>(null);
+
+    // Animate Connections (Inward Flow)
+    useEffect(() => {
+        const group = connectionsRef.current;
+        if (!group) return;
+
+        // We need the layer to start animation, but if the group isn't attached yet it might fail?
+        // Usually safe in useEffect.
+        const layer = group.getLayer();
+        if (!layer) return;
+
+        const anim = new Konva.Animation((frame) => {
+            if (!frame) return;
+            // Speed: pixels per second
+            // Positive offset moves dash pattern "backwards" relative to line direction (Start->End)
+            // Line is drawn Cluster(0,0) -> Note.
+            // "Inward" means moving Note -> Cluster.
+            // So we want the pattern to move from End to Start.
+            // Increasing offset usually moves pattern towards Start.
+            const speed = 30;
+            const dashOffset = (frame.time / 1000) * speed;
+
+            group.children.forEach((node) => {
+                if (node instanceof Konva.Line) {
+                    node.dashOffset(-dashOffset); // Try negative for outward, positive for inward? 
+                    // Actually, let's try strict test. 
+                    // If I draw -> and increase offset, the pattern slides ->. 
+                    // Wait, offset shifts the texture.
+                    // Let's stick with one direction; if user says it's wrong, we flip sign.
+                    // "Inward flowing" -> Towards Center.
+                    // Line: Center -> Note. 
+                    // Movement: Note -> Center. (Upstream).
+
+                    // If I subtract offset, it moves forward? 
+                    // Let's use Positive time-based accumulation.
+                    node.dashOffset(dashOffset);
+                }
+            });
+        }, layer);
+
+        anim.start();
+        return () => {
+            anim.stop();
+        };
+    }, []);
 
     const childrenNotes = cluster.children.map(id => notes[id]).filter(Boolean);
     if (childrenNotes.length === 0) return null;
@@ -48,18 +97,20 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
                 onMouseEnter={() => setHover(true)}
                 onMouseLeave={() => setHover(false)}
             >
-                {/* Connections to notes */}
-                {childrenNotes.map(note => (
-                    <Line
-                        key={`link-${cluster.id}-${note.id}`}
-                        points={[0, 0, note.x - cluster.x, note.y - cluster.y]}
-                        stroke={cluster.color}
-                        strokeWidth={1}
-                        opacity={0.3}
-                        dash={[5, 5]}
-                        listening={false}
-                    />
-                ))}
+                {/* Connections to notes (Animated) */}
+                <Group ref={connectionsRef}>
+                    {childrenNotes.map(note => (
+                        <Line
+                            key={`link-${cluster.id}-${note.id}`}
+                            points={[0, 0, note.x - cluster.x, note.y - cluster.y]}
+                            stroke={cluster.color}
+                            strokeWidth={1.5}
+                            opacity={0.6}
+                            dash={[10, 10]}
+                            listening={false}
+                        />
+                    ))}
+                </Group>
 
                 {/* Orbit Ring */}
                 <Circle

@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - **Drill-Down Context Menu:** Replaced expanding submenus with a mobile-native "Drill-Down" navigation (Stack-based) to prevent screen overflow.
 - **Minimap 2.0:** Completely rewritten minimap with infinite dynamic bounds and drag-to-pan viewport control.
 - **Default Link Style:** New links now default to "Dashed & Straight" for a cleaner initial look.
+- **Cluster Gravity:** Cluster-to-Orb connections now flow inward with a dashed animation.
 
 ### Fixed
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.
