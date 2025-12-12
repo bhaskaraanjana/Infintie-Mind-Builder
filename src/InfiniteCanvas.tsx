@@ -57,6 +57,33 @@ export const InfiniteCanvas = () => {
     const dragStartRef = useRef<{ startX: number, startY: number, noteId: string, selectionSnapshot: Record<string, { x: number, y: number }> } | null>(null);
     // Removed unused linkingDragRef
     const ignoreClickRef = useRef(false); // To prevent click after long press
+    const editingNoteId = useStore((state) => state.editingNoteId); // Get editing state
+
+    // Global Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if editing a note (let text editor handle keys)
+            // Also ignore if any input/textarea is focused (e.g. search bar)
+            const activeElement = document.activeElement;
+            const isInput = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA' || activeElement?.getAttribute('contenteditable') === 'true';
+
+            if (editingNoteId || isInput) return;
+
+            // Delete Selection
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedNoteIds.length > 0) {
+                    e.preventDefault();
+                    if (window.confirm(`Delete ${selectedNoteIds.length} selected notes?`)) {
+                        deleteNotes(selectedNoteIds);
+                        setSelectedNoteIds([]);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [editingNoteId, selectedNoteIds, deleteNotes, setSelectedNoteIds]);
 
     const getDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
         return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -540,30 +567,33 @@ export const InfiniteCanvas = () => {
         }
     };
 
+    const updateNotesPositionTransient = useStore((state) => state.updateNotesPositionTransient);
+
     const handleNoteDragMove = (id: string, x: number, y: number) => {
-        if (!dragStartRef.current || dragStartRef.current.noteId !== id) return;
+        // Batch Drag
+        if (dragStartRef.current && dragStartRef.current.noteId === id) {
+            const { startX, startY, selectionSnapshot } = dragStartRef.current;
+            const deltaX = x - startX;
+            const deltaY = y - startY;
 
-        const { startX, startY, selectionSnapshot } = dragStartRef.current;
-        const deltaX = x - startX;
-        const deltaY = y - startY;
+            const updates = selectedNoteIds.map(selectedId => {
+                const initialPos = selectionSnapshot[selectedId];
+                if (selectedId === id) return { id, x, y };
+                if (initialPos) {
+                    return {
+                        id: selectedId,
+                        x: initialPos.x + deltaX,
+                        y: initialPos.y + deltaY
+                    };
+                }
+                return null;
+            }).filter(Boolean) as { id: string, x: number, y: number }[];
 
-        const stage = stageRef.current;
-        if (!stage) return;
-
-        // Move other selected notes visually (without store update for perf)
-        selectedNoteIds.forEach(selectedId => {
-            if (selectedId === id) return; // Skip self (already moved by Konva drag)
-
-            const node = stage.findOne(`.note-${selectedId}`);
-            const initialPos = selectionSnapshot[selectedId];
-
-            if (node && initialPos) {
-                node.position({
-                    x: initialPos.x + deltaX,
-                    y: initialPos.y + deltaY
-                });
-            }
-        });
+            updateNotesPositionTransient(updates);
+        } else {
+            // Single Drag (Transient update for smooth cluster recentering)
+            updateNotesPositionTransient([{ id, x, y }]);
+        }
     };
 
     const handleNoteDragEnd = (id: string, x: number, y: number) => {

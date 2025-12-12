@@ -67,7 +67,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
         setEditingNoteId(note.id);
     };
 
-    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 1.2);
+    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 0.8);
 
     // LEVEL 1 & 2: Far and Medium View - Obsidian Style Dots with Labels
     if (isOrbView) {

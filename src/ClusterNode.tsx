@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Group, Circle, Text, Rect, Arc, Line } from 'react-konva';
+import { Group, Circle, Text, Rect, Line } from 'react-konva';
 import Konva from 'konva';
 import type { Cluster, Note } from './types';
 import { themes, type ThemeName } from './themes';
@@ -79,7 +79,7 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
     const width = maxX - minX + 350;
     const height = maxY - minY + 250;
 
-    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 1.2);
+    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 0.8);
 
     // LEVEL 1: Far Out View - "The Orb"
     if (isOrbView) {

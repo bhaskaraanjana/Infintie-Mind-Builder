@@ -86,7 +86,7 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
         };
     }, []);
 
-    const isOrbView = scale < 1.2;
+    const isOrbView = scale < 0.8;
     // Show labels if scale is high enough or hovered
     const showLabels = scale > 0.6;
 

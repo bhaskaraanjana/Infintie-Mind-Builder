@@ -29,6 +29,7 @@ interface AppState {
     toggleNoteSelection: (id: string) => void;
     deleteNotes: (ids: string[]) => Promise<void>;
     updateNotesPosition: (updates: { id: string, x: number, y: number }[]) => Promise<void>;
+    updateNotesPositionTransient: (updates: { id: string, x: number, y: number }[]) => void;
 
     // UI State
     ui: {
@@ -206,6 +207,37 @@ export const useStore = create<AppState>((set, get) => ({
         updates.forEach(({ id, x, y }) => {
             const note = get().notes[id];
             if (note) firebaseSyncService.saveNote(note);
+        });
+    },
+
+    updateNotesPositionTransient: (updates) => {
+        set((state) => {
+            const newNotes = { ...state.notes };
+            const affectedClusters = new Set<string>();
+
+            updates.forEach(({ id, x, y }) => {
+                if (newNotes[id]) {
+                    newNotes[id] = { ...newNotes[id], x, y };
+                    if (newNotes[id].clusterId) {
+                        affectedClusters.add(newNotes[id].clusterId!);
+                    }
+                }
+            });
+
+            const newClusters = { ...state.clusters };
+            affectedClusters.forEach(clusterId => {
+                const cluster = newClusters[clusterId];
+                if (cluster) {
+                    const children = cluster.children.map(cid => newNotes[cid]).filter(Boolean);
+                    if (children.length > 0) {
+                        const centerX = children.reduce((sum, n) => sum + n.x, 0) / children.length;
+                        const centerY = children.reduce((sum, n) => sum + n.y, 0) / children.length;
+                        newClusters[clusterId] = { ...cluster, x: centerX, y: centerY };
+                    }
+                }
+            });
+
+            return { notes: newNotes, clusters: newClusters };
         });
     },
 
