@@ -258,14 +258,6 @@ export const InfiniteCanvas = () => {
         e.evt.preventDefault();
         const options: MenuOption[] = [
             {
-                label: 'Change Type',
-                submenu: [
-                    { label: 'Related', action: () => updateLink(linkId, { type: 'related' }) },
-                    { label: 'Parent', action: () => updateLink(linkId, { type: 'parent' }) },
-                    { label: 'Criticism', action: () => updateLink(linkId, { type: 'criticism' }) },
-                ]
-            },
-            {
                 label: 'Delete Link',
                 action: () => deleteLink(linkId),
                 danger: true
@@ -586,16 +578,101 @@ export const InfiniteCanvas = () => {
             const shape = stage.getIntersection(pointerPos);
             const target = shape || stage;
 
-            // Determine if Note or Cluster
+            // Determine if Note or Cluster or Link
             const noteGroup = target.findAncestor?.((node: any) => node.name() && node.name().startsWith('note-'))
                 || (target.name()?.startsWith('note-') ? target : null);
 
             const clusterGroup = target.findAncestor?.((node: any) => node.name() && node.name().startsWith('cluster-'))
                 || (target.name()?.startsWith('cluster-') ? target : null);
 
-            const options: MenuOption[] = [];
+            // Check for link hit area
+            const linkHitLine = target.name() === 'link-hit-area' ? target : null;
 
-            if (noteGroup) {
+            const options: MenuOption[] = [];
+            if (linkHitLine) {
+                const linkId = linkHitLine.id().replace('link-', '');
+                const link = links[linkId];
+
+                // 1. Link Type
+                options.push({
+                    label: 'Link Type',
+                    submenu: [
+                        {
+                            label: 'Solid',
+                            action: () => updateLink(linkId, { style: 'solid', arrowDirection: 'none' })
+                        },
+                        {
+                            label: 'Dashed',
+                            action: () => updateLink(linkId, { style: 'dashed', arrowDirection: 'none' })
+                        },
+                        {
+                            label: 'Dotted',
+                            action: () => updateLink(linkId, { style: 'dotted', arrowDirection: 'none' })
+                        },
+                        {
+                            label: 'Arrow',
+                            action: () => updateLink(linkId, { style: 'solid', arrowDirection: 'forward' })
+                        }
+                    ]
+                });
+
+                // 2. Link Shape
+                options.push({
+                    label: 'Link Shape',
+                    submenu: [
+                        { label: 'Curved', action: () => updateLink(linkId, { shape: 'curved' }) },
+                        { label: 'Straight', action: () => updateLink(linkId, { shape: 'straight' }) }
+                    ]
+                });
+
+                // 3. Arrow Actions (Conditional)
+                const arrowDir = link.arrowDirection || 'forward'; // Default for check
+                // Note: 'Arrow' type sets it to forward. 'Solid/Dashed/Dotted' set it to 'none'.
+                // If it is NOT none, we show these options.
+                if (link.arrowDirection && link.arrowDirection !== 'none') {
+                    options.push({
+                        label: 'Flip Arrow',
+                        action: () => {
+                            const newDir = link.arrowDirection === 'forward' ? 'reverse' : 'forward';
+                            updateLink(linkId, { arrowDirection: newDir });
+                        }
+                    });
+
+                    options.push({
+                        label: 'Remove Arrow',
+                        action: () => updateLink(linkId, { arrowDirection: 'none' })
+                    });
+                }
+
+                // Retained Options (Color, Label)
+                options.push({
+                    label: 'Color',
+                    submenu: [
+                        { label: 'Blue', action: () => updateLink(linkId, { color: '#3B82F6' }) },
+                        { label: 'Green', action: () => updateLink(linkId, { color: '#22C55E' }) },
+                        { label: 'Red', action: () => updateLink(linkId, { color: '#EF4444' }) },
+                        { label: 'Gray', action: () => updateLink(linkId, { color: '#9CA3AF' }) },
+                        { label: 'Gold', action: () => updateLink(linkId, { color: '#EAB308' }) },
+                    ]
+                });
+
+                options.push({
+                    label: 'Edit Label',
+                    action: () => {
+                        const newLabel = window.prompt("Enter link label:", link.label || "");
+                        if (newLabel !== null) {
+                            updateLink(linkId, { label: newLabel });
+                        }
+                    }
+                });
+
+                // 4. Delete Link
+                options.push({
+                    label: 'Delete Link',
+                    action: () => deleteLink(linkId),
+                    danger: true
+                });
+            } else if (noteGroup) {
                 const noteId = noteGroup.name().replace('note-', '');
 
                 // Note Options
@@ -736,7 +813,7 @@ export const InfiniteCanvas = () => {
                         />
                     ))}
 
-                    <LinkLayer notes={notes} links={links} onLinkContextMenu={handleLinkContextMenu} />
+                    <LinkLayer notes={notes} links={links} onLinkContextMenu={handleLinkContextMenu} scale={viewport.scale} />
 
                     {linkingSourceId && mousePos && notes[linkingSourceId] && (
                         <Line

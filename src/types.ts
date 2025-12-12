@@ -30,7 +30,12 @@ export interface Link {
     id: string;
     sourceId: string;
     targetId: string;
-    type?: 'related' | 'parent' | 'criticism';
+    type?: 'related' | 'parent' | 'criticism'; // Legacy/Semantic type
+    label?: string; // Custom label text
+    color?: string; // Hex color
+    style?: 'solid' | 'dashed' | 'dotted';
+    shape?: 'curved' | 'straight';
+    arrowDirection?: 'forward' | 'reverse' | 'none';
 }
 
 export interface ViewportState {

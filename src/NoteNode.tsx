@@ -3,6 +3,7 @@ import { Group, Rect, Text, Circle } from 'react-konva';
 import type { Note } from './types';
 import { themes, type ThemeName } from './themes';
 import { useStore } from './store';
+import { NOTE_WIDTH, NOTE_HEIGHT, ORB_RADIUS_DEFAULT, ORB_RADIUS_HUB } from './constants';
 
 interface Props {
     note: Note;
@@ -70,7 +71,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
 
     // LEVEL 1 & 2: Far and Medium View - Obsidian Style Dots with Labels
     if (isOrbView) {
-        const dotSize = note.type === 'hub' ? 12 : 8;
+        const dotSize = note.type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT;
         const glowSize = hover ? dotSize + 8 : dotSize + 4;
         const showLabel = ui.showOrbLabels || hover || isEditing || isSelected;
         const showDetails = ui.showOrbDetails || hover || isEditing || isSelected;
@@ -157,7 +158,8 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
     // Strip HTML tags for preview
     const plainTextContent = (note.content || '').replace(/<[^>]*>?/gm, '');
     const contentPreview = plainTextContent.substring(0, 100);
-    const cardHeight = 140;
+    const cardHeight = NOTE_HEIGHT;
+    const cardWidth = NOTE_WIDTH;
 
     const cardColorScheme = {
         main: noteColor.main,
@@ -185,7 +187,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 <Rect
                     y={-4}
                     x={-4}
-                    width={288}
+                    width={cardWidth + 8}
                     height={cardHeight + 8}
                     stroke={theme.colors.text}
                     strokeWidth={1}
@@ -200,7 +202,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 <Rect
                     y={-4}
                     x={-4}
-                    width={288}
+                    width={cardWidth + 8}
                     height={cardHeight + 8}
                     stroke="#00a1ff"
                     strokeWidth={2}
@@ -212,7 +214,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
             {/* Shadow layers */}
             <Rect
                 y={6}
-                width={280}
+                width={cardWidth}
                 height={cardHeight}
                 fill="rgba(0,0,0,0.04)"
                 cornerRadius={16}
@@ -221,7 +223,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
             />
             <Rect
                 y={3}
-                width={280}
+                width={cardWidth}
                 height={cardHeight}
                 fill="rgba(0,0,0,0.06)"
                 cornerRadius={16}
@@ -229,7 +231,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 listening={false}
             />
             <Rect
-                width={280}
+                width={cardWidth}
                 height={cardHeight}
                 fill={theme.colors.canvasBg}
                 cornerRadius={16}
@@ -239,7 +241,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 shadowOffsetY={hover || isEditing ? 10 : 4}
             />
             <Rect
-                width={280}
+                width={cardWidth}
                 height={cardHeight}
                 fillLinearGradientStartPoint={{ x: 0, y: 0 }}
                 fillLinearGradientEndPoint={{ x: 0, y: cardHeight }}
@@ -259,7 +261,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 listening={false}
             />
             <Circle
-                x={265}
+                x={cardWidth - 15}
                 y={15}
                 radius={6}
                 fill={cardColorScheme.main}
@@ -272,7 +274,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 fontStyle="bold"
                 x={20}
                 y={15}
-                width={235}
+                width={cardWidth - 45}
                 ellipsis={true}
                 listening={false}
             />
@@ -284,7 +286,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                     lineHeight={1.4}
                     x={20}
                     y={45}
-                    width={250}
+                    width={cardWidth - 30}
                     height={50}
                     ellipsis={true}
                     listening={false}
@@ -299,7 +301,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                     fontStyle="italic"
                     x={20}
                     y={95}
-                    width={250}
+                    width={cardWidth - 30}
                     ellipsis={true}
                     listening={false}
                     opacity={0.6}
