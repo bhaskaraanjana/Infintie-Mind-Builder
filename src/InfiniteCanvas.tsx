@@ -256,13 +256,85 @@ export const InfiniteCanvas = () => {
 
     const handleLinkContextMenu = (e: any, linkId: string) => {
         e.evt.preventDefault();
-        const options: MenuOption[] = [
-            {
-                label: 'Delete Link',
-                action: () => deleteLink(linkId),
-                danger: true
+        const link = links[linkId];
+        const options: MenuOption[] = [];
+
+        // 1. Link Type
+        options.push({
+            label: 'Link Type',
+            submenu: [
+                {
+                    label: 'Solid',
+                    action: () => updateLink(linkId, { style: 'solid', arrowDirection: 'none' })
+                },
+                {
+                    label: 'Dashed',
+                    action: () => updateLink(linkId, { style: 'dashed', arrowDirection: 'none' })
+                },
+                {
+                    label: 'Dotted',
+                    action: () => updateLink(linkId, { style: 'dotted', arrowDirection: 'none' })
+                },
+                {
+                    label: 'Arrow',
+                    action: () => updateLink(linkId, { style: 'solid', arrowDirection: 'forward' })
+                }
+            ]
+        });
+
+        // 2. Link Shape
+        options.push({
+            label: 'Link Shape',
+            submenu: [
+                { label: 'Curved', action: () => updateLink(linkId, { shape: 'curved' }) },
+                { label: 'Straight', action: () => updateLink(linkId, { shape: 'straight' }) }
+            ]
+        });
+
+        // 3. Arrow Actions (Conditional)
+        if (link.arrowDirection && link.arrowDirection !== 'none') {
+            options.push({
+                label: 'Flip Arrow',
+                action: () => {
+                    const newDir = link.arrowDirection === 'forward' ? 'reverse' : 'forward';
+                    updateLink(linkId, { arrowDirection: newDir });
+                }
+            });
+
+            options.push({
+                label: 'Remove Arrow',
+                action: () => updateLink(linkId, { arrowDirection: 'none' })
+            });
+        }
+
+        // Retained Options (Color, Label)
+        options.push({
+            label: 'Color',
+            submenu: [
+                { label: 'Blue', action: () => updateLink(linkId, { color: '#3B82F6' }) },
+                { label: 'Green', action: () => updateLink(linkId, { color: '#22C55E' }) },
+                { label: 'Red', action: () => updateLink(linkId, { color: '#EF4444' }) },
+                { label: 'Gray', action: () => updateLink(linkId, { color: '#9CA3AF' }) },
+                { label: 'Gold', action: () => updateLink(linkId, { color: '#EAB308' }) },
+            ]
+        });
+
+        options.push({
+            label: 'Edit Label',
+            action: () => {
+                const newLabel = window.prompt("Enter link label:", link.label || "");
+                if (newLabel !== null) {
+                    updateLink(linkId, { label: newLabel });
+                }
             }
-        ];
+        });
+
+        // 4. Delete Link
+        options.push({
+            label: 'Delete Link',
+            action: () => deleteLink(linkId),
+            danger: true
+        });
 
         setContextMenu({
             x: e.evt.clientX,
