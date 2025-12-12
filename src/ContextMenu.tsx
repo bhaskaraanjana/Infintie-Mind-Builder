@@ -14,60 +14,66 @@ interface Props {
     onClose: () => void;
 }
 
-const MenuItem: React.FC<{ option: MenuOption; onClose: () => void }> = ({ option, onClose }) => {
-    const [showSubmenu, setShowSubmenu] = useState(false);
+interface MenuLevel {
+    title: string;
+    options: MenuOption[];
+}
+
+const MenuItem: React.FC<{
+    option: MenuOption;
+    onClose: () => void;
+    onNavigate: (title: string, submenu: MenuOption[]) => void;
+}> = ({ option, onClose, onNavigate }) => {
 
     return (
         <div
             style={{
-                position: 'relative',
-                padding: '10px 20px',
+                padding: '12px 16px', // Larger touch target
                 cursor: 'pointer',
-                color: option.danger ? '#ff4444' : '#333',
+                color: option.danger ? '#ef4444' : 'var(--theme-text-primary, #333)',
                 fontSize: '14px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                backgroundColor: showSubmenu ? '#f5f5f5' : 'transparent'
+                borderBottom: '1px solid var(--theme-border-color, #eee)',
+                backgroundColor: 'transparent',
+                transition: 'background-color 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-hover-bg, #f5f5f5)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             onClick={(e) => {
+                e.stopPropagation();
                 if (option.submenu) {
-                    e.stopPropagation();
+                    onNavigate(option.label, option.submenu);
                 } else if (option.action) {
                     option.action();
                     onClose();
                 }
             }}
-            onMouseEnter={() => setShowSubmenu(true)}
-            onMouseLeave={() => setShowSubmenu(false)}
         >
-            {option.label}
-            {option.submenu && <span>›</span>}
-
-            {/* Submenu */}
-            {showSubmenu && option.submenu && (
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '100%',
-                    backgroundColor: '#fff',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    padding: '8px 0',
-                    zIndex: 1001,
-                    minWidth: '180px',
-                    border: '1px solid #eee'
-                }}>
-                    {option.submenu.map((subOption, index) => (
-                        <MenuItem key={index} option={subOption} onClose={onClose} />
-                    ))}
-                </div>
-            )}
+            <span style={{ fontWeight: 500 }}>{option.label}</span>
+            {option.submenu && <span style={{ color: '#999', fontSize: '18px' }}>›</span>}
         </div>
     );
 };
 
 export const ContextMenu: React.FC<Props> = ({ x, y, options, onClose }) => {
+    // Stack for drill-down navigation
+    const [history, setHistory] = useState<MenuLevel[]>([{ title: 'Menu', options }]);
+
+    const currentLevel = history[history.length - 1];
+
+    const handleNavigate = (title: string, submenu: MenuOption[]) => {
+        setHistory([...history, { title, options: submenu }]);
+    };
+
+    const handleBack = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (history.length > 1) {
+            setHistory(history.slice(0, -1));
+        }
+    };
+
     return (
         <>
             {/* Backdrop to close menu on click outside */}
@@ -81,17 +87,48 @@ export const ContextMenu: React.FC<Props> = ({ x, y, options, onClose }) => {
                 position: 'fixed',
                 top: y,
                 left: x,
-                backgroundColor: '#fff',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                padding: '8px 0',
+                backgroundColor: 'var(--theme-bg, #fff)',
+                borderRadius: '12px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                padding: '0',
                 zIndex: 1000,
-                minWidth: '180px',
-                border: '1px solid #eee'
+                minWidth: '220px',
+                maxWidth: '280px', // Prevent too wide on mobile
+                border: '1px solid var(--theme-border-color, #e5e7eb)',
+                overflow: 'hidden',
+                animation: 'fadeIn 0.1s ease-out'
             }}>
-                {options.map((option, index) => (
-                    <MenuItem key={index} option={option} onClose={onClose} />
-                ))}
+                {/* Header (Only if deep or title is relevant, but mostly for Back button) */}
+                {history.length > 1 && (
+                    <div
+                        onClick={handleBack}
+                        style={{
+                            padding: '10px 16px',
+                            borderBottom: '1px solid var(--theme-border-color, #eee)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            backgroundColor: 'var(--theme-hover-bg, #f9fafb)',
+                            color: 'var(--theme-text-secondary, #666)',
+                            fontSize: '13px',
+                            fontWeight: 600
+                        }}
+                    >
+                        <span style={{ marginRight: '6px', fontSize: '16px' }}>‹</span> Back
+                    </div>
+                )}
+
+                {/* Menu List */}
+                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                    {currentLevel.options.map((option, index) => (
+                        <MenuItem
+                            key={index}
+                            option={option}
+                            onClose={onClose}
+                            onNavigate={handleNavigate}
+                        />
+                    ))}
+                </div>
             </div>
         </>
     );

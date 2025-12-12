@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
   - **Dynamic Arrows:** Added controls to "Flip" or "Remove" arrows directly.
   - **Clean Defaults:** Links are now label-free by default; custom labels can be added via "Edit Label".
   - **Smart Rendering:** Refactored rendering engine (single component) for seamless animations and perfect arrow alignment.
-- **Mobile-Friendly Context Menu:** Simplified link context menu hierarchy for easier touch interaction.
+- **Drill-Down Context Menu:** Replaced expanding submenus with a mobile-native "Drill-Down" navigation (Stack-based) to prevent screen overflow.
 
 ### Fixed
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.
