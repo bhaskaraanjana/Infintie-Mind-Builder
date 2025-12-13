@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { Line, Arrow, Group, Text, Rect } from 'react-konva';
 import Konva from 'konva';
-import type { Note, Link } from './types';
+import { useStore } from './store';
+import type { Note, Link, Cluster } from './types';
 import { NOTE_WIDTH, NOTE_HEIGHT, ORB_RADIUS_DEFAULT, ORB_RADIUS_HUB } from './constants';
 
 interface Props {
     notes: Record<string, Note>;
+    clusters: Record<string, Cluster>;
     links: Record<string, Link>;
     onLinkContextMenu: (e: any, linkId: string) => void;
     scale: number;
@@ -16,12 +18,6 @@ const DEFAULT_COLORS = {
     parent: '#22C55E',    // Green
     criticism: '#EF4444', // Red
     default: '#9CA3AF'    // Gray
-};
-
-const LEGACY_LABELS = {
-    related: 'Related',
-    parent: 'Parent',
-    criticism: 'Critique'
 };
 
 // Helper to calculate intersection point between a line (center to point) and a rectangle
@@ -53,7 +49,28 @@ const getBezierPoint = (t: number, p0: { x: number, y: number }, p1: { x: number
     };
 };
 
-export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, scale }) => {
+const getClusterBounds = (cluster: Cluster, notes: Record<string, Note>) => {
+    const children = cluster.children.map(id => notes[id]).filter(Boolean);
+    if (children.length === 0) return { x: cluster.x, y: cluster.y, width: 200, height: 200 };
+
+    const xs = children.map(n => n.x);
+    const ys = children.map(n => n.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    // Padding matches ClusterNode implementation
+    return {
+        x: minX - 50,
+        y: minY - 50,
+        width: maxX - minX + 350,
+        height: maxY - minY + 250
+    };
+};
+
+export const LinkLayer: React.FC<Props> = ({ notes, clusters, links, onLinkContextMenu, scale }) => {
+    const ui = useStore((state) => state.ui);
     const [hoveredLink, setHoveredLink] = React.useState<string | null>(null);
     const layerRef = useRef<any>(null);
 
@@ -86,115 +103,126 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
         };
     }, []);
 
-    const isOrbView = scale < 0.8;
+    const isOrbView = ui.lodMode === 'orb' || (ui.lodMode === 'auto' && scale < 0.8);
     // Show labels if scale is high enough or hovered
     const showLabels = scale > 0.6;
 
     return (
         <Group ref={layerRef}>
             {Object.values(links).map((link) => {
-                const source = notes[link.sourceId];
-                const target = notes[link.targetId];
+                const sourceNote = notes[link.sourceId];
+                const sourceCluster = clusters[link.sourceId];
+                const targetNote = notes[link.targetId];
+                const targetCluster = clusters[link.targetId];
+
+                const source = sourceNote || sourceCluster;
+                const target = targetNote || targetCluster;
 
                 if (!source || !target) return null;
+
+                const isSourceCluster = !!sourceCluster;
+                const isTargetCluster = !!targetCluster;
 
                 const isHovered = hoveredLink === link.id;
 
                 // --- Style Resolution ---
-                // 1. Color
                 let linkColor = link.color;
                 if (!linkColor) {
                     linkColor = DEFAULT_COLORS[link.type as keyof typeof DEFAULT_COLORS] || DEFAULT_COLORS.default;
                 }
 
-                // 2. Label - Default to empty
                 const labelText = link.label || "";
 
-                // 3. Style (Solid/Dashed/Dotted)
                 let dashPattern: number[] | undefined = undefined;
                 if (link.style === 'dashed') dashPattern = [10, 10];
                 else if (link.style === 'dotted') dashPattern = [3, 5];
-                else if (!link.style && link.type === 'criticism') dashPattern = [8, 4]; // Legacy fallback
+                else if (!link.style && link.type === 'criticism') dashPattern = [8, 4];
 
-                // 4. Shape (Curved/Straight)
                 const isStraight = link.shape === 'straight';
 
-                // 5. Arrow Direction
                 const arrowDirection = link.arrowDirection || 'forward';
                 const showEndArrow = arrowDirection === 'forward';
                 const showStartArrow = arrowDirection === 'reverse';
 
 
                 // --- Geometry Calculation ---
+                let sW = 0, sH = 0, tW = 0, tH = 0, sR = 0, tR = 0;
+                let sourceCenter = { x: 0, y: 0 };
+                let targetCenter = { x: 0, y: 0 };
 
-                // Determine dimensions based on view mode
-                let sW, sH, tW, tH, sR, tR;
-
-                // Source Dimensions
-                if (isOrbView) {
-                    sR = source.type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT;
-                    sW = sR * 2;
-                    sH = sR * 2;
+                // Source Geometry
+                if (isSourceCluster) {
+                    if (isOrbView) {
+                        sR = 90;
+                        sourceCenter = { x: source.x, y: source.y };
+                    } else {
+                        const bounds = getClusterBounds(source as unknown as Cluster, notes);
+                        sW = bounds.width;
+                        sH = bounds.height;
+                        sourceCenter = { x: bounds.x + sW / 2, y: bounds.y + sH / 2 };
+                    }
                 } else {
-                    sW = NOTE_WIDTH;
-                    sH = NOTE_HEIGHT;
+                    if (isOrbView) {
+                        sR = (source as Note).type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT;
+                        sourceCenter = { x: source.x, y: source.y };
+                    } else {
+                        sW = NOTE_WIDTH;
+                        sH = NOTE_HEIGHT;
+                        sourceCenter = { x: source.x + sW / 2, y: source.y + sH / 2 };
+                    }
                 }
 
-                // Target Dimensions
-                if (isOrbView) {
-                    tR = target.type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT;
-                    tW = tR * 2;
-                    tH = tR * 2;
+                // Target Geometry
+                if (isTargetCluster) {
+                    if (isOrbView) {
+                        tR = 90;
+                        targetCenter = { x: target.x, y: target.y };
+                    } else {
+                        const bounds = getClusterBounds(target as unknown as Cluster, notes);
+                        tW = bounds.width;
+                        tH = bounds.height;
+                        targetCenter = { x: bounds.x + tW / 2, y: bounds.y + tH / 2 };
+                    }
                 } else {
-                    tW = NOTE_WIDTH;
-                    tH = NOTE_HEIGHT;
+                    if (isOrbView) {
+                        tR = (target as Note).type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT;
+                        targetCenter = { x: target.x, y: target.y };
+                    } else {
+                        tW = NOTE_WIDTH;
+                        tH = NOTE_HEIGHT;
+                        targetCenter = { x: target.x + tW / 2, y: target.y + tH / 2 };
+                    }
                 }
-
-                // Centers
-                const sourceCenter = isOrbView
-                    ? { x: source.x, y: source.y }
-                    : { x: source.x + sW / 2, y: source.y + sH / 2 };
-
-                const targetCenter = isOrbView
-                    ? { x: target.x, y: target.y }
-                    : { x: target.x + tW / 2, y: target.y + tH / 2 };
-
 
                 // Edge Intersection Points
-                const startPoint = isOrbView
-                    ? getRectIntersection(sourceCenter.x, sourceCenter.y, sW, sH, targetCenter.x, targetCenter.y)
-                    : getRectIntersection(sourceCenter.x, sourceCenter.y, sW, sH, targetCenter.x, targetCenter.y);
-
+                let startPoint = { x: 0, y: 0 };
                 if (isOrbView) {
                     const angle = Math.atan2(targetCenter.y - sourceCenter.y, targetCenter.x - sourceCenter.x);
-                    startPoint.x = sourceCenter.x + Math.cos(angle) * (sR! + 2);
-                    startPoint.y = sourceCenter.y + Math.sin(angle) * (sR! + 2);
+                    const radius = sR || ((source as Note).type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT);
+                    startPoint.x = sourceCenter.x + Math.cos(angle) * (radius + 2);
+                    startPoint.y = sourceCenter.y + Math.sin(angle) * (radius + 2);
+                } else {
+                    startPoint = getRectIntersection(sourceCenter.x, sourceCenter.y, sW, sH, targetCenter.x, targetCenter.y);
                 }
 
-                const endPoint = isOrbView
-                    ? { x: targetCenter.x, y: targetCenter.y }
-                    : getRectIntersection(targetCenter.x, targetCenter.y, tW, tH, sourceCenter.x, sourceCenter.y);
-
+                let endPoint = { x: 0, y: 0 };
                 if (isOrbView) {
                     const angle = Math.atan2(sourceCenter.y - targetCenter.y, sourceCenter.x - targetCenter.x);
-                    endPoint.x = targetCenter.x + Math.cos(angle) * (tR! + 2);
-                    endPoint.y = targetCenter.y + Math.sin(angle) * (tR! + 2);
+                    const radius = tR || ((target as Note).type === 'hub' ? ORB_RADIUS_HUB : ORB_RADIUS_DEFAULT);
+                    endPoint.x = targetCenter.x + Math.cos(angle) * (radius + 2);
+                    endPoint.y = targetCenter.y + Math.sin(angle) * (radius + 2);
+                } else {
+                    endPoint = getRectIntersection(targetCenter.x, targetCenter.y, tW, tH, sourceCenter.x, sourceCenter.y);
                 }
 
                 // Control Points & Midpoint
-                let controlX, controlY, midPoint, tangentX, tangentY;
+                let controlX, controlY, midPoint;
 
                 if (isStraight) {
                     controlX = (startPoint.x + endPoint.x) / 2;
                     controlY = (startPoint.y + endPoint.y) / 2;
                     midPoint = { x: controlX, y: controlY };
-
-                    // Tangent for straight line is the line itself
-                    tangentX = endPoint.x - startPoint.x;
-                    tangentY = endPoint.y - startPoint.y;
-
                 } else {
-                    // Curved Logic
                     const dx = endPoint.x - startPoint.x;
                     const dy = endPoint.y - startPoint.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -204,18 +232,16 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
                     controlY = (startPoint.y + endPoint.y) / 2 - dx / distance * curvature;
 
                     midPoint = getBezierPoint(0.5, startPoint, { x: controlX, y: controlY }, endPoint);
-
-                    // Tangent at end for arrow: 2(P2 - P1)
-                    tangentX = endPoint.x - controlX;
-                    tangentY = endPoint.y - controlY;
                 }
 
-                // Arrow Angle (Used for manual head in previous iteration, relying on Konva Arrow component now)
-
-                // Points array depends on shape.
+                // Points array
                 const points = isStraight
                     ? [startPoint.x, startPoint.y, endPoint.x, endPoint.y]
                     : [startPoint.x, startPoint.y, controlX, controlY, endPoint.x, endPoint.y];
+
+                const isClusterLink = isSourceCluster || isTargetCluster;
+                const baseStroke = isClusterLink ? 4 : 1.5;
+                const hoverStroke = isClusterLink ? 6 : 2.5;
 
                 return (
                     <React.Fragment key={link.id}>
@@ -241,7 +267,7 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
                             <Line
                                 points={points}
                                 stroke={linkColor}
-                                strokeWidth={6}
+                                strokeWidth={hoverStroke * 2}
                                 opacity={0.3}
                                 tension={isStraight ? 0 : 0.5}
                                 bezier={!isStraight}
@@ -249,7 +275,7 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
                             />
                         )}
 
-                        {/* Main Link & Arrow using single component */}
+                        {/* Main Link & Arrow */}
                         <Arrow
                             name="animated-link"
                             points={points}
@@ -257,9 +283,9 @@ export const LinkLayer: React.FC<Props> = ({ notes, links, onLinkContextMenu, sc
                             pointerAtEnding={showEndArrow}
                             fill={linkColor}
                             stroke={linkColor}
-                            strokeWidth={isHovered ? 2.5 : 1.5}
-                            pointerLength={10}
-                            pointerWidth={10}
+                            strokeWidth={isHovered ? hoverStroke : baseStroke}
+                            pointerLength={isClusterLink ? 15 : 10}
+                            pointerWidth={isClusterLink ? 15 : 10}
                             tension={isStraight ? 0 : 0.5}
                             bezier={!isStraight}
                             opacity={isHovered ? 1 : 0.9}

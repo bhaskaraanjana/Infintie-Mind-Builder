@@ -180,7 +180,7 @@ export const useStore = create<AppState>((set, get) => ({
 
         // Sync deletions to cloud
         ids.forEach(id => {
-            firebaseSyncService.deleteNote(id);
+            syncService.deleteNote(id);
         });
     },
     updateNotesPosition: async (updates) => {
@@ -204,9 +204,9 @@ export const useStore = create<AppState>((set, get) => ({
         await Promise.all(dbUpdates.map(u => db.notes.update(u.key, u.changes)));
 
         // Sync to cloud (debounced usually, but explicit here)
-        updates.forEach(({ id, x, y }) => {
+        updates.forEach(({ id }) => {
             const note = get().notes[id];
-            if (note) firebaseSyncService.saveNote(note);
+            if (note) syncService.syncNote(note);
         });
     },
 
@@ -276,6 +276,13 @@ export const useStore = create<AppState>((set, get) => ({
 
         const updatedNote = { ...note, ...updates, modified: Date.now() };
 
+        // Remove undefined fields to prevent Firebase errors
+        Object.keys(updates).forEach(key => {
+            if (updates[key as keyof Note] === undefined) {
+                delete (updatedNote as any)[key];
+            }
+        });
+
         // If content changed, parse references and sync
         if (updates.content !== undefined) {
             const { parseReferences } = await import('./referenceParser');
@@ -284,8 +291,10 @@ export const useStore = create<AppState>((set, get) => ({
             const oldReferences = note.references || [];
             const newReferences = parseReferences(updatedNote.content, get().notes);
 
+            updatedNote.references = newReferences;
+
             set(state => ({
-                notes: { ...state.notes, [id]: { ...updatedNote, references: newReferences } }
+                notes: { ...state.notes, [id]: updatedNote }
             }));
 
             // Sync links bidirectionally
@@ -298,12 +307,19 @@ export const useStore = create<AppState>((set, get) => ({
                 get().deleteLink
             );
 
-            await db.notes.update(id, { ...updatedNote, references: newReferences });
+            await db.notes.update(id, updatedNote);
         } else {
             set(state => ({
                 notes: { ...state.notes, [id]: updatedNote }
             }));
             await db.notes.update(id, updatedNote);
+        }
+
+        // Sync to cloud
+        try {
+            await syncService.syncNote(updatedNote);
+        } catch (error) {
+            console.error('Failed to sync note update:', error);
         }
     },
 
@@ -392,7 +408,8 @@ export const useStore = create<AppState>((set, get) => ({
             x: centerX,
             y: centerY,
             children: noteIds,
-            color: '#FFD700'
+            color: '#FFD700',
+            modified: Date.now()
         };
 
         set(state => {
@@ -427,6 +444,10 @@ export const useStore = create<AppState>((set, get) => ({
 
         const childrenIds = cluster.children;
 
+        // Find links connected to this cluster
+        const links = get().links;
+        const linksToDelete = Object.values(links).filter(l => l.sourceId === id || l.targetId === id);
+
         set(state => {
             const updatedNotes = { ...state.notes };
             childrenIds.forEach(childId => {
@@ -437,20 +458,30 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             const { [id]: deleted, ...restClusters } = state.clusters;
+
+            // Remove connections
+            const updatedLinks = { ...state.links };
+            linksToDelete.forEach(l => delete updatedLinks[l.id]);
+
             return {
                 notes: updatedNotes,
-                clusters: restClusters
+                clusters: restClusters,
+                links: updatedLinks
             };
         });
 
         await db.clusters.delete(id);
         await Promise.all(childrenIds.map(childId => db.notes.update(childId, { clusterId: undefined })));
+        await Promise.all(linksToDelete.map(l => db.links.delete(l.id)));
 
         try {
             await syncService.deleteCluster(id);
             for (const childId of childrenIds) {
                 const note = get().notes[childId];
                 if (note) await syncService.syncNote(note);
+            }
+            for (const link of linksToDelete) {
+                await syncService.deleteLink(link.id);
             }
         } catch (error) {
             console.error('Failed to sync cluster deletion:', error);
@@ -565,10 +596,20 @@ export const useStore = create<AppState>((set, get) => ({
             };
         });
 
-        db.clusters.update(id, { x, y });
+        db.clusters.update(id, { x, y, modified: Date.now() }); // Update modified in DB
         cluster.children.forEach(childId => {
             const note = get().notes[childId];
-            if (note) db.notes.update(childId, { x: note.x, y: note.y });
+            if (note) db.notes.update(childId, { x: note.x, y: note.y, modified: Date.now() }); // Update note timestamp too
+        });
+
+        // Sync Cluster Move
+        const updatedCluster = get().clusters[id];
+        if (updatedCluster) syncService.syncCluster(updatedCluster);
+
+        // Sync Child Notes Moves
+        cluster.children.forEach(childId => {
+            const note = get().notes[childId];
+            if (note) syncService.syncNote(note);
         });
     },
 
@@ -576,7 +617,7 @@ export const useStore = create<AppState>((set, get) => ({
         const cluster = get().clusters[id];
         if (!cluster) return;
 
-        const updatedCluster = { ...cluster, ...updates };
+        const updatedCluster = { ...cluster, ...updates, modified: Date.now() };
 
         set(state => ({
             clusters: { ...state.clusters, [id]: updatedCluster }
@@ -596,12 +637,21 @@ export const useStore = create<AppState>((set, get) => ({
     addLink: async (sourceId, targetId) => {
         if (sourceId === targetId) return;
 
-        const links = Object.values(get().links);
+        const state = get();
+        const links = Object.values(state.links);
         const exists = links.some(l =>
             (l.sourceId === sourceId && l.targetId === targetId) ||
             (l.sourceId === targetId && l.targetId === sourceId)
         );
         if (exists) return;
+
+        const sourceNote = state.notes[sourceId];
+        const targetNote = state.notes[targetId];
+        const sourceCluster = state.clusters[sourceId];
+        const targetCluster = state.clusters[targetId];
+
+        // Validation: Source and Target must exist (as Note or Cluster)
+        if ((!sourceNote && !sourceCluster) || (!targetNote && !targetCluster)) return;
 
         const newLink: Link = {
             id: uuidv4(),
@@ -610,41 +660,37 @@ export const useStore = create<AppState>((set, get) => ({
             type: 'related',
             style: 'dashed',
             shape: 'straight',
-            arrowDirection: 'none'
+            arrowDirection: 'none',
+            modified: Date.now()
         };
 
-        // Update references in both notes
-        const notes = get().notes;
-        const sourceNote = notes[sourceId];
-        const targetNote = notes[targetId];
+        const notesUpdates: Record<string, Note> = {};
 
-        if (!sourceNote || !targetNote) return;
-
-        const sourceRefs = [...(sourceNote.references || [])];
-        const targetRefs = [...(targetNote.references || [])];
-
-        if (!sourceRefs.includes(targetId)) sourceRefs.push(targetId);
-        if (!targetRefs.includes(sourceId)) targetRefs.push(sourceId);
+        // Only update references for Notes
+        if (sourceNote) {
+            const refs = [...(sourceNote.references || [])];
+            if (!refs.includes(targetId)) refs.push(targetId);
+            notesUpdates[sourceId] = { ...sourceNote, references: refs };
+        }
+        if (targetNote) {
+            const refs = [...(targetNote.references || [])];
+            if (!refs.includes(sourceId)) refs.push(sourceId);
+            notesUpdates[targetId] = { ...targetNote, references: refs };
+        }
 
         set(state => ({
             links: { ...state.links, [newLink.id]: newLink },
-            notes: {
-                ...state.notes,
-                [sourceId]: { ...sourceNote, references: sourceRefs },
-                [targetId]: { ...targetNote, references: targetRefs }
-            }
+            notes: { ...state.notes, ...notesUpdates }
         }));
 
         await db.links.add(newLink);
-        await db.notes.update(sourceId, { references: sourceRefs });
-        await db.notes.update(targetId, { references: targetRefs });
+        if (sourceNote) await db.notes.update(sourceId, { references: notesUpdates[sourceId].references });
+        if (targetNote) await db.notes.update(targetId, { references: notesUpdates[targetId].references });
 
         try {
             await syncService.syncLink(newLink);
-            const sNote = get().notes[sourceId];
-            const tNote = get().notes[targetId];
-            if (sNote) await syncService.syncNote(sNote);
-            if (tNote) await syncService.syncNote(tNote);
+            if (sourceNote) await syncService.syncNote(notesUpdates[sourceId]);
+            if (targetNote) await syncService.syncNote(notesUpdates[targetId]);
         } catch (error) {
             console.error('Failed to sync new link:', error);
         }
@@ -704,7 +750,7 @@ export const useStore = create<AppState>((set, get) => ({
         const link = get().links[id];
         if (!link) return;
 
-        const updatedLink = { ...link, ...updates };
+        const updatedLink = { ...link, ...updates, modified: Date.now() };
 
         set(state => ({
             links: { ...state.links, [id]: updatedLink }
@@ -740,6 +786,16 @@ export const useStore = create<AppState>((set, get) => ({
         }
 
         await db.notes.bulkPut(newNotes);
+
+        // Sync generated notes
+        try {
+            for (const note of newNotes) {
+                await syncService.syncNote(note);
+            }
+        } catch (error) {
+            console.error('Failed to sync generated notes:', error);
+        }
+
         get().loadData();
     },
 
@@ -785,9 +841,30 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             // Save to database
-            // Save to IndexedDB`r`n            if (notes) {`r`n                Object.values(notes).forEach((note: any) => db.notes.put(note));`r`n            }`r`n            if (clusters) {`r`n                Object.values(clusters).forEach((cluster: any) => db.clusters.put(cluster));`r`n            }`r`n            if (links) {`r`n                Object.values(links).forEach((link: any) => db.links.put(link));`r`n            }
+            // Save to IndexedDB
+            if (notes) {
+                Object.values(notes).forEach((note: any) => db.notes.put(note));
+            }
+            if (clusters) {
+                Object.values(clusters).forEach((cluster: any) => db.clusters.put(cluster));
+            }
+            if (links) {
+                Object.values(links).forEach((link: any) => db.links.put(link));
+            }
 
-            return { success: true, message: 'Data imported successfully!' };
+            // Trigger Sync for imported data
+            (async () => {
+                try {
+                    if (notes) for (const note of Object.values(notes) as Note[]) await syncService.syncNote(note);
+                    if (clusters) for (const cluster of Object.values(clusters) as Cluster[]) await syncService.syncCluster(cluster);
+                    if (links) for (const link of Object.values(links) as Link[]) await syncService.syncLink(link);
+                    console.log('✅ Imported data synced to cloud');
+                } catch (e) {
+                    console.error('Failed to sync imported data:', e);
+                }
+            })();
+
+            return { success: true, message: 'Data imported successfully! Syncing to cloud...' };
         } catch (error) {
             console.error('Import error:', error);
             return {
@@ -816,9 +893,16 @@ export const useStore = create<AppState>((set, get) => ({
                 console.log('📝 Notes updated from cloud:', Object.keys(cloudNotes).length);
                 set(state => {
                     const mergedNotes = { ...state.notes };
+
+                    // Handle Deletions: If in local but not in cloud, delete it
+                    Object.keys(mergedNotes).forEach(id => {
+                        if (!cloudNotes[id]) delete mergedNotes[id];
+                    });
+
+                    // Handle Updates: Last-Write-Wins
                     Object.entries(cloudNotes).forEach(([id, cloudNote]) => {
                         const localNote = mergedNotes[id];
-                        if (!localNote || cloudNote.modified >= localNote.modified) {
+                        if (!localNote || (cloudNote.modified || 0) >= (localNote.modified || 0)) {
                             mergedNotes[id] = cloudNote;
                         }
                     });
@@ -827,16 +911,48 @@ export const useStore = create<AppState>((set, get) => ({
                 Object.values(cloudNotes).forEach(note => db.notes.put(note));
             });
 
-            syncService.onClustersChanged((clusters) => {
-                console.log('📦 Clusters updated from cloud:', Object.keys(clusters).length);
-                set({ clusters });
-                Object.values(clusters).forEach(cluster => db.clusters.put(cluster));
+            syncService.onClustersChanged((cloudClusters) => {
+                console.log('📦 Clusters updated from cloud:', Object.keys(cloudClusters).length);
+                set(state => {
+                    const mergedClusters = { ...state.clusters };
+
+                    // Handle Deletions
+                    Object.keys(mergedClusters).forEach(id => {
+                        if (!cloudClusters[id]) delete mergedClusters[id];
+                    });
+
+                    // Handle Updates
+                    Object.entries(cloudClusters).forEach(([id, cloudCluster]) => {
+                        const localCluster = mergedClusters[id];
+                        if (!localCluster || (cloudCluster.modified || 0) >= (localCluster.modified || 0)) {
+                            mergedClusters[id] = cloudCluster;
+                        }
+                    });
+                    return { clusters: mergedClusters };
+                });
+                Object.values(cloudClusters).forEach(cluster => db.clusters.put(cluster));
             });
 
-            syncService.onLinksChanged((links) => {
-                console.log('🔗 Links updated from cloud:', Object.keys(links).length);
-                set({ links });
-                Object.values(links).forEach(link => db.links.put(link));
+            syncService.onLinksChanged((cloudLinks) => {
+                console.log('🔗 Links updated from cloud:', Object.keys(cloudLinks).length);
+                set(state => {
+                    const mergedLinks = { ...state.links };
+
+                    // Handle Deletions
+                    Object.keys(mergedLinks).forEach(id => {
+                        if (!cloudLinks[id]) delete mergedLinks[id];
+                    });
+
+                    // Handle Updates
+                    Object.entries(cloudLinks).forEach(([id, cloudLink]) => {
+                        const localLink = mergedLinks[id];
+                        if (!localLink || (cloudLink.modified || 0) >= (localLink.modified || 0)) {
+                            mergedLinks[id] = cloudLink;
+                        }
+                    });
+                    return { links: mergedLinks };
+                });
+                Object.values(cloudLinks).forEach(link => db.links.put(link));
             });
 
             console.log('✅ Cloud sync initialized');

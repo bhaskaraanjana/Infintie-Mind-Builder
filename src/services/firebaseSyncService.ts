@@ -35,8 +35,7 @@ class FirebaseSyncService implements SyncService {
 
         const noteRef = doc(firestore, 'users', this.userId, 'notes', note.id);
         await setDoc(noteRef, {
-            ...note,
-            modified: Date.now()
+            ...note
         }, { merge: true });
     }
 

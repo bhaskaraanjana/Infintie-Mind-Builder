@@ -437,6 +437,11 @@ export const InfiniteCanvas = () => {
             });
 
             options.push({
+                label: 'Link to Cluster',
+                action: () => setLinkingSourceId(clusterId)
+            });
+
+            options.push({
                 label: 'Change Color',
                 submenu: [
                     { label: 'Gold', action: () => updateCluster(clusterId, { color: '#FFD700' }) },
@@ -490,12 +495,17 @@ export const InfiniteCanvas = () => {
         if (e.evt.shiftKey) {
             const target = e.target;
             const noteGroup = target.findAncestor((node: any) => node.name() && node.name().startsWith('note-'));
+            const clusterGroup = target.findAncestor((node: any) => node.name() && node.name().startsWith('cluster-'));
+
             if (noteGroup) {
                 const noteId = noteGroup.name().replace('note-', '');
                 setLinkingSourceId(noteId);
-
                 // Prevent dragging the note
                 noteGroup.draggable(false);
+            } else if (clusterGroup) {
+                const clusterId = clusterGroup.name().replace('cluster-', '');
+                setLinkingSourceId(clusterId);
+                clusterGroup.draggable(false);
             }
         }
     };
@@ -518,26 +528,35 @@ export const InfiniteCanvas = () => {
         if (linkingSourceId) {
             const target = e.target;
             const noteGroup = target.findAncestor((node: any) => node.name() && node.name().startsWith('note-'));
+            const clusterGroup = target.findAncestor((node: any) => node.name() && node.name().startsWith('cluster-'));
 
+            let targetId: string | null = null;
             if (noteGroup) {
-                const targetId = noteGroup.name().replace('note-', '');
-                if (linkingIdRef.current && targetId !== linkingIdRef.current) {
-                    addLink(linkingIdRef.current, targetId);
-                    triggerHaptic('success');
-                    linkingIdRef.current = null; // Prevent double firing
-                }
+                targetId = noteGroup.name().replace('note-', '');
+            } else if (clusterGroup) {
+                targetId = clusterGroup.name().replace('cluster-', '');
             }
+
+            if (targetId && targetId !== linkingSourceId) { // Check against current ID
+                addLink(linkingSourceId, targetId);
+                triggerHaptic('success');
+            }
+            // Reset Ref
+            linkingIdRef.current = null;
 
             // Reset draggable
             const stage = stageRef.current;
             const sourceNode = stage.findOne(`.note-${linkingSourceId}`);
-            if (sourceNode) {
-                sourceNode.draggable(true);
-            }
+            if (sourceNode) sourceNode.draggable(true);
+            const sourceCluster = stage.findOne(`.cluster-${linkingSourceId}`);
+            if (sourceCluster) sourceCluster.draggable(true);
 
             // Also try finding by name directly if class selector fails
             const sourceGroup = stage.findOne((n: any) => n.name() === `note-${linkingSourceId}`);
             if (sourceGroup) sourceGroup.draggable(true);
+            const sourceClusterGroup = stage.findOne((n: any) => n.name() === `cluster-${linkingSourceId}`);
+            if (sourceClusterGroup) sourceClusterGroup.draggable(true);
+
 
             setLinkingSourceId(null);
             setMousePos(null);
@@ -915,13 +934,19 @@ export const InfiniteCanvas = () => {
                         />
                     ))}
 
-                    <LinkLayer notes={notes} links={links} onLinkContextMenu={handleLinkContextMenu} scale={viewport.scale} />
+                    <LinkLayer
+                        notes={notes}
+                        clusters={clusters}
+                        links={links}
+                        onLinkContextMenu={handleLinkContextMenu}
+                        scale={viewport.scale}
+                    />
 
-                    {linkingSourceId && mousePos && notes[linkingSourceId] && (
+                    {linkingSourceId && mousePos && (notes[linkingSourceId] || clusters[linkingSourceId]) && (
                         <Line
                             points={[
-                                notes[linkingSourceId].x,
-                                notes[linkingSourceId].y,
+                                notes[linkingSourceId]?.x || clusters[linkingSourceId]?.x,
+                                notes[linkingSourceId]?.y || clusters[linkingSourceId]?.y,
                                 mousePos.x,
                                 mousePos.y
                             ]}

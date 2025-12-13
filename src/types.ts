@@ -24,6 +24,7 @@ export interface Cluster {
     y: number;
     children: string[]; // Note IDs
     color: string;
+    modified: number;
 }
 
 export interface Link {
@@ -36,6 +37,7 @@ export interface Link {
     style?: 'solid' | 'dashed' | 'dotted';
     shape?: 'curved' | 'straight';
     arrowDirection?: 'forward' | 'reverse' | 'none';
+    modified: number;
 }
 
 export interface ViewportState {

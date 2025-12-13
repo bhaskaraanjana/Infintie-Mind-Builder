@@ -26,7 +26,7 @@ export const syncBidirectionalReferences = async (
     // Add new links
     for (const targetId of toAdd) {
         if (notes[targetId]) {
-            await addLink(noteId, targetId);
+            await addLink(targetId, noteId);
         }
     }
 

@@ -36,6 +36,7 @@ const DraggableEditorContent = ({
     removeSource,
     isSaving,
     lastSaved,
+    editingNoteId,
     setEditingNoteId,
     viewportHeight,
     keyboardOpen
@@ -125,6 +126,7 @@ const DraggableEditorContent = ({
 
             <div className={styles.contentArea}>
                 <RichTextEditor
+                    key={editingNoteId}
                     content={content}
                     onChange={setContent}
                     onStatsChange={setEditorStats}
@@ -327,7 +329,7 @@ export const NoteEditor = () => {
                 content,
                 tags: noteTags,
                 type,
-                source: type === 'literature' ? source : undefined
+                source: type === 'literature' ? (sources[0] || '') : undefined
             });
         }
         setEditingNoteId(null);
@@ -418,6 +420,7 @@ export const NoteEditor = () => {
             isSaving={isSaving}
             lastSaved={lastSaved}
             setEditingNoteId={setEditingNoteId}
+            editingNoteId={editingNoteId}
             viewportHeight={viewportHeight}
             keyboardOpen={keyboardOpen}
         />

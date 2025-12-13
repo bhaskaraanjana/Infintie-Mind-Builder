@@ -1,5 +1,7 @@
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Mention from '@tiptap/extension-mention';
+import suggestion from './components/extensions/mentionSuggestion';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { createLowlight, all } from 'lowlight';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -86,6 +88,22 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             TableRow,
             TableCell,
             TableHeader,
+            Mention.configure({
+                HTMLAttributes: {
+                    class: 'mention',
+                },
+                suggestion: {
+                    ...suggestion,
+                    command: ({ editor, range, props }: any) => {
+                        const title = props.id || props.label;
+                        editor
+                            .chain()
+                            .focus()
+                            .insertContentAt(range, `[[${title}]] `)
+                            .run();
+                    },
+                },
+            }),
         ],
         content: content,
         editable: editable,
@@ -104,7 +122,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             attributes: {
                 class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[200px] p-4 ${isExpanded ? 'max-w-none' : ''}`,
             },
-            handleDrop: (view, event, slice, moved) => {
+            handleDrop: (view, event, _slice, moved) => {
                 if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
                     const files = Array.from(event.dataTransfer.files);
                     const images = files.filter(file => file.type.startsWith('image/'));
