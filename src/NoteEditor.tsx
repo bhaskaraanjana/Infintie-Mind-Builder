@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useStore } from './store';
 import { X, Trash2, Maximize2, Minimize2, GripHorizontal } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
@@ -91,7 +91,7 @@ const DraggableEditorContent = ({
                     </button>
                     {!isExpanded && (
                         <button
-                            onClick={() => setEditingNoteId(null)}
+                            onClick={handleSave}
                             className={styles.iconButton}
                             title="Close"
                         >
@@ -264,6 +264,14 @@ export const NoteEditor = () => {
     const [viewportHeight, setViewportHeight] = useState(window.visualViewport?.height || window.innerHeight);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
 
+    // REFS to hold latest state for unmount saving (The "Safety Net")
+    const noteStateRef = useRef({ title, content, noteTags, type, sources });
+
+    // Update refs whenever state changes
+    useEffect(() => {
+        noteStateRef.current = { title, content, noteTags, type, sources };
+    }, [title, content, noteTags, type, sources]);
+
     useEffect(() => {
         if (!window.visualViewport) return;
 
@@ -271,21 +279,16 @@ export const NoteEditor = () => {
             const currentHeight = window.visualViewport?.height || window.innerHeight;
             setViewportHeight(currentHeight);
             setKeyboardOpen(currentHeight < window.innerHeight * 0.85); // Threshold for keyboard detection
-
-            // If editing and keyboard opens, ensure editor is visible
-            if (editingNoteId && currentHeight < window.innerHeight) {
-                // Optional: scroll into view or adjust position
-            }
         };
 
         window.visualViewport.addEventListener('resize', handleResize);
-        window.visualViewport.addEventListener('scroll', handleResize); // IOS sometimes fires scroll
+        window.visualViewport.addEventListener('scroll', handleResize);
 
         return () => {
             window.visualViewport?.removeEventListener('resize', handleResize);
             window.visualViewport?.removeEventListener('scroll', handleResize);
         };
-    }, [editingNoteId]);
+    }, []);
 
     useEffect(() => {
         if (note) {
@@ -293,45 +296,70 @@ export const NoteEditor = () => {
             setContent(note.content || '');
             setNoteTags(note.tags || []);
             setType(note.type);
-            // Initialize sources: prefer 'sources', fallback to 'source' legacy, or empty
             setSources(note.sources || (note.source ? [note.source] : []));
         }
     }, [editingNoteId, note]);
 
-    // Autosave with 2-second debounce
+    // Autosave State
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+    // Unified Save Function (Reads from Refs for safety)
+    const saveChanges = useCallback(() => {
+        if (!editingNoteId) return;
+
+        const current = noteStateRef.current;
+        console.log('💾 Saving note:', editingNoteId);
+
+        updateNote(editingNoteId, {
+            title: current.title,
+            content: current.content,
+            tags: current.noteTags,
+            type: current.type,
+            sources: current.type === 'literature' ? current.sources : undefined,
+            source: current.type === 'literature' ? (current.sources[0] || '') : undefined
+        });
+        setLastSaved(new Date());
+    }, [editingNoteId, updateNote]);
+
+    // Autosave Effect (500ms Debounce)
     useEffect(() => {
         if (!editingNoteId) return;
 
         setIsSaving(true);
         const timer = setTimeout(() => {
-            updateNote(editingNoteId, {
-                title,
-                content,
-                tags: noteTags,
-                type,
-                sources: type === 'literature' ? sources : undefined,
-                source: type === 'literature' ? (sources[0] || '') : undefined // Legacy sync
-            });
+            saveChanges();
             setIsSaving(false);
-            setLastSaved(new Date());
-        }, 2000);
+        }, 500); // Faster feedback
 
         return () => clearTimeout(timer);
-    }, [title, content, noteTags, type, sources, editingNoteId, updateNote]);
+    }, [title, content, noteTags, type, sources, editingNoteId, saveChanges]);
+
+    // Unmount / Close Protection
+    useEffect(() => {
+        return () => {
+            if (editingNoteId) {
+                console.log('🚪 Editor closing/unmounting, forcing save...');
+                // We MUST call the save logic here. 
+                // However, we cannot call 'saveChanges' directly if it's in the dependency array
+                // because that would trigger this effect constantly.
+                // Instead, we implement the save logic directly reading from the Ref.
+
+                const current = noteStateRef.current;
+                useStore.getState().updateNote(editingNoteId, {
+                    title: current.title,
+                    content: current.content,
+                    tags: current.noteTags,
+                    type: current.type,
+                    sources: current.type === 'literature' ? current.sources : undefined,
+                    source: current.type === 'literature' ? (current.sources[0] || '') : undefined
+                });
+            }
+        };
+    }, [editingNoteId]); // Only re-bind when the Note ID changes (switching notes)
 
     const handleSave = () => {
-        if (editingNoteId) {
-            updateNote(editingNoteId, {
-                title,
-                content,
-                tags: noteTags,
-                type,
-                source: type === 'literature' ? (sources[0] || '') : undefined
-            });
-        }
+        saveChanges();
         setEditingNoteId(null);
         setIsExpanded(false);
     };
