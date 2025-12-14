@@ -51,8 +51,9 @@ function App() {
         if (user) {
             (async () => {
                 await initializeSync(user.uid);
-                // After sync is initialized, reconcile any local changes
-                await reconcileWithCloud();
+                // DISABLED: reconcileWithCloud blindly pushes local data, causing resurrection of deleted notes.
+                // We rely on 'onSnapshot' to sync state first.
+                // await reconcileWithCloud();
             })();
         }
 

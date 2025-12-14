@@ -6,7 +6,8 @@ import {
     deleteDoc,
     onSnapshot,
     query,
-    getDocs
+    getDocs,
+    getDoc
 } from 'firebase/firestore';
 import { firestore } from '../firebase';
 import type { SyncService } from './syncService';
@@ -19,6 +20,15 @@ class FirebaseSyncService implements SyncService {
     async initialize(userId: string): Promise<void> {
         this.userId = userId;
         console.log('🔄 Sync service initialized for user:', userId);
+
+        // Ensure metadata tombstone exists so we know this account is active/used.
+        // This prevents other devices from treating an empty cloud as a "Fresh Account" after we delete everything.
+        try {
+            const metadataRef = doc(firestore, 'users', userId, 'metadata', 'sync');
+            await setDoc(metadataRef, { lastSeen: Date.now() }, { merge: true });
+        } catch (e) {
+            console.error('Failed to update sync metadata:', e);
+        }
     }
 
     cleanup(): void {
@@ -44,6 +54,11 @@ class FirebaseSyncService implements SyncService {
 
         const noteRef = doc(firestore, 'users', this.userId, 'notes', noteId);
         await deleteDoc(noteRef);
+
+        // Ensure tombstone exists (critical if this was the last note)
+        const metadataRef = doc(firestore, 'users', this.userId, 'metadata', 'sync');
+        // We use setDoc mostly to ensure existence, not specific content
+        setDoc(metadataRef, { lastDelete: Date.now() }, { merge: true }).catch(console.error);
     }
 
     onNotesChanged(callback: (notes: Record<string, Note>) => void): () => void {
@@ -142,21 +157,47 @@ class FirebaseSyncService implements SyncService {
 
         console.log('🔄 Checking if migration needed...');
 
-        // Check if cloud already has data
+        // 1. Check for Sync Metadata (The "Account Used Before" Flag)
+        const metadataRef = doc(firestore, 'users', this.userId, 'metadata', 'sync');
+        const metadataSnap = await getDoc(metadataRef);
+
+        // 2. Check if cloud has actual data
         const notesRef = collection(firestore, 'users', this.userId, 'notes');
-        const snapshot = await getDocs(notesRef);
+        const notesSnap = await getDocs(notesRef);
 
-        if (!snapshot.empty) {
+        const hasCloudData = !notesSnap.empty;
+        const hasMetadata = metadataSnap.exists();
+
+        console.log(`🔍 [Migration Check] Metadata: ${hasMetadata}, CloudData: ${hasCloudData}, LocalNotes: ${localNotes.length}`);
+
+        // Case A: Account was used before (metadata exists) but is empty (notesSnap empty).
+        // This implies the user explicitly deleted everything.
+        // We should NOT upload local data (which would "resurrect" it).
+        if (hasMetadata && !hasCloudData) {
+            console.log('⚠️ Metadata exists but cloud is empty. Respecting deletion state.');
+            return; // Exit. The subsequent sync listeners will wipe local data to match the empty cloud.
+        }
+
+        // Case B: Cloud has data.
+        if (hasCloudData) {
             console.log('✅ Cloud already has data, skipping migration');
+            // Ensure metadata exists for future
+            if (!hasMetadata) await setDoc(metadataRef, { created: Date.now() });
             return;
         }
 
-        if (localNotes.length === 0) {
+        // Case C: Fresh Account (No Metadata, No Data).
+        // Safe to migrate local data up.
+        if (localNotes.length === 0 && localClusters.length === 0 && localLinks.length === 0) {
             console.log('✅ No local data to migrate');
+            if (!hasMetadata) await setDoc(metadataRef, { created: Date.now() });
             return;
         }
 
-        console.log(`🚀 Migrating ${localNotes.length} notes, ${localClusters.length} clusters, ${localLinks.length} links...`);
+        console.log(`🚀 Fresh Account detected. Migrating ${localNotes.length} items...`);
+
+        // Mark account as initialized
+        await setDoc(metadataRef, { created: Date.now() });
 
         // Migrate notes
         for (const note of localNotes) {

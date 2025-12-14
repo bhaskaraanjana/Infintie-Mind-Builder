@@ -327,6 +327,21 @@ export const DebugMenu: React.FC = () => {
                                                     await syncService.deleteLink(link.id);
                                                 }
 
+                                                // Force Tombstone for safety (Ensure "Legacy Cleared" state is avoided)
+                                                try {
+                                                    const { firestore } = await import('./firebase');
+                                                    const { doc, setDoc } = await import('firebase/firestore');
+                                                    if (user?.uid) {
+                                                        await setDoc(doc(firestore, 'users', user.uid, 'metadata', 'sync'), {
+                                                            lastDelete: Date.now(),
+                                                            cleanWipe: true
+                                                        }, { merge: true });
+                                                        console.log('✅ Tombstone set');
+                                                    }
+                                                } catch (e) {
+                                                    console.error('Failed to set tombstone:', e);
+                                                }
+
                                                 // Clear local
                                                 useStore.setState({ notes: {}, clusters: {}, links: {} });
                                                 const { db } = await import('./db');

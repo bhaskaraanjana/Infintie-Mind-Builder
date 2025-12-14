@@ -891,6 +891,18 @@ export const useStore = create<AppState>((set, get) => ({
 
             syncService.onNotesChanged((cloudNotes) => {
                 console.log('📝 Notes updated from cloud:', Object.keys(cloudNotes).length);
+
+                // Identify and Delete items missing from cloud (Zombie killer)
+                const currentNotes = get().notes;
+                const cloudIds = new Set(Object.keys(cloudNotes));
+                const localIds = Object.keys(currentNotes);
+                const deletedIds = localIds.filter(id => !cloudIds.has(id));
+
+                if (deletedIds.length > 0) {
+                    console.log('🗑️ Syncing note deletions to DB:', deletedIds.length);
+                    db.notes.bulkDelete(deletedIds);
+                }
+
                 set(state => {
                     const mergedNotes = { ...state.notes };
 
@@ -908,11 +920,25 @@ export const useStore = create<AppState>((set, get) => ({
                     });
                     return { notes: mergedNotes };
                 });
+
+                // Update DB with latest cloud data
                 Object.values(cloudNotes).forEach(note => db.notes.put(note));
             });
 
             syncService.onClustersChanged((cloudClusters) => {
                 console.log('📦 Clusters updated from cloud:', Object.keys(cloudClusters).length);
+
+                // Identify and Delete items missing from cloud
+                const currentClusters = get().clusters;
+                const cloudIds = new Set(Object.keys(cloudClusters));
+                const localIds = Object.keys(currentClusters);
+                const deletedIds = localIds.filter(id => !cloudIds.has(id));
+
+                if (deletedIds.length > 0) {
+                    console.log('🗑️ Syncing cluster deletions to DB:', deletedIds.length);
+                    db.clusters.bulkDelete(deletedIds);
+                }
+
                 set(state => {
                     const mergedClusters = { ...state.clusters };
 
@@ -935,6 +961,18 @@ export const useStore = create<AppState>((set, get) => ({
 
             syncService.onLinksChanged((cloudLinks) => {
                 console.log('🔗 Links updated from cloud:', Object.keys(cloudLinks).length);
+
+                // Identify and Delete items missing from cloud
+                const currentLinks = get().links;
+                const cloudIds = new Set(Object.keys(cloudLinks));
+                const localIds = Object.keys(currentLinks);
+                const deletedIds = localIds.filter(id => !cloudIds.has(id));
+
+                if (deletedIds.length > 0) {
+                    console.log('🗑️ Syncing link deletions to DB:', deletedIds.length);
+                    db.links.bulkDelete(deletedIds);
+                }
+
                 set(state => {
                     const mergedLinks = { ...state.links };
 
@@ -956,10 +994,10 @@ export const useStore = create<AppState>((set, get) => ({
             });
 
             console.log('✅ Cloud sync initialized');
+            set({ syncing: false });
         } catch (error) {
             console.error('❌ Error initializing sync:', error);
-        } finally {
-            set({ syncing: false });
+            set({ syncing: false }); // Allow app to open even if sync fails
         }
     },
 
