@@ -336,9 +336,10 @@ export const useStore = create<AppState>((set, get) => ({
             if (syncTimers[id]) clearTimeout(syncTimers[id]);
             await doCloudSync();
         } else {
-            // Debounce: Reset timer on every keystroke
-            if (syncTimers[id]) clearTimeout(syncTimers[id]);
-            syncTimers[id] = setTimeout(doCloudSync, 5000); // 5s Cloud Delay
+            // Throttle: If timer exists, let it run. It will pick up latest changes.
+            if (!syncTimers[id]) {
+                syncTimers[id] = setTimeout(doCloudSync, 5000);
+            }
         }
     },
 
