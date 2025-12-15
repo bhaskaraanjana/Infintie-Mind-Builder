@@ -5,6 +5,9 @@ import { db } from './db';
 import { type ThemeName } from './themes';
 import { syncService } from './services/firebaseSyncService';
 
+// Module-level throttle timers
+const syncTimers: Record<string, any> = {};
+
 interface AppState {
     notes: Record<string, Note>;
     clusters: Record<string, Cluster>;
@@ -52,7 +55,8 @@ interface AppState {
     // Actions
     loadData: () => Promise<void>;
     addNote: (note: Omit<Note, 'id' | 'created' | 'modified'>) => Promise<void>;
-    updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+    updateNote: (id: string, updates: Partial<Note>, options?: { immediate?: boolean }) => Promise<void>;
+
     deleteNote: (id: string) => Promise<void>;
     updateNotePosition: (id: string, x: number, y: number) => void;
 
@@ -270,7 +274,7 @@ export const useStore = create<AppState>((set, get) => ({
         await db.notes.add(newNote);
     },
 
-    updateNote: async (id, updates) => {
+    updateNote: async (id, updates, options = {}) => {
         const note = get().notes[id];
         if (!note) return;
 
@@ -315,11 +319,26 @@ export const useStore = create<AppState>((set, get) => ({
             await db.notes.update(id, updatedNote);
         }
 
-        // Sync to cloud
-        try {
-            await syncService.syncNote(updatedNote);
-        } catch (error) {
-            console.error('Failed to sync note update:', error);
+        // Sync to cloud (Debounced/Throttled)
+        const doCloudSync = async () => {
+            try {
+                // Always fetch latest state to ensure we save final version
+                const currentNote = get().notes[id];
+                if (currentNote) await syncService.syncNote(currentNote);
+            } catch (error) {
+                console.error('Failed to sync note:', error);
+            }
+            delete syncTimers[id];
+        };
+
+        if (options.immediate) {
+            // Cancel pending, run immediately
+            if (syncTimers[id]) clearTimeout(syncTimers[id]);
+            await doCloudSync();
+        } else {
+            // Debounce: Reset timer on every keystroke
+            if (syncTimers[id]) clearTimeout(syncTimers[id]);
+            syncTimers[id] = setTimeout(doCloudSync, 5000); // 5s Cloud Delay
         }
     },
 

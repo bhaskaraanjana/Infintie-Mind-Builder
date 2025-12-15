@@ -305,11 +305,11 @@ export const NoteEditor = () => {
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     // Unified Save Function (Reads from Refs for safety)
-    const saveChanges = useCallback(() => {
+    const saveChanges = useCallback((immediate = false) => {
         if (!editingNoteId) return;
 
         const current = noteStateRef.current;
-        console.log('💾 Saving note:', editingNoteId);
+        console.log('💾 Saving note:', editingNoteId, immediate ? '(Immediate)' : '(Debounced)');
 
         updateNote(editingNoteId, {
             title: current.title,
@@ -318,7 +318,7 @@ export const NoteEditor = () => {
             type: current.type,
             sources: current.type === 'literature' ? current.sources : undefined,
             source: current.type === 'literature' ? (current.sources[0] || '') : undefined
-        });
+        }, { immediate });
         setLastSaved(new Date());
     }, [editingNoteId, updateNote]);
 
@@ -328,7 +328,7 @@ export const NoteEditor = () => {
 
         setIsSaving(true);
         const timer = setTimeout(() => {
-            saveChanges();
+            saveChanges(false);
             setIsSaving(false);
         }, 500); // Faster feedback
 
@@ -353,13 +353,13 @@ export const NoteEditor = () => {
                     type: current.type,
                     sources: current.type === 'literature' ? current.sources : undefined,
                     source: current.type === 'literature' ? (current.sources[0] || '') : undefined
-                });
+                }, { immediate: true }); // FORCE IMMEDIATE SAVE
             }
         };
     }, [editingNoteId]); // Only re-bind when the Note ID changes (switching notes)
 
     const handleSave = () => {
-        saveChanges();
+        saveChanges(true); // Explicit Save is Immediate
         setEditingNoteId(null);
         setIsExpanded(false);
     };
