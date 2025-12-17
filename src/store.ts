@@ -272,6 +272,13 @@ export const useStore = create<AppState>((set, get) => ({
         };
         set(state => ({ notes: { ...state.notes, [newNote.id]: newNote }, editingNoteId: newNote.id }));
         await db.notes.add(newNote);
+
+        // Sync to cloud
+        try {
+            await syncService.syncNote(newNote);
+        } catch (error) {
+            console.error('Failed to sync new note:', error);
+        }
     },
 
     updateNote: async (id, updates, options = {}) => {
@@ -430,17 +437,26 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     updateNotePosition: (id, x, y) => {
+        const timestamp = Date.now();
         set((state) => ({
             notes: {
                 ...state.notes,
-                [id]: { ...state.notes[id], x, y }
+                [id]: { ...state.notes[id], x, y, modified: timestamp }
             }
         }));
-        db.notes.update(id, { x, y, modified: Date.now() });
 
+        // Update DB
+        db.notes.update(id, { x, y, modified: timestamp });
+
+        // Update Cluster Center
         const note = get().notes[id];
         if (note && note.clusterId) {
             recalculateClusterCenter(note.clusterId, get, set);
+        }
+
+        // Sync to cloud
+        if (note) {
+            syncService.syncNote(note);
         }
     },
 
