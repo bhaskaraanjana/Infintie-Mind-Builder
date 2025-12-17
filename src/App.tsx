@@ -95,7 +95,7 @@ function App() {
             <Canvas />
             <SearchBar />
             <TagFilter />
-            <NoteEditor />
+            <NoteEditor key={editingNoteId} />
             <Minimap />
             <DebugMenu />
             <Settings />

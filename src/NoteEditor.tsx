@@ -246,19 +246,20 @@ export const NoteEditor = () => {
     const deleteNote = useStore((state) => state.deleteNote);
     const setEditingNoteId = useStore((state) => state.setEditingNoteId);
 
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [noteTags, setNoteTags] = useState<string[]>([]);
+    const note = editingNoteId ? notes[editingNoteId] : null;
+
+    // Initialize state directly from note to prevent race conditions
+    const [title, setTitle] = useState(note?.title || '');
+    const [content, setContent] = useState(note?.content || '');
+    const [noteTags, setNoteTags] = useState<string[]>(note?.tags || []);
     const [tagInput, setTagInput] = useState('');
-    const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>('fleeting');
-    const [sources, setSources] = useState<string[]>([]);
+    const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>(note?.type || 'fleeting');
+    const [sources, setSources] = useState<string[]>(note?.sources || (note?.source ? [note.source] : []));
     const [sourceInput, setSourceInput] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
 
     const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
-
-    const note = editingNoteId ? notes[editingNoteId] : null;
 
     // Virtual Keyboard Handling
     const [viewportHeight, setViewportHeight] = useState(window.visualViewport?.height || window.innerHeight);
@@ -290,8 +291,14 @@ export const NoteEditor = () => {
         };
     }, []);
 
+    // Track the currently active note ID to prevent background updates from overwriting local state
+    const activeNoteIdRef = useRef<string | null>(null);
+
     useEffect(() => {
-        if (note) {
+        if (note && note.id !== activeNoteIdRef.current) {
+            // New note selected (or first load)
+            activeNoteIdRef.current = note.id;
+
             setTitle(note.title);
             setContent(note.content || '');
             setNoteTags(note.tags || []);
@@ -330,7 +337,8 @@ export const NoteEditor = () => {
         const timer = setTimeout(() => {
             saveChanges(false);
             setIsSaving(false);
-        }, 500); // Faster feedback
+            setLastSaved(new Date());
+        }, 1000);
 
         return () => clearTimeout(timer);
     }, [title, content, noteTags, type, sources, editingNoteId, saveChanges]);

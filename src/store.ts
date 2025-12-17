@@ -293,7 +293,39 @@ export const useStore = create<AppState>((set, get) => ({
             const { syncBidirectionalReferences } = await import('./linkUtils');
 
             const oldReferences = note.references || [];
-            const newReferences = parseReferences(updatedNote.content, get().notes);
+
+            // 1. Identify "Graph Links" (References that existed but were NOT in the OLD text)
+            // We parse the OLD content to find what text links existed previously.
+            // Any reference NOT in that list must be a Manual/Graph link.
+            const oldTextReferences = parseReferences(note.content, get().notes);
+            const graphReferences = oldReferences.filter(refId => !oldTextReferences.includes(refId));
+
+            // 2. Parse NEW text references
+            const newTextReferences = parseReferences(updatedNote.content, get().notes);
+
+            // 3. Extract references from sources (Robustness for Hub/Literature notes)
+            const sourceReferences: string[] = [];
+
+            // Handle new 'sources' array
+            if (updatedNote.sources && Array.isArray(updatedNote.sources)) {
+                updatedNote.sources.forEach(src => {
+                    const target = Object.values(get().notes).find(n => n.title === src || n.id === src);
+                    if (target) sourceReferences.push(target.id);
+                });
+            }
+
+            // Handle legacy 'source' string
+            if (updatedNote.source) {
+                const target = Object.values(get().notes).find(n => n.title === updatedNote.source || n.id === updatedNote.source);
+                if (target) sourceReferences.push(target.id);
+            }
+
+            // 4. MERGE: New Text Refs + Preserved Graph Refs + Source Refs
+            const newReferences = Array.from(new Set([
+                ...newTextReferences,
+                ...graphReferences,
+                ...sourceReferences
+            ]));
 
             updatedNote.references = newReferences;
 

@@ -27,6 +27,23 @@ export const parseReferences = (content: string, notes: Record<string, Note>): s
         }
     }
 
+    // Also parse Tiptap Mention nodes (HTML)
+    // Looking for <span data-type="mention" data-id="Title"> or class="mention"
+    // Regex for data-label or data-id in span
+    const startTagPattern = /<span\s+[^>]*data-(?:id|label)="([^"]+)"[^>]*>/g;
+    const htmlMatches = Array.from(content.matchAll(startTagPattern));
+
+    for (const match of htmlMatches) {
+        const mentionedTitle = match[1].trim();
+        const targetNote = notesArray.find(
+            note => note.title.toLowerCase() === mentionedTitle.toLowerCase() ||
+                note.id === mentionedTitle
+        );
+        if (targetNote && !referencedIds.includes(targetNote.id)) {
+            referencedIds.push(targetNote.id);
+        }
+    }
+
     return referencedIds;
 };
 
