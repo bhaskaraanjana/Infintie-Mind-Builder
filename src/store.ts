@@ -4,6 +4,7 @@ import type { Note, Cluster, Link, ViewportState } from './types';
 import { db } from './db';
 import { type ThemeName } from './themes';
 import { syncService } from './services/firebaseSyncService';
+import { ORB_RADIUS_DEFAULT, ORB_RADIUS_HUB } from './constants';
 
 // Module-level throttle timers
 const syncTimers: Record<string, any> = {};
@@ -437,6 +438,30 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     updateNotePosition: (id, x, y) => {
+        const state = get();
+        const currentNote = state.notes[id];
+
+        // Hub Collision Avoidance (Only strictly enforce in Orb View logic or generally if desired. User asked for "in orb view" but physics is usually global. Let's apply generally for consistency).
+        // Only non-hub notes avoid hubs.
+        if (currentNote && currentNote.type !== 'hub') {
+            const minDistance = ORB_RADIUS_HUB + ORB_RADIUS_DEFAULT + 12; // 12px padding
+
+            Object.values(state.notes).forEach(otherNote => {
+                if (otherNote.id !== id && otherNote.type === 'hub') {
+                    const dx = x - otherNote.x;
+                    const dy = y - otherNote.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < minDistance) {
+                        // Collision detected! Push out.
+                        const angle = Math.atan2(dy, dx);
+                        x = otherNote.x + Math.cos(angle) * minDistance;
+                        y = otherNote.y + Math.sin(angle) * minDistance;
+                    }
+                }
+            });
+        }
+
         const timestamp = Date.now();
         set((state) => ({
             notes: {

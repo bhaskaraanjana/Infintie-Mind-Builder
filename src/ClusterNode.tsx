@@ -135,10 +135,10 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
                 <Circle
                     radius={90}
                     fill={cluster.color}
-                    opacity={hover || isDragging ? 0.9 : 0.8}
+                    opacity={hover || isDragging ? 0.3 : 0.2}
                     shadowColor={cluster.color}
                     shadowBlur={hover || isDragging ? 40 : 20}
-                    shadowOpacity={0.5}
+                    shadowOpacity={0.3}
                 />
 
                 {/* Title */}
@@ -148,9 +148,9 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
                     fontStyle="bold"
                     fill={theme.colors.text}
                     align="center"
-                    width={300}
-                    offsetX={150}
-                    offsetY={15}
+                    width={400}
+                    offsetX={200}
+                    offsetY={18}
                     listening={false}
                     shadowColor="black"
                     shadowBlur={10}
