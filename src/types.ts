@@ -15,6 +15,12 @@ export interface Note {
     created: number; // Timestamp
     modified: number; // Timestamp
     references: string[]; // IDs of referenced notes
+    metadata?: {
+        author?: string;
+        url?: string;
+        publishedDate?: string;
+        type?: string;
+    };
 }
 
 export interface Cluster {

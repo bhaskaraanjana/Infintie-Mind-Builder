@@ -8,6 +8,12 @@ import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '
 import type { DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
+// Specialized Components
+import { LiteratureMetadata } from './components/note-types/LiteratureMetadata';
+import { HubPanel } from './components/note-types/HubPanel';
+import { BacklinksPanel } from './components/note-types/BacklinksPanel';
+import { FleetingActions } from './components/note-types/FleetingActions';
+
 const DraggableEditorContent = ({
     coordinates,
     handleSave,
@@ -39,7 +45,10 @@ const DraggableEditorContent = ({
     editingNoteId,
     setEditingNoteId,
     viewportHeight,
-    keyboardOpen
+    keyboardOpen,
+    // New Metadata Prop
+    metadata,
+    setMetadata
 }: any) => {
     const [editorInstance, setEditorInstance] = useState<any>(null);
 
@@ -62,6 +71,15 @@ const DraggableEditorContent = ({
         bottom: keyboardOpen ? 'auto' : 0 // Ensure it doesn't get covered
     } : style;
     const panelClass = isExpanded ? styles.expandedPanel : styles.editorPanel;
+
+    // Handle fleeting conversions
+    const handleConvertToPermanent = () => {
+        setType('permanent');
+    };
+
+    const handleConvertToLiterature = () => {
+        setType('literature');
+    };
 
     const editorContent = (
         <div className={`${styles.editorContent} ${isExpanded ? styles.expandedEditorContent : ''}`}>
@@ -124,6 +142,32 @@ const DraggableEditorContent = ({
                 )}
             </div>
 
+
+            {/* Literature Metadata Section */}
+            {
+                type === 'literature' && (
+                    <LiteratureMetadata
+                        metadata={metadata}
+                        onChange={setMetadata}
+                        readOnly={!isExpanded && false} // Future: readonly mode
+                    />
+                )
+            }
+
+            {/* Hub: Connections Panel (Top) */}
+            {
+                type === 'hub' && (
+                    <HubPanel
+                        noteId={editingNoteId}
+                        clusterId={useStore.getState().notes[editingNoteId]?.clusterId} // Pass current cluster ID if needed, or rely on store inside HubPanel
+                        onNavigate={(id) => {
+                            handleSave();
+                            setEditingNoteId(id);
+                        }}
+                    />
+                )
+            }
+
             <div className={styles.contentArea}>
                 <RichTextEditor
                     key={editingNoteId}
@@ -135,6 +179,30 @@ const DraggableEditorContent = ({
                     onEditorReady={setEditorInstance}
                 />
             </div>
+
+
+            {/* Permanent: Backlinks */}
+            {
+                type === 'permanent' && (
+                    <BacklinksPanel
+                        noteId={editingNoteId}
+                        onNavigate={(id) => {
+                            handleSave();
+                            setEditingNoteId(id);
+                        }}
+                    />
+                )
+            }
+
+            {/* Fleeting: Action Buttons */}
+            {
+                type === 'fleeting' && (
+                    <FleetingActions
+                        onConvertToPermanent={handleConvertToPermanent}
+                        onConvertToLiterature={handleConvertToLiterature}
+                    />
+                )
+            }
 
             <div className={styles.tagsSection}>
                 {type === 'literature' && (
@@ -208,7 +276,7 @@ const DraggableEditorContent = ({
                     <Trash2 size={18} />
                 </button>
             </div>
-        </div>
+        </div >
     );
 
     if (isExpanded) {
@@ -259,6 +327,9 @@ export const NoteEditor = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
 
+    // New State for Metadata
+    const [metadata, setMetadata] = useState(note?.metadata || {});
+
     const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
 
     // Virtual Keyboard Handling
@@ -266,12 +337,12 @@ export const NoteEditor = () => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
 
     // REFS to hold latest state for unmount saving (The "Safety Net")
-    const noteStateRef = useRef({ title, content, noteTags, type, sources });
+    const noteStateRef = useRef({ title, content, noteTags, type, sources, metadata });
 
     // Update refs whenever state changes
     useEffect(() => {
-        noteStateRef.current = { title, content, noteTags, type, sources };
-    }, [title, content, noteTags, type, sources]);
+        noteStateRef.current = { title, content, noteTags, type, sources, metadata };
+    }, [title, content, noteTags, type, sources, metadata]);
 
     useEffect(() => {
         if (!window.visualViewport) return;
@@ -304,6 +375,7 @@ export const NoteEditor = () => {
             setNoteTags(note.tags || []);
             setType(note.type);
             setSources(note.sources || (note.source ? [note.source] : []));
+            setMetadata(note.metadata || {});
         }
     }, [editingNoteId, note]);
 
@@ -324,7 +396,8 @@ export const NoteEditor = () => {
             tags: current.noteTags,
             type: current.type,
             sources: current.type === 'literature' ? current.sources : undefined,
-            source: current.type === 'literature' ? (current.sources[0] || '') : undefined
+            source: current.type === 'literature' ? (current.sources[0] || '') : undefined,
+            metadata: current.metadata // New Metadata field
         }, { immediate });
         setLastSaved(new Date());
     }, [editingNoteId, updateNote]);
@@ -341,7 +414,7 @@ export const NoteEditor = () => {
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [title, content, noteTags, type, sources, editingNoteId, saveChanges]);
+    }, [title, content, noteTags, type, sources, metadata, editingNoteId, saveChanges]);
 
     // Unmount / Close Protection
     useEffect(() => {
@@ -360,7 +433,8 @@ export const NoteEditor = () => {
                     tags: current.noteTags,
                     type: current.type,
                     sources: current.type === 'literature' ? current.sources : undefined,
-                    source: current.type === 'literature' ? (current.sources[0] || '') : undefined
+                    source: current.type === 'literature' ? (current.sources[0] || '') : undefined,
+                    metadata: current.metadata
                 }, { immediate: true }); // FORCE IMMEDIATE SAVE
             }
         };
@@ -459,6 +533,8 @@ export const NoteEditor = () => {
             editingNoteId={editingNoteId}
             viewportHeight={viewportHeight}
             keyboardOpen={keyboardOpen}
+            metadata={metadata}
+            setMetadata={setMetadata}
         />
     );
 

@@ -20,6 +20,13 @@ All notable changes to this project will be documented in this file.
 - **Auto-Centering Clusters:** Clusters now magnetically recenter in real-time as you drag their child notes.
 - **Global Shortcuts:** Added `Delete`/`Backspace` to delete selected items and full keyboard shortcut documentation.
 - **Visual Polish:** Doubled the size of Orbs and adjusted zoom threshold so cards appear sooner (80% zoom).
+- **Note Type Specialization:**
+  - **Literature Notes:** Added metadata fields (Author, Year, URL) with a collapsible UI.
+  - **Hub Notes:** Implemented a connections panel showing cluster contents and backlinks.
+  - **Permanent Notes:** Added a dedicated backlinks panel for synthesis.
+  - **Fleeting Notes:** Added quick conversion actions to transform into Literature or Permanent types.
+  - **Collapsible UI:** Optimized screen space with toggleable panels for all specialized metadata.
+  - **Mobile Friendly:** Improved touch targets and responsive layout for all new editor components.
 
 ### Fixed
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.
