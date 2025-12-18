@@ -7,42 +7,60 @@ interface HubPanelProps {
     noteId: string;
     clusterId?: string;
     onNavigate: (id: string) => void;
+    // Controlled props
+    isOpen?: boolean;
+    onToggle?: () => void;
+    hideHeader?: boolean;
 }
 
-export const HubPanel: React.FC<HubPanelProps> = ({ noteId, clusterId, onNavigate }) => {
+export const HubPanel: React.FC<HubPanelProps> = ({
+    noteId,
+    clusterId,
+    onNavigate,
+    isOpen: controlledIsOpen,
+    onToggle: controlledOnToggle,
+    hideHeader
+}) => {
     const notes = useStore((state) => state.notes);
     const clusters = useStore((state) => state.clusters);
-    const [isOpen, setIsOpen] = useState(false);
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+
+    const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : localIsOpen;
+    const handleToggle = () => controlledOnToggle ? controlledOnToggle() : setLocalIsOpen(!localIsOpen);
 
     // 1. Get Cluster Children
     const cluster = clusterId ? clusters[clusterId] : null;
     const children = cluster ? cluster.children.map(id => notes[id]).filter(Boolean) : [];
 
-    // 2. Get Backlinks (Notes that reference THIS note)
+    // 2. Get Backlinks: Notes that reference this note
     const backlinks = Object.values(notes).filter(n => n.references && n.references.includes(noteId));
 
-    if (children.length === 0 && backlinks.length === 0) return null;
+    if (children.length === 0 && backlinks.length === 0 && !hideHeader) return null;
 
     const totalConnections = children.length + backlinks.length;
 
     return (
-        <div className="flex flex-col gap-4 p-4 bg-neutral-50 rounded-lg border border-neutral-200 mt-6 shadow-sm transition-all duration-200">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="text-sm font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2 w-full hover:text-primary-700 transition-colors"
-            >
-                {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                <Network size={18} />
-                <span>Connections ({totalConnections})</span>
-            </button>
+        <div className={`flex flex-col gap-4 ${!hideHeader ? 'p-4 bg-neutral-50 rounded-lg border border-neutral-200 mt-6 shadow-sm' : ''} transition-all duration-200`}>
+            {!hideHeader && (
+                <button
+                    onClick={handleToggle}
+                    className="text-sm font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2 w-full hover:text-primary-700 transition-colors"
+                >
+                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                    <Network size={18} />
+                    <span>Connections ({totalConnections})</span>
+                </button>
+            )}
 
             {isOpen && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                    {children.length > 0 && (
+                    {children.length > 0 && !hideHeader && (
                         <div className="mb-4">
-                            <h4 className="text-xs font-semibold text-neutral-500 mb-2 flex items-center gap-1 uppercase tracking-wide">
-                                <CircleDot size={12} /> Cluster Contents ({children.length})
-                            </h4>
+                            {!hideHeader && (
+                                <h4 className="text-xs font-semibold text-neutral-500 mb-2 flex items-center gap-1 uppercase tracking-wide">
+                                    <CircleDot size={12} /> Cluster Contents ({children.length})
+                                </h4>
+                            )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {children.map(child => (
                                     <button
@@ -60,9 +78,11 @@ export const HubPanel: React.FC<HubPanelProps> = ({ noteId, clusterId, onNavigat
 
                     {backlinks.length > 0 && (
                         <div>
-                            <h4 className="text-xs font-semibold text-neutral-500 mb-2 flex items-center gap-1 uppercase tracking-wide">
-                                <ArrowLeftCircle size={12} /> Mentioned In ({backlinks.length})
-                            </h4>
+                            {!hideHeader && (
+                                <h4 className="text-xs font-semibold text-neutral-500 mb-2 flex items-center gap-1 uppercase tracking-wide">
+                                    <ArrowLeftCircle size={12} /> Mentioned In ({backlinks.length})
+                                </h4>
+                            )}
                             <div className="flex flex-col gap-1">
                                 {backlinks.map(link => (
                                     <button

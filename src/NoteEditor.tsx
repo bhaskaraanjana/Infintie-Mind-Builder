@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useStore } from './store';
-import { X, Trash2, Maximize2, Minimize2, GripHorizontal, Tag, BookOpen, Zap, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Trash2, Maximize2, Minimize2, GripHorizontal, Tag, BookOpen, Zap, ChevronDown, ChevronRight, Network } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { EditorToolbar } from './components/EditorToolbar';
 import styles from './NoteEditor.module.css';
@@ -147,19 +147,7 @@ const DraggableEditorContent = ({
                 )}
             </div>
 
-            {/* Hub: Connections Panel (Top) */}
-            {
-                type === 'hub' && (
-                    <HubPanel
-                        noteId={editingNoteId}
-                        clusterId={useStore.getState().notes[editingNoteId]?.clusterId}
-                        onNavigate={(id) => {
-                            handleSave();
-                            setEditingNoteId(id);
-                        }}
-                    />
-                )
-            }
+
 
             <div className={styles.contentArea}>
                 <RichTextEditor
@@ -195,8 +183,8 @@ const DraggableEditorContent = ({
                         <button
                             onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'actions' ? null : 'actions')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'actions'
-                                    ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
                                 }`}
                         >
                             <Zap size={16} />
@@ -209,8 +197,8 @@ const DraggableEditorContent = ({
                         <button
                             onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'sources' ? null : 'sources')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'sources'
-                                    ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
                                 }`}
                         >
                             <BookOpen size={16} />
@@ -219,11 +207,25 @@ const DraggableEditorContent = ({
                         </button>
                     )}
 
+                    {type === 'hub' && (
+                        <button
+                            onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'connections' ? null : 'connections')}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'connections'
+                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                }`}
+                        >
+                            <Network size={16} />
+                            <span>Connections</span>
+                            {activeMetadataPanel === 'connections' ? <ChevronDown size={14} className="ml-1 opacity-50" /> : <ChevronRight size={14} className="ml-1 opacity-50" />}
+                        </button>
+                    )}
+
                     <button
                         onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'tags' ? null : 'tags')}
                         className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'tags'
-                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                            ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                            : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
                             }`}
                     >
                         <Tag size={16} />
@@ -250,6 +252,19 @@ const DraggableEditorContent = ({
                                 onChange={setSourcesMetadata}
                                 readOnly={!isExpanded && false}
                                 metadata={metadata}
+                                isOpen={true}
+                                hideHeader={true}
+                            />
+                        )}
+
+                        {activeMetadataPanel === 'connections' && type === 'hub' && (
+                            <HubPanel
+                                noteId={editingNoteId}
+                                clusterId={useStore.getState().notes[editingNoteId]?.clusterId}
+                                onNavigate={(id) => {
+                                    handleSave();
+                                    setEditingNoteId(id);
+                                }}
                                 isOpen={true}
                                 hideHeader={true}
                             />

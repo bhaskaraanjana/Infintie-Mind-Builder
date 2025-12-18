@@ -133,63 +133,61 @@ export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({
                                         </button>
                                     )}
                                 </div>
-                            ) : (
-                                sources.map(source => (
-                                    <div
-                                        key={source.id}
-                                        className="flex items-center gap-2 p-2 bg-white border border-neutral-200 rounded-md hover:border-primary-300 hover:shadow-sm transition-all"
-                                    >
-                                        <div className="flex-grow overflow-x-auto whitespace-nowrap scrollbar-hide text-sm text-neutral-700 flex items-center gap-2 pr-2">
-                                            <span className="font-semibold text-neutral-900">{source.title}</span>
-                                            {source.author && (
-                                                <>
-                                                    <span className="text-neutral-300">/</span>
-                                                    <span>{source.author}</span>
-                                                </>
-                                            )}
-                                            {source.publishedDate && (
-                                                <>
-                                                    <span className="text-neutral-300">/</span>
-                                                    <span className="text-neutral-500">{source.publishedDate}</span>
-                                                </>
-                                            )}
-                                            {source.url && (
-                                                <>
-                                                    <span className="text-neutral-300">/</span>
-                                                    <a
-                                                        href={source.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="flex items-center gap-1 text-primary-600 hover:underline"
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        <ExternalLink size={12} /> Link
-                                                    </a>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {!readOnly && (
-                                            <div className="flex items-center gap-1 flex-shrink-0 border-l border-neutral-100 pl-2">
-                                                <button
-                                                    onClick={(e) => handleEditSource(source, e)}
-                                                    className="p-1 text-neutral-400 hover:text-primary-600 rounded hover:bg-neutral-100 transition-colors"
-                                                    title="Edit"
+                            ) : sources.map(source => (
+                                <div
+                                    key={source.id}
+                                    className="flex items-center justify-between gap-3 p-2 bg-white border border-neutral-200 rounded-md hover:border-primary-300 hover:shadow-sm transition-all"
+                                >
+                                    <div className="flex-grow min-w-0 flex items-center gap-2 text-sm text-neutral-700">
+                                        <span className="font-semibold text-neutral-900 truncate">{source.title}</span>
+                                        {source.author && (
+                                            <>
+                                                <span className="text-neutral-300">/</span>
+                                                <span className="truncate">{source.author}</span>
+                                            </>
+                                        )}
+                                        {source.publishedDate && (
+                                            <>
+                                                <span className="text-neutral-300">/</span>
+                                                <span className="text-neutral-500 whitespace-nowrap">{source.publishedDate}</span>
+                                            </>
+                                        )}
+                                        {source.url && (
+                                            <>
+                                                <span className="text-neutral-300">/</span>
+                                                <a
+                                                    href={source.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-1 text-primary-600 hover:underline whitespace-nowrap"
+                                                    onClick={e => e.stopPropagation()}
                                                 >
-                                                    <Edit2 size={12} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDeleteSource(source.id, e)}
-                                                    className="p-1 text-neutral-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
-                                                    title="Remove"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
+                                                    <ExternalLink size={12} /> Link
+                                                </a>
+                                            </>
                                         )}
                                     </div>
-                                ))
-                            )}
+
+                                    {!readOnly && (
+                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                            <button
+                                                onClick={(e) => handleEditSource(source, e)}
+                                                className="p-1 text-neutral-400 hover:text-primary-600 rounded hover:bg-neutral-100 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteSource(source.id, e)}
+                                                className="p-1 text-neutral-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                                                title="Remove"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
