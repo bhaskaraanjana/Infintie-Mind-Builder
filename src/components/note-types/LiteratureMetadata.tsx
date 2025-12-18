@@ -138,18 +138,18 @@ export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({
                                     key={source.id}
                                     className="flex items-center justify-between gap-3 p-2 bg-white border border-neutral-200 rounded-md hover:border-primary-300 hover:shadow-sm transition-all"
                                 >
-                                    <div className="flex-grow min-w-0 flex items-center gap-2 text-sm text-neutral-700">
-                                        <span className="font-semibold text-neutral-900 truncate">{source.title}</span>
+                                    <div className="flex-grow min-w-0 flex items-center gap-2 text-sm text-neutral-700 overflow-x-auto scrollbar-hide whitespace-nowrap pr-2">
+                                        <span className="font-semibold text-neutral-900">{source.title}</span>
                                         {source.author && (
                                             <>
                                                 <span className="text-neutral-300">/</span>
-                                                <span className="truncate">{source.author}</span>
+                                                <span>{source.author}</span>
                                             </>
                                         )}
                                         {source.publishedDate && (
                                             <>
                                                 <span className="text-neutral-300">/</span>
-                                                <span className="text-neutral-500 whitespace-nowrap">{source.publishedDate}</span>
+                                                <span className="text-neutral-500">{source.publishedDate}</span>
                                             </>
                                         )}
                                         {source.url && (
@@ -159,7 +159,7 @@ export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({
                                                     href={source.url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="flex items-center gap-1 text-primary-600 hover:underline whitespace-nowrap"
+                                                    className="flex items-center gap-1 text-primary-600 hover:underline"
                                                     onClick={e => e.stopPropagation()}
                                                 >
                                                     <ExternalLink size={12} /> Link

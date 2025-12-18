@@ -131,10 +131,10 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 <Text
                     text={note.title}
                     fill={theme.colors.text}
-                    fontSize={11}
+                    fontSize={22}
                     fontStyle={note.type === 'hub' ? 'bold' : 'normal'}
-                    x={dotSize + 8}
-                    y={-6}
+                    x={dotSize + 12}
+                    y={-12}
                     opacity={showLabel ? 1 : 0}
                 />
                 {/* Small preview text on hover or toggle */}
@@ -142,10 +142,10 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                     <Text
                         text={note.content.replace(/<[^>]*>?/gm, '').substring(0, 50) + '...'}
                         fill={theme.colors.text}
-                        fontSize={9}
-                        x={dotSize + 8}
-                        y={8}
-                        width={150}
+                        fontSize={18}
+                        x={dotSize + 12}
+                        y={14}
+                        width={300}
                         opacity={0.7}
                     />
                 )}
