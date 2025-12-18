@@ -1,116 +1,197 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Link as LinkIcon, Calendar, User, ChevronRight, ChevronDown } from 'lucide-react';
-import type { Note } from '../../types';
+import React, { useState } from 'react';
+import { BookOpen, Plus, Edit2, Trash2, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import type { Note, SourceMetadata } from '../../types';
+import { SourceForm } from './SourceForm';
 
 interface LiteratureMetadataProps {
-    metadata: Note['metadata'];
-    onChange: (metadata: Note['metadata']) => void;
+    metadata: Note['metadata']; // Legacy support (optional)
+    sources: SourceMetadata[];
+    onChange: (sources: SourceMetadata[]) => void;
     readOnly?: boolean;
+    // Controlled State Props
+    isOpen?: boolean;
+    onToggle?: () => void;
+    hideHeader?: boolean;
 }
 
-export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({ metadata, onChange, readOnly }) => {
-    const [author, setAuthor] = useState(metadata?.author || '');
-    const [url, setUrl] = useState(metadata?.url || '');
-    const [date, setDate] = useState(metadata?.publishedDate || '');
-    const [isOpen, setIsOpen] = useState(true); // Default open to encourage data entry
-
-    // Sync local state when prop changes (e.g. switching notes)
-    useEffect(() => {
-        setAuthor(metadata?.author || '');
-        setUrl(metadata?.url || '');
-        setDate(metadata?.publishedDate || '');
-    }, [metadata]);
-
-    const handleChange = (field: keyof NonNullable<Note['metadata']>, value: string) => {
-        const newMetadata = { ...metadata, [field]: value };
-        onChange(newMetadata);
+export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({
+    sources = [],
+    onChange,
+    readOnly,
+    isOpen: controlledIsOpen,
+    onToggle: controlledOnToggle,
+    hideHeader
+}) => {
+    const [localIsOpen, setLocalIsOpen] = useState(false);
+    const isEditingMode = controlledIsOpen !== undefined;
+    const isOpen = isEditingMode ? controlledIsOpen : localIsOpen;
+    const handleToggle = () => {
+        if (controlledOnToggle) {
+            controlledOnToggle();
+        } else {
+            setLocalIsOpen(!localIsOpen);
+        }
     };
 
-    if (readOnly) {
-        return (
-            <div className="flex flex-col gap-2 p-3 bg-neutral-50 rounded-md text-sm border border-neutral-200 mb-4">
-                {author && <div className="flex items-center gap-2"><User size={14} className="text-neutral-500" /> <span>{author}</span></div>}
-                {date && <div className="flex items-center gap-2"><Calendar size={14} className="text-neutral-500" /> <span>{date}</span></div>}
-                {url && (
-                    <div className="flex items-center gap-2">
-                        <LinkIcon size={14} className="text-neutral-500" />
-                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-full">
-                            {url}
-                        </a>
-                    </div>
-                )}
-            </div>
-        );
-    }
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingSource, setEditingSource] = useState<SourceMetadata | undefined>(undefined);
+
+    const handleSaveSource = (source: SourceMetadata) => {
+        if (editingSource) {
+            // Update existing
+            const updated = sources.map(s => s.id === source.id ? source : s);
+            onChange(updated);
+        } else {
+            // Add new
+            onChange([...sources, source]);
+        }
+        setIsEditing(false);
+        setEditingSource(undefined);
+    };
+
+    const handleDeleteSource = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Remove this source?')) {
+            onChange(sources.filter(s => s.id !== id));
+        }
+    };
+
+    const handleEditSource = (source: SourceMetadata, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingSource(source);
+        setIsEditing(true);
+    };
+
+    const handleAddSource = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingSource(undefined);
+        setIsEditing(true);
+    };
 
     return (
-        <div className="flex flex-col gap-3 p-3 bg-neutral-50 rounded-md border border-neutral-200 mb-4 transition-all duration-200 shadow-sm">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 text-neutral-700 font-semibold text-sm w-full hover:text-primary-600 transition-colors py-1"
-            >
-                {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                <BookOpen size={18} />
-                <span>Source Metadata</span>
-                {!isOpen && (author || date) && (
-                    <span className="text-xs text-neutral-400 font-normal ml-auto truncate max-w-[150px]">
-                        {[author, date].filter(Boolean).join(' • ')}
-                    </span>
-                )}
-            </button>
+        <div className={`flex flex-col gap-3 ${!hideHeader ? 'p-3 bg-neutral-50 rounded-md border border-neutral-200 shadow-sm' : ''} transition-all duration-200 h-full`}>
+            {/* Header */}
+            {!hideHeader && (
+                <div className="flex items-center justify-between w-full">
+                    <button
+                        onClick={handleToggle}
+                        className="flex items-center gap-2 text-neutral-700 font-bold text-sm hover:text-primary-700 transition-colors py-1 flex-grow text-left"
+                    >
+                        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                        <BookOpen size={18} />
+                        <span>Sources ({sources.length})</span>
+                    </button>
 
+                    {isOpen && !isEditing && !readOnly && (
+                        <button
+                            onClick={handleAddSource}
+                            className="flex items-center gap-1 px-2 py-1 bg-primary-100 hover:bg-primary-200 text-primary-700 text-xs font-semibold rounded transition-colors"
+                        >
+                            <Plus size={14} />
+                            Add Source
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Toolbar for Tabs Mode (Add Source Button) */}
+            {hideHeader && !isEditing && !readOnly && isOpen && (
+                <div className="flex justify-end mb-2">
+                    <button
+                        onClick={handleAddSource}
+                        className="flex items-center gap-1 px-2 py-1 bg-primary-100 hover:bg-primary-200 text-primary-700 text-xs font-semibold rounded transition-colors"
+                    >
+                        <Plus size={14} />
+                        Add Source
+                    </button>
+                </div>
+            )}
+
+            {/* Content */}
             {isOpen && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-200 pt-2">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-neutral-500 font-medium ml-1">Author</label>
-                        <div className="flex items-center bg-white border border-neutral-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-primary-100 transition-shadow">
-                            <User size={16} className="text-neutral-400 mr-2" />
-                            <input
-                                type="text"
-                                className="w-full bg-transparent outline-none text-sm min-h-[20px]"
-                                placeholder="Author Name"
-                                value={author}
-                                onChange={(e) => {
-                                    setAuthor(e.target.value);
-                                    handleChange('author', e.target.value);
-                                }}
-                            />
-                        </div>
-                    </div>
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    {isEditing ? (
+                        <SourceForm
+                            source={editingSource}
+                            onSave={handleSaveSource}
+                            onCancel={() => {
+                                setIsEditing(false);
+                                setEditingSource(undefined);
+                            }}
+                        />
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            {sources.length === 0 ? (
+                                <div className="text-center py-4 border-2 border-dashed border-neutral-200 rounded-md">
+                                    <p className="text-sm text-neutral-500 mb-2">No sources linked yet.</p>
+                                    {!readOnly && (
+                                        <button
+                                            onClick={handleAddSource}
+                                            className="text-primary-600 hover:text-primary-700 text-sm font-medium hover:underline"
+                                        >
+                                            Add your first source
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                sources.map(source => (
+                                    <div
+                                        key={source.id}
+                                        className="flex items-center gap-2 p-2 bg-white border border-neutral-200 rounded-md hover:border-primary-300 hover:shadow-sm transition-all"
+                                    >
+                                        <div className="flex-grow overflow-x-auto whitespace-nowrap scrollbar-hide text-sm text-neutral-700 flex items-center gap-2 pr-2">
+                                            <span className="font-semibold text-neutral-900">{source.title}</span>
+                                            {source.author && (
+                                                <>
+                                                    <span className="text-neutral-300">/</span>
+                                                    <span>{source.author}</span>
+                                                </>
+                                            )}
+                                            {source.publishedDate && (
+                                                <>
+                                                    <span className="text-neutral-300">/</span>
+                                                    <span className="text-neutral-500">{source.publishedDate}</span>
+                                                </>
+                                            )}
+                                            {source.url && (
+                                                <>
+                                                    <span className="text-neutral-300">/</span>
+                                                    <a
+                                                        href={source.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center gap-1 text-primary-600 hover:underline"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        <ExternalLink size={12} /> Link
+                                                    </a>
+                                                </>
+                                            )}
+                                        </div>
 
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-neutral-500 font-medium ml-1">Year / Date</label>
-                        <div className="flex items-center bg-white border border-neutral-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-primary-100 transition-shadow">
-                            <Calendar size={16} className="text-neutral-400 mr-2" />
-                            <input
-                                type="text"
-                                className="w-full bg-transparent outline-none text-sm min-h-[20px]"
-                                placeholder="YYYY or Date"
-                                value={date}
-                                onChange={(e) => {
-                                    setDate(e.target.value);
-                                    handleChange('publishedDate', e.target.value);
-                                }}
-                            />
+                                        {!readOnly && (
+                                            <div className="flex items-center gap-1 flex-shrink-0 border-l border-neutral-100 pl-2">
+                                                <button
+                                                    onClick={(e) => handleEditSource(source, e)}
+                                                    className="p-1 text-neutral-400 hover:text-primary-600 rounded hover:bg-neutral-100 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit2 size={12} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteSource(source.id, e)}
+                                                    className="p-1 text-neutral-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors"
+                                                    title="Remove"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
-                        <label className="text-xs text-neutral-500 font-medium ml-1">URL / Link</label>
-                        <div className="flex items-center bg-white border border-neutral-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-primary-100 transition-shadow">
-                            <LinkIcon size={16} className="text-neutral-400 mr-2" />
-                            <input
-                                type="text"
-                                className="w-full bg-transparent outline-none text-sm min-h-[20px]"
-                                placeholder="https://..."
-                                value={url}
-                                onChange={(e) => {
-                                    setUrl(e.target.value);
-                                    handleChange('url', e.target.value);
-                                }}
-                            />
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
         </div>

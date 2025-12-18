@@ -1,5 +1,13 @@
 export type NoteType = 'fleeting' | 'literature' | 'permanent' | 'hub';
 
+export interface SourceMetadata {
+    id: string;
+    title: string;
+    author: string;
+    publishedDate: string;
+    url: string;
+}
+
 export interface Note {
     id: string;
     type: NoteType;
@@ -9,18 +17,15 @@ export interface Note {
     content: string;
     tags: string[];
     source?: string; // Legacy
-    sources?: string[]; // New List of sources
+    sources?: string[]; // Legacy
     spaceId?: string;
     clusterId?: string;
     created: number; // Timestamp
     modified: number; // Timestamp
     references: string[]; // IDs of referenced notes
-    metadata?: {
-        author?: string;
-        url?: string;
-        publishedDate?: string;
-        type?: string;
-    };
+    // Single metadata is legacy, we prefer sourcesMetadata array now
+    metadata?: Partial<SourceMetadata>;
+    sourcesMetadata?: SourceMetadata[]; // New Array of rich sources
 }
 
 export interface Cluster {

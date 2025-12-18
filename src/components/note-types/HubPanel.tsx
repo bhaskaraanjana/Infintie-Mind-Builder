@@ -12,7 +12,7 @@ interface HubPanelProps {
 export const HubPanel: React.FC<HubPanelProps> = ({ noteId, clusterId, onNavigate }) => {
     const notes = useStore((state) => state.notes);
     const clusters = useStore((state) => state.clusters);
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
 
     // 1. Get Cluster Children
     const cluster = clusterId ? clusters[clusterId] : null;

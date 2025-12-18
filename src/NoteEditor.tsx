@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useStore } from './store';
-import { X, Trash2, Maximize2, Minimize2, GripHorizontal } from 'lucide-react';
+import { X, Trash2, Maximize2, Minimize2, GripHorizontal, Tag, BookOpen, Zap, ChevronDown, ChevronRight } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { EditorToolbar } from './components/EditorToolbar';
 import styles from './NoteEditor.module.css';
 import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import type { SourceMetadata } from './types';
 
 // Specialized Components
 import { LiteratureMetadata } from './components/note-types/LiteratureMetadata';
 import { HubPanel } from './components/note-types/HubPanel';
 import { BacklinksPanel } from './components/note-types/BacklinksPanel';
 import { FleetingActions } from './components/note-types/FleetingActions';
+import { TagsPanel } from './components/note-types/TagsPanel';
 
 const DraggableEditorContent = ({
     coordinates,
@@ -27,6 +29,7 @@ const DraggableEditorContent = ({
     content,
     setContent,
     noteTags,
+    setNoteTags, // New Prop
     removeTag,
     tagInput,
     setTagInput,
@@ -35,20 +38,26 @@ const DraggableEditorContent = ({
     setType,
 
     sources,
-    setSources, // Array handler
-    sourceInput,
-    setSourceInput,
-    handleAddSource,
-    removeSource,
+    setSources, // Legacy Array handler 
+
+    // New Source Manager Props
+    sourcesMetadata,
+    setSourcesMetadata,
+
     isSaving,
     lastSaved,
     editingNoteId,
     setEditingNoteId,
     viewportHeight,
     keyboardOpen,
-    // New Metadata Prop
+
+    // Legacy Single Metadata 
     metadata,
-    setMetadata
+    setMetadata,
+
+    // Accordion State
+    activeMetadataPanel,
+    setActiveMetadataPanel
 }: any) => {
     const [editorInstance, setEditorInstance] = useState<any>(null);
 
@@ -64,11 +73,9 @@ const DraggableEditorContent = ({
         top: keyboardOpen ? `${viewportHeight / 2}px` : '50%', // Keep centered in visible area
     };
 
-    // If expanded, disable custom transform and use fixed inset
-    // When keyboard is open on mobile, visualViewport height shrinks
     const panelStyle = isExpanded ? {
         height: keyboardOpen ? `${viewportHeight}px` : '100%',
-        bottom: keyboardOpen ? 'auto' : 0 // Ensure it doesn't get covered
+        bottom: keyboardOpen ? 'auto' : 0
     } : style;
     const panelClass = isExpanded ? styles.expandedPanel : styles.editorPanel;
 
@@ -132,8 +139,6 @@ const DraggableEditorContent = ({
                             <option value="permanent">Permanent</option>
                             <option value="hub">Hub</option>
                         </select>
-
-                        {/* Legacy Source Input Removed */}
                     </div>
                 )}
                 {/* External Toolbar */}
@@ -142,24 +147,12 @@ const DraggableEditorContent = ({
                 )}
             </div>
 
-
-            {/* Literature Metadata Section */}
-            {
-                type === 'literature' && (
-                    <LiteratureMetadata
-                        metadata={metadata}
-                        onChange={setMetadata}
-                        readOnly={!isExpanded && false} // Future: readonly mode
-                    />
-                )
-            }
-
             {/* Hub: Connections Panel (Top) */}
             {
                 type === 'hub' && (
                     <HubPanel
                         noteId={editingNoteId}
-                        clusterId={useStore.getState().notes[editingNoteId]?.clusterId} // Pass current cluster ID if needed, or rely on store inside HubPanel
+                        clusterId={useStore.getState().notes[editingNoteId]?.clusterId}
                         onNavigate={(id) => {
                             handleSave();
                             setEditingNoteId(id);
@@ -180,7 +173,6 @@ const DraggableEditorContent = ({
                 />
             </div>
 
-
             {/* Permanent: Backlinks */}
             {
                 type === 'permanent' && (
@@ -194,65 +186,94 @@ const DraggableEditorContent = ({
                 )
             }
 
-            {/* Fleeting: Action Buttons */}
-            {
-                type === 'fleeting' && (
-                    <FleetingActions
-                        onConvertToPermanent={handleConvertToPermanent}
-                        onConvertToLiterature={handleConvertToLiterature}
-                    />
-                )
-            }
 
-            <div className={styles.tagsSection}>
-                {type === 'literature' && (
-                    <div className={styles.sourceSection} style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--neutral-600)' }}>Sources</div>
-                        <div className={styles.tagsList}>
-                            {sources.map((src: string, i: number) => (
-                                <span key={i} className={styles.tag} style={{ background: 'var(--primary-100)', color: 'var(--primary-700)' }}>
-                                    {src}
-                                    <button
-                                        onClick={() => removeSource(i)}
-                                        className={styles.tagRemoveButton}
-                                    >
-                                        ×
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                        <input
-                            type="text"
-                            value={sourceInput}
-                            onChange={(e) => setSourceInput(e.target.value)}
-                            onKeyDown={handleAddSource}
-                            placeholder="Add source (Press Enter)..."
-                            className={styles.tagInput} // Reuse tag input style
-                        />
+
+            {/* Footer Metadata Tabs */}
+            <div className="mt-4">
+                <div className="flex items-center gap-1 border-b border-neutral-200">
+                    {type === 'fleeting' && (
+                        <button
+                            onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'actions' ? null : 'actions')}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'actions'
+                                    ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                }`}
+                        >
+                            <Zap size={16} />
+                            <span>Process Note</span>
+                            {activeMetadataPanel === 'actions' ? <ChevronDown size={14} className="ml-1 opacity-50" /> : <ChevronRight size={14} className="ml-1 opacity-50" />}
+                        </button>
+                    )}
+
+                    {type === 'literature' && (
+                        <button
+                            onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'sources' ? null : 'sources')}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'sources'
+                                    ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                }`}
+                        >
+                            <BookOpen size={16} />
+                            <span>Sources <span className="text-neutral-500 font-normal">({sourcesMetadata.length})</span></span>
+                            {activeMetadataPanel === 'sources' ? <ChevronDown size={14} className="ml-1 opacity-50" /> : <ChevronRight size={14} className="ml-1 opacity-50" />}
+                        </button>
+                    )}
+
+                    <button
+                        onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'tags' ? null : 'tags')}
+                        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'tags'
+                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                            }`}
+                    >
+                        <Tag size={16} />
+                        <span>Tags <span className="text-neutral-500 font-normal">({noteTags.length})</span></span>
+                        {activeMetadataPanel === 'tags' ? <ChevronDown size={14} className="ml-1 opacity-50" /> : <ChevronRight size={14} className="ml-1 opacity-50" />}
+                    </button>
+                </div>
+
+                {/* Tab Content Panel */}
+                {activeMetadataPanel && (
+                    <div className="bg-neutral-50 border-x border-b border-neutral-200 rounded-b-md p-3 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                        {activeMetadataPanel === 'actions' && type === 'fleeting' && (
+                            <FleetingActions
+                                onConvertToPermanent={handleConvertToPermanent}
+                                onConvertToLiterature={handleConvertToLiterature}
+                                isOpen={true}
+                                hideHeader={true}
+                            />
+                        )}
+
+                        {activeMetadataPanel === 'sources' && type === 'literature' && (
+                            <LiteratureMetadata
+                                sources={sourcesMetadata}
+                                onChange={setSourcesMetadata}
+                                readOnly={!isExpanded && false}
+                                metadata={metadata}
+                                isOpen={true}
+                                hideHeader={true}
+                            />
+                        )}
+
+                        {activeMetadataPanel === 'tags' && (
+                            <TagsPanel
+                                tags={noteTags}
+                                onAddTag={(tag) => {
+                                    const newTag = tag.trim();
+                                    if (newTag && !noteTags.includes(newTag)) {
+                                        if (setNoteTags) {
+                                            setNoteTags([...noteTags, newTag]);
+                                        }
+                                    }
+                                }}
+                                onRemoveTag={removeTag}
+                                readOnly={!isExpanded && false}
+                                isOpen={true}
+                                hideHeader={true}
+                            />
+                        )}
                     </div>
                 )}
-
-                <div className={styles.tagsList}>
-                    {noteTags.map((tag: string) => (
-                        <span key={tag} className={styles.tag}>
-                            {tag}
-                            <button
-                                onClick={() => removeTag(tag)}
-                                className={styles.tagRemoveButton}
-                            >
-                                ×
-                            </button>
-                        </span>
-                    ))}
-                </div>
-                <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleAddTag}
-                    placeholder="Add tags..."
-                    className={styles.tagInput}
-                />
             </div>
 
             <div className={styles.footer}>
@@ -320,29 +341,28 @@ export const NoteEditor = () => {
     const [title, setTitle] = useState(note?.title || '');
     const [content, setContent] = useState(note?.content || '');
     const [noteTags, setNoteTags] = useState<string[]>(note?.tags || []);
-    const [tagInput, setTagInput] = useState('');
     const [type, setType] = useState<'fleeting' | 'literature' | 'permanent' | 'hub'>(note?.type || 'fleeting');
-    const [sources, setSources] = useState<string[]>(note?.sources || (note?.source ? [note.source] : []));
-    const [sourceInput, setSourceInput] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
     const [editorStats, setEditorStats] = useState({ words: 0, characters: 0 });
 
-    // New State for Metadata
     const [metadata, setMetadata] = useState(note?.metadata || {});
+    const [sourcesMetadata, setSourcesMetadata] = useState<SourceMetadata[]>(note?.sourcesMetadata || []);
+
+    // Metadata Accordion State
+    const [activeMetadataPanel, setActiveMetadataPanel] = useState<'sources' | 'tags' | 'actions' | null>(null);
+
+
 
     const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
 
-    // Virtual Keyboard Handling
     const [viewportHeight, setViewportHeight] = useState(window.visualViewport?.height || window.innerHeight);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-    // REFS to hold latest state for unmount saving (The "Safety Net")
-    const noteStateRef = useRef({ title, content, noteTags, type, sources, metadata });
+    const noteStateRef = useRef({ title, content, noteTags, type, metadata, sourcesMetadata });
 
-    // Update refs whenever state changes
     useEffect(() => {
-        noteStateRef.current = { title, content, noteTags, type, sources, metadata };
-    }, [title, content, noteTags, type, sources, metadata]);
+        noteStateRef.current = { title, content, noteTags, type, metadata, sourcesMetadata };
+    }, [title, content, noteTags, type, metadata, sourcesMetadata]);
 
     useEffect(() => {
         if (!window.visualViewport) return;
@@ -350,7 +370,7 @@ export const NoteEditor = () => {
         const handleResize = () => {
             const currentHeight = window.visualViewport?.height || window.innerHeight;
             setViewportHeight(currentHeight);
-            setKeyboardOpen(currentHeight < window.innerHeight * 0.85); // Threshold for keyboard detection
+            setKeyboardOpen(currentHeight < window.innerHeight * 0.85);
         };
 
         window.visualViewport.addEventListener('resize', handleResize);
@@ -362,28 +382,24 @@ export const NoteEditor = () => {
         };
     }, []);
 
-    // Track the currently active note ID to prevent background updates from overwriting local state
     const activeNoteIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         if (note && note.id !== activeNoteIdRef.current) {
-            // New note selected (or first load)
             activeNoteIdRef.current = note.id;
 
             setTitle(note.title);
             setContent(note.content || '');
             setNoteTags(note.tags || []);
             setType(note.type);
-            setSources(note.sources || (note.source ? [note.source] : []));
             setMetadata(note.metadata || {});
+            setSourcesMetadata(note.sourcesMetadata || []);
         }
     }, [editingNoteId, note]);
 
-    // Autosave State
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-    // Unified Save Function (Reads from Refs for safety)
     const saveChanges = useCallback((immediate = false) => {
         if (!editingNoteId) return;
 
@@ -395,14 +411,12 @@ export const NoteEditor = () => {
             content: current.content,
             tags: current.noteTags,
             type: current.type,
-            sources: current.type === 'literature' ? current.sources : undefined,
-            source: current.type === 'literature' ? (current.sources[0] || '') : undefined,
-            metadata: current.metadata // New Metadata field
+            metadata: current.metadata,
+            sourcesMetadata: current.sourcesMetadata
         }, { immediate });
         setLastSaved(new Date());
     }, [editingNoteId, updateNote]);
 
-    // Autosave Effect (500ms Debounce)
     useEffect(() => {
         if (!editingNoteId) return;
 
@@ -414,17 +428,12 @@ export const NoteEditor = () => {
         }, 1000);
 
         return () => clearTimeout(timer);
-    }, [title, content, noteTags, type, sources, metadata, editingNoteId, saveChanges]);
+    }, [title, content, noteTags, type, metadata, sourcesMetadata, editingNoteId, saveChanges]);
 
-    // Unmount / Close Protection
     useEffect(() => {
         return () => {
             if (editingNoteId) {
                 console.log('🚪 Editor closing/unmounting, forcing save...');
-                // We MUST call the save logic here. 
-                // However, we cannot call 'saveChanges' directly if it's in the dependency array
-                // because that would trigger this effect constantly.
-                // Instead, we implement the save logic directly reading from the Ref.
 
                 const current = noteStateRef.current;
                 useStore.getState().updateNote(editingNoteId, {
@@ -432,16 +441,15 @@ export const NoteEditor = () => {
                     content: current.content,
                     tags: current.noteTags,
                     type: current.type,
-                    sources: current.type === 'literature' ? current.sources : undefined,
-                    source: current.type === 'literature' ? (current.sources[0] || '') : undefined,
-                    metadata: current.metadata
-                }, { immediate: true }); // FORCE IMMEDIATE SAVE
+                    metadata: current.metadata,
+                    sourcesMetadata: current.sourcesMetadata
+                }, { immediate: true });
             }
         };
-    }, [editingNoteId]); // Only re-bind when the Note ID changes (switching notes)
+    }, [editingNoteId]);
 
     const handleSave = () => {
-        saveChanges(true); // Explicit Save is Immediate
+        saveChanges(true);
         setEditingNoteId(null);
         setIsExpanded(false);
     };
@@ -454,15 +462,7 @@ export const NoteEditor = () => {
         setIsExpanded(false);
     };
 
-    const handleAddTag = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && tagInput.trim()) {
-            const newTag = tagInput.trim();
-            if (!noteTags.includes(newTag)) {
-                setNoteTags([...noteTags, newTag]);
-            }
-            setTagInput('');
-        }
-    };
+
 
     const removeTag = (tagToRemove: string) => {
         setNoteTags(noteTags.filter((tag) => tag !== tagToRemove));
@@ -484,21 +484,6 @@ export const NoteEditor = () => {
         }));
     };
 
-    const handleAddSource = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const val = sourceInput.trim();
-            if (val) {
-                setSources([...sources, val]);
-                setSourceInput('');
-            }
-        }
-    };
-
-    const removeSource = (index: number) => {
-        setSources(sources.filter((_, i) => i !== index));
-    };
-
     if (!editingNoteId) return null;
 
     const dragContent = (
@@ -515,18 +500,12 @@ export const NoteEditor = () => {
             content={content}
             setContent={setContent}
             noteTags={noteTags}
+            setNoteTags={setNoteTags}
             removeTag={removeTag}
-            tagInput={tagInput}
-            setTagInput={setTagInput}
-            handleAddTag={handleAddTag}
+
             type={type}
             setType={setType}
-            sources={sources}
-            setSources={setSources}
-            sourceInput={sourceInput}
-            setSourceInput={setSourceInput}
-            handleAddSource={handleAddSource}
-            removeSource={removeSource}
+
             isSaving={isSaving}
             lastSaved={lastSaved}
             setEditingNoteId={setEditingNoteId}
@@ -535,6 +514,10 @@ export const NoteEditor = () => {
             keyboardOpen={keyboardOpen}
             metadata={metadata}
             setMetadata={setMetadata}
+            sourcesMetadata={sourcesMetadata}
+            setSourcesMetadata={setSourcesMetadata}
+            activeMetadataPanel={activeMetadataPanel}
+            setActiveMetadataPanel={setActiveMetadataPanel}
         />
     );
 

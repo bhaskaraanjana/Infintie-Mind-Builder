@@ -10,7 +10,7 @@ interface BacklinksPanelProps {
 
 export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({ noteId, onNavigate }) => {
     const notes = useStore((state) => state.notes);
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
 
     // Get notes that link TO this note
     const backlinks = Object.values(notes).filter(n => n.references && n.references.includes(noteId));
