@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from './store';
+import { Sparkles, CircleDot, Square, Tag, AlignLeft } from 'lucide-react';
 
 export const ViewControls: React.FC = () => {
     const { viewport, setViewport, ui, setUi } = useStore();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newScale = parseFloat(e.target.value);
@@ -21,23 +30,23 @@ export const ViewControls: React.FC = () => {
                 bottom: '20px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                padding: 'var(--spacing-2) var(--spacing-4)', // Reduced padding
-                borderRadius: 'var(--radius-full)',
+                padding: '4px',
+                borderRadius: '9999px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--spacing-2)', // Reduced gap
+                gap: '8px',
                 zIndex: 'var(--z-sticky)',
                 boxShadow: 'var(--shadow-xl)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--glass-border)',
                 width: 'max-content',
-                maxWidth: '95vw', // Ensure it fits screen
-                overflowX: 'auto' // Allow scroll if needed
+                maxWidth: '90vw',
+                transition: 'all 0.3s ease'
             }}
         >
             {/* Zoom Slider - Desktop Only */}
-            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--textSecondary)', fontWeight: 600 }}>
+            <div className="hide-on-mobile" style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: 'var(--spacing-2)', paddingLeft: '8px' }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--textSecondary)', fontWeight: 600, minWidth: '40px' }}>
                     {(viewport.scale * 100).toFixed(0)}%
                 </span>
                 <input
@@ -48,71 +57,90 @@ export const ViewControls: React.FC = () => {
                     value={viewport.scale}
                     onChange={handleZoomChange}
                     style={{
-                        width: '100px',
+                        width: '80px',
                         accentColor: 'var(--primary-500)',
                         cursor: 'pointer'
                     }}
                 />
             </div>
 
-            <div className="hide-on-mobile" style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
+            <div className="hide-on-mobile" style={{ display: isMobile ? 'none' : 'block', width: '1px', height: '24px', backgroundColor: 'var(--border)' }} />
 
             {/* LOD Toggle */}
-            <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--canvasBg)', padding: '2px', borderRadius: 'var(--radius-lg)' }}>
-                {(['auto', 'orb', 'card'] as const).map((mode) => (
-                    <button
-                        key={mode}
-                        onClick={() => setUi({ lodMode: mode })}
-                        style={{
-                            padding: '4px 8px',
-                            borderRadius: 'var(--radius-md)',
-                            border: 'none',
-                            background: ui.lodMode === mode ? 'var(--primary-500)' : 'transparent',
-                            color: ui.lodMode === mode ? '#fff' : 'var(--textSecondary)',
-                            fontSize: 'var(--text-xs)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            textTransform: 'capitalize',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {mode}
-                    </button>
-                ))}
+            <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--canvasBg)', padding: '2px', borderRadius: '9999px' }}>
+                {(['auto', 'orb', 'card'] as const).map((mode) => {
+                    const Icon = mode === 'auto' ? Sparkles : mode === 'orb' ? CircleDot : Square;
+                    return (
+                        <button
+                            key={mode}
+                            onClick={() => setUi({ lodMode: mode })}
+                            style={{
+                                padding: isMobile ? '8px' : '4px 12px',
+                                borderRadius: '9999px',
+                                border: 'none',
+                                background: ui.lodMode === mode ? 'var(--primary-500)' : 'transparent',
+                                color: ui.lodMode === mode ? '#fff' : 'var(--textSecondary)',
+                                fontSize: 'var(--text-xs)',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                textTransform: 'capitalize',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                minWidth: isMobile ? '36px' : 'auto',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {isMobile ? <Icon size={18} /> : mode}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Label & Details Toggles - Visible on Mobile now */}
-            {/* Label & Details Toggles - Only visible if Orb mode */}
+            {/* Label & Details Toggles */}
             {ui.lodMode === 'orb' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
+                <>
+                    <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border)' }} />
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={ui.showOrbLabels}
-                            onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
-                            style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
-                        />
-                        <span style={{ fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>
-                            Labels
-                        </span>
-                    </label>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                        <button
+                            onClick={() => setUi({ showOrbLabels: !ui.showOrbLabels })}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: ui.showOrbLabels ? 'var(--primary-100)' : 'transparent',
+                                color: ui.showOrbLabels ? 'var(--primary-600)' : 'var(--textSecondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Tag size={18} />
+                        </button>
 
-                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={ui.showOrbDetails}
-                            onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
-                            style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
-                        />
-                        <span style={{ fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>
-                            Details
-                        </span>
-                    </label>
-                </div>
+                        <button
+                            onClick={() => setUi({ showOrbDetails: !ui.showOrbDetails })}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: ui.showOrbDetails ? 'var(--primary-100)' : 'transparent',
+                                color: ui.showOrbDetails ? 'var(--primary-600)' : 'var(--textSecondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <AlignLeft size={18} />
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );
