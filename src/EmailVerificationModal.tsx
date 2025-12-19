@@ -112,6 +112,9 @@ export const EmailVerificationModal = () => {
                     <p style={{ color: 'var(--neutral-500)', fontSize: '14px', marginTop: '8px' }}>
                         Please check your inbox and click the link to continue.
                     </p>
+                    <p style={{ color: 'var(--neutral-400)', fontSize: '13px', marginTop: '8px' }}>
+                        (Check your <strong>Spam</strong> folder if you don't see it)
+                    </p>
                 </div>
 
                 {/* Status Messages */}
