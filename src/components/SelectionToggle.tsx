@@ -20,8 +20,8 @@ export const SelectionToggle = () => {
                 width: '48px', // Standardize size
                 height: '48px',
                 borderRadius: 'var(--radius-full)', // Match others
-                backgroundColor: selectionMode ? 'var(--theme-primary)' : 'var(--glass-bg)',
-                color: selectionMode ? 'white' : 'var(--theme-text)',
+                backgroundColor: selectionMode ? 'var(--primary-500)' : 'var(--glass-bg)',
+                color: selectionMode ? 'white' : 'var(--text)',
                 border: '1px solid var(--glass-border)',
                 display: 'flex',
                 alignItems: 'center',

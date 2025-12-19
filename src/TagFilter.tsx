@@ -98,7 +98,7 @@ export const TagFilter: React.FC = () => {
                             fontSize: 'var(--text-sm)',
                             fontWeight: 600,
                             marginBottom: 'var(--spacing-2)',
-                            color: 'var(--theme-text)'
+                            color: 'var(--text)'
                         }}>
                             Filter by Tags
                         </div>

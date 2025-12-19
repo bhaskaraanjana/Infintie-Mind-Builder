@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import type { Note, Cluster, Link, ViewportState } from './types';
 import { db } from './db';
-import { type ThemeName } from './themes';
+import { themes, type ThemeName } from './themes';
 import { syncService } from './services/firebaseSyncService';
 import { ORB_RADIUS_DEFAULT, ORB_RADIUS_HUB } from './constants';
 
@@ -119,7 +119,10 @@ export const useStore = create<AppState>((set, get) => ({
     viewport: { x: 0, y: 0, scale: 1 },
     editingNoteId: null,
     selectedTags: [],
-    theme: (localStorage.getItem('infinite-mind-theme') as ThemeName) || 'light',
+    theme: (() => {
+        const stored = localStorage.getItem('infinite-mind-theme');
+        return (stored && stored in themes) ? (stored as ThemeName) : 'cream';
+    })(),
     ui: {
         minimapVisible: true,
         lodMode: 'auto',

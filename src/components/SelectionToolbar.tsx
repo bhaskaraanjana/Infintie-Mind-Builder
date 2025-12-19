@@ -42,6 +42,9 @@ export const SelectionToolbar: React.FC = () => {
 
     const handleClear = () => {
         setSelectedNoteIds([]);
+        if (selectionMode) {
+            toggleSelectionMode();
+        }
     };
 
     return (
@@ -53,12 +56,12 @@ export const SelectionToolbar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            background: 'rgba(255, 255, 255, 0.8)',
+            background: 'var(--glass-bg)',
             backdropFilter: 'blur(12px)',
             padding: '12px 20px',
             borderRadius: '24px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-            border: '1px solid rgba(255,255,255,0.4)',
+            border: '1px solid var(--glass-border)',
             zIndex: 1000,
             transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
             minWidth: '200px',
@@ -67,9 +70,9 @@ export const SelectionToolbar: React.FC = () => {
             <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#333',
+                color: 'var(--text)',
                 marginRight: '12px',
-                borderRight: '1px solid #ddd',
+                borderRight: '1px solid var(--border)',
                 paddingRight: '12px',
                 minWidth: '80px',
                 textAlign: 'center'
@@ -87,7 +90,7 @@ export const SelectionToolbar: React.FC = () => {
                     background: 'none',
                     border: 'none',
                     cursor: selectedNoteIds.length === 0 ? 'default' : 'pointer',
-                    color: '#444',
+                    color: 'var(--textSecondary)',
                     fontSize: '11px',
                     gap: '4px',
                     opacity: selectedNoteIds.length === 0 ? 0.5 : 1
@@ -97,7 +100,7 @@ export const SelectionToolbar: React.FC = () => {
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.05)',
+                    background: 'var(--neutral-100)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -117,7 +120,7 @@ export const SelectionToolbar: React.FC = () => {
                     background: 'none',
                     border: 'none',
                     cursor: selectedNoteIds.length < 2 ? 'not-allowed' : 'pointer',
-                    color: selectedNoteIds.length < 2 ? '#aaa' : '#444',
+                    color: selectedNoteIds.length < 2 ? 'var(--neutral-400)' : 'var(--textSecondary)',
                     fontSize: '11px',
                     gap: '4px',
                     opacity: selectedNoteIds.length < 2 ? 0.5 : 1
@@ -127,7 +130,7 @@ export const SelectionToolbar: React.FC = () => {
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.05)',
+                    background: 'var(--neutral-100)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'

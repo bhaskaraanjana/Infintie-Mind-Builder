@@ -220,7 +220,7 @@ export const Minimap: React.FC = () => {
                     justifyContent: 'center',
                     border: '1px solid var(--glass-border)',
                     background: 'var(--glass-bg)',
-                    color: 'var(--theme-text)',
+                    color: 'var(--text)',
                     cursor: 'pointer',
                     zIndex: 'var(--z-sticky)',
                     boxShadow: 'var(--shadow-lg)',
@@ -262,12 +262,12 @@ export const Minimap: React.FC = () => {
                         gap: 'var(--spacing-2)',
                         marginBottom: 'var(--spacing-2)'
                     }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-secondary)" strokeWidth="2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--textSecondary)" strokeWidth="2">
                             <polygon points="3 11 22 2 13 21 11 13 3 11" />
                         </svg>
                         <div style={{
                             fontSize: 'var(--text-xs)',
-                            color: 'var(--theme-text)',
+                            color: 'var(--text)',
                             fontWeight: 600,
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px'
@@ -284,17 +284,15 @@ export const Minimap: React.FC = () => {
                             display: 'block',
                             cursor: 'crosshair',
                             borderRadius: 'var(--radius-lg)',
-                            backgroundColor: 'var(--theme-canvas-bg)',
-                            border: '1px solid var(--theme-border)'
+                            backgroundColor: 'var(--canvasBg)',
+                            border: '1px solid var(--border)'
                         }}
                         onClick={handleBackgroundClick}
                     >
                         {/* Notes */}
                         {Object.values(notes).map(note => {
                             const pos = worldToMinimap(note.x, note.y);
-                            const noteColor = theme.colors[note.type as keyof typeof theme.colors] || theme.colors.fleeting;
-                            // @ts-ignore
-                            const fill = noteColor.main;
+                            const fill = theme.colors[`${note.type}-main` as keyof typeof theme.colors] || theme.colors['fleeting-main'];
 
                             return (
                                 <circle

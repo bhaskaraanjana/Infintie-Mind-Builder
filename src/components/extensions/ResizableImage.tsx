@@ -90,7 +90,7 @@ export const ResizableImage: React.FC<NodeViewProps> = (props) => {
                         maxWidth: '100%',
                         display: 'block',
                         borderRadius: '8px',
-                        boxShadow: selected ? '0 0 0 2px var(--theme-primary)' : 'none'
+                        boxShadow: selected ? '0 0 0 2px var(--primary-500)' : 'none'
                     }}
                 />
 
@@ -125,7 +125,7 @@ export const ResizableImage: React.FC<NodeViewProps> = (props) => {
                                 width: '24px',
                                 height: '24px',
                                 backgroundColor: 'white',
-                                border: '2px solid var(--theme-primary)',
+                                border: '2px solid var(--primary-500)',
                                 borderRadius: '50%',
                                 cursor: 'nwse-resize',
                                 zIndex: 10,
@@ -151,7 +151,7 @@ export const ResizableImage: React.FC<NodeViewProps> = (props) => {
                             <button onClick={() => setAlign('left')} className={node.attrs.align === 'left' ? 'active' : ''}><AlignLeft size={16} /></button>
                             <button onClick={() => setAlign('center')} className={node.attrs.align === 'center' ? 'active' : ''}><AlignCenter size={16} /></button>
                             <button onClick={() => setAlign('right')} className={node.attrs.align === 'right' ? 'active' : ''}><AlignRight size={16} /></button>
-                            <div style={{ width: '1px', background: 'var(--theme-border)', margin: '0 4px' }}></div>
+                            <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }}></div>
                             <button onClick={deleteNode} style={{ color: '#ff4444' }}><Trash2 size={16} /></button>
                         </div>
                     </>

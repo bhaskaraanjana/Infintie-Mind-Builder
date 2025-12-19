@@ -31,14 +31,11 @@ const DraggableEditorContent = ({
     noteTags,
     setNoteTags, // New Prop
     removeTag,
-    tagInput,
-    setTagInput,
-    handleAddTag,
+
     type,
     setType,
 
-    sources,
-    setSources, // Legacy Array handler 
+
 
     // New Source Manager Props
     sourcesMetadata,
@@ -53,7 +50,7 @@ const DraggableEditorContent = ({
 
     // Legacy Single Metadata 
     metadata,
-    setMetadata,
+
 
     // Accordion State
     activeMetadataPanel,
@@ -97,7 +94,7 @@ const DraggableEditorContent = ({
                     className={styles.dragHandle}
                     title="Drag to move"
                 >
-                    <GripHorizontal size={20} color="var(--theme-text-secondary)" />
+                    <GripHorizontal size={20} color="var(--textSecondary)" />
                 </div>
                 <input
                     type="text"
@@ -112,7 +109,7 @@ const DraggableEditorContent = ({
                         className={styles.iconButton}
                         title={isExpanded ? "Collapse" : "Expand"}
                     >
-                        {isExpanded ? <Minimize2 size={20} color="var(--theme-text)" /> : <Maximize2 size={20} color="var(--theme-text)" />}
+                        {isExpanded ? <Minimize2 size={20} color="var(--text)" /> : <Maximize2 size={20} color="var(--text)" />}
                     </button>
                     {!isExpanded && (
                         <button
@@ -120,7 +117,7 @@ const DraggableEditorContent = ({
                             className={styles.iconButton}
                             title="Close"
                         >
-                            <X size={20} color="var(--theme-text)" />
+                            <X size={20} color="var(--text)" />
                         </button>
                     )}
                 </div>
@@ -325,7 +322,7 @@ const DraggableEditorContent = ({
                         className={styles.closeButton}
                         title="Close Full Screen"
                     >
-                        <X size={24} color="var(--theme-text)" />
+                        <X size={24} color="var(--text)" />
                     </button>
                 </div>
             </div>
@@ -528,7 +525,7 @@ export const NoteEditor = () => {
             viewportHeight={viewportHeight}
             keyboardOpen={keyboardOpen}
             metadata={metadata}
-            setMetadata={setMetadata}
+
             sourcesMetadata={sourcesMetadata}
             setSourcesMetadata={setSourcesMetadata}
             activeMetadataPanel={activeMetadataPanel}

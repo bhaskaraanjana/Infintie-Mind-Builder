@@ -21,38 +21,8 @@ body {
    ========================================== */
 
 :root {
-    /* Color Palette - Primary */
-    --primary-50: #f0f9ff;
-    --primary-100: #e0f2fe;
-    --primary-500: #0ea5e9;
-    --primary-600: #0284c7;
-    --primary-700: #0369a1;
+    /* Color variables are injected via App.tsx based on the active theme */
 
-    /* Color Palette - Neutral */
-    --neutral-50: #fafafa;
-    --neutral-100: #f5f5f5;
-    --neutral-200: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --neutral-400: #a3a3a3;
-    --neutral-500: #737373;
-    --neutral-600: #525252;
-    --neutral-700: #404040;
-    --neutral-800: #262626;
-    --neutral-900: #171717;
-
-    /* Color Palette - Semantic */
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --error: #ef4444;
-    --red-50: #fef2f2;
-    --red-600: #dc2626;
-    --info: #3b82f6;
-
-    /* Note Type Colors */
-    --fleeting: #FFD700;
-    --literature: #87CEEB;
-    --permanent: #90EE90;
-    --hub: #D8BFD8;
 
     /* Typography */
     --font-sans: 'Arial', sans-serif;

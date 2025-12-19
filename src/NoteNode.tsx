@@ -30,10 +30,21 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
     const isSelected = selectedNoteIds.includes(note.id);
 
     // Fallback if theme or color is missing
+    // Fallback if theme or color is missing
     const getNoteColor = (t: typeof theme, type: string) => {
-        const c = t.colors[type as keyof typeof t.colors];
-        if (c && typeof c === 'object' && 'main' in c) return c;
-        return t.colors.fleeting;
+        const mainKey = `${type}-main` as keyof typeof t.colors;
+        const glowKey = `${type}-glow` as keyof typeof t.colors;
+
+        if (t.colors[mainKey]) {
+            return {
+                main: t.colors[mainKey],
+                glow: t.colors[glowKey]
+            };
+        }
+        return {
+            main: t.colors['fleeting-main'],
+            glow: t.colors['fleeting-glow']
+        };
     };
     const noteColor = getNoteColor(theme, note.type);
 

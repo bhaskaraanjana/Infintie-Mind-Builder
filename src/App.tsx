@@ -76,12 +76,10 @@ function App() {
         const theme = themes[themeName];
         if (theme) {
             const root = document.documentElement;
-            root.style.setProperty('--theme-bg', theme.colors.bg);
-            root.style.setProperty('--theme-canvas-bg', theme.colors.canvasBg);
-            root.style.setProperty('--theme-text', theme.colors.text);
-            root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
-            root.style.setProperty('--theme-border', theme.colors.border);
-            root.style.setProperty('--theme-primary', theme.colors.primary);
+            // Dynamic injection of all theme variables
+            Object.entries(theme.colors).forEach(([key, value]) => {
+                root.style.setProperty(`--${key}`, value);
+            });
         }
     }, [themeName]);
 
@@ -94,7 +92,7 @@ function App() {
                 height: '100vh',
                 display: 'flex',
                 overflow: 'hidden',
-                backgroundColor: 'var(--theme-bg)',
+                backgroundColor: 'var(--bg)',
             }}
         >
             <Canvas />

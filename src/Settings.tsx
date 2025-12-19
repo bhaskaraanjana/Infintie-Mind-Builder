@@ -411,14 +411,14 @@ export const Settings: React.FC = () => {
                                                 width: '24px',
                                                 height: '24px',
                                                 borderRadius: 'var(--radius-md)',
-                                                backgroundColor: theme.colors.fleeting.main,
+                                                backgroundColor: theme.colors['fleeting-main'],
                                                 border: '1px solid var(--neutral-300)'
                                             }} />
                                             <div style={{
                                                 width: '24px',
                                                 height: '24px',
                                                 borderRadius: 'var(--radius-md)',
-                                                backgroundColor: theme.colors.literature.main,
+                                                backgroundColor: theme.colors['literature-main'],
                                                 border: '1px solid var(--neutral-300)'
                                             }} />
                                         </div>

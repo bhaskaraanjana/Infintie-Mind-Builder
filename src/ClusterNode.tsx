@@ -240,7 +240,7 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
                     y={12}
                     fontSize={18}
                     fontStyle="bold"
-                    fill={theme.name === 'light' ? '#fff' : theme.colors.text}
+                    fill={theme.name === 'cream' ? '#fff' : theme.colors.text}
                     listening={false}
                 />
             </Group>

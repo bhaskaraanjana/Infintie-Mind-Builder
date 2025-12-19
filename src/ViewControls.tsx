@@ -37,7 +37,7 @@ export const ViewControls: React.FC = () => {
         >
             {/* Zoom Slider - Desktop Only */}
             <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--theme-text-secondary)', fontWeight: 600 }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--textSecondary)', fontWeight: 600 }}>
                     {(viewport.scale * 100).toFixed(0)}%
                 </span>
                 <input
@@ -55,10 +55,10 @@ export const ViewControls: React.FC = () => {
                 />
             </div>
 
-            <div className="hide-on-mobile" style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+            <div className="hide-on-mobile" style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
 
             {/* LOD Toggle */}
-            <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--theme-canvas-bg)', padding: '2px', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--canvasBg)', padding: '2px', borderRadius: 'var(--radius-lg)' }}>
                 {(['auto', 'orb', 'card'] as const).map((mode) => (
                     <button
                         key={mode}
@@ -68,7 +68,7 @@ export const ViewControls: React.FC = () => {
                             borderRadius: 'var(--radius-md)',
                             border: 'none',
                             background: ui.lodMode === mode ? 'var(--primary-500)' : 'transparent',
-                            color: ui.lodMode === mode ? '#fff' : 'var(--theme-text-secondary)',
+                            color: ui.lodMode === mode ? '#fff' : 'var(--textSecondary)',
                             fontSize: 'var(--text-xs)',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -85,7 +85,7 @@ export const ViewControls: React.FC = () => {
             {/* Label & Details Toggles - Only visible if Orb mode */}
             {ui.lodMode === 'orb' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
 
                     <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                         <input
@@ -94,12 +94,12 @@ export const ViewControls: React.FC = () => {
                             onChange={(e) => setUi({ showOrbLabels: e.target.checked })}
                             style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
                         />
-                        <span style={{ fontSize: '11px', color: 'var(--theme-text)', fontWeight: 500 }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>
                             Labels
                         </span>
                     </label>
 
-                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--theme-border)' }} />
+                    <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--border)' }} />
 
                     <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                         <input
@@ -108,7 +108,7 @@ export const ViewControls: React.FC = () => {
                             onChange={(e) => setUi({ showOrbDetails: e.target.checked })}
                             style={{ accentColor: 'var(--primary-500)', transform: 'scale(0.8)' }}
                         />
-                        <span style={{ fontSize: '11px', color: 'var(--theme-text)', fontWeight: 500 }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>
                             Details
                         </span>
                     </label>

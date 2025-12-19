@@ -203,10 +203,10 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                 .ProseMirror {
                     outline: none;
                     min-height: 200px;
-                    color: var(--theme-text);
+                    color: var(--text);
                 }
                 .ProseMirror p.is-editor-empty:first-child::before {
-                    color: var(--theme-text-secondary);
+                    color: var(--textSecondary);
                     content: attr(data-placeholder);
                     float: left;
                     height: 0;
@@ -224,7 +224,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                 }
                 .ProseMirror img.ProseMirror-selectednode {
-                    outline: 2px solid var(--theme-primary);
+                    outline: 2px solid var(--primary-500);
                 }
 
                 /* YouTube Styling */
@@ -252,7 +252,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                 .ProseMirror table td,
                 .ProseMirror table th {
                     min-width: 100px;
-                    border: 2px solid var(--theme-border);
+                    border: 2px solid var(--border);
                     padding: 0.5rem;
                     vertical-align: top;
                     position: relative;
@@ -261,7 +261,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                 .ProseMirror table th {
                     font-weight: bold;
                     text-align: left;
-                    background-color: var(--theme-canvas-bg);
+                    background-color: var(--canvasBg);
                 }
 
                 .ProseMirror table .selectedCell {

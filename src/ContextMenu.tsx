@@ -30,16 +30,16 @@ const MenuItem: React.FC<{
             style={{
                 padding: '12px 16px', // Larger touch target
                 cursor: 'pointer',
-                color: option.danger ? '#ef4444' : 'var(--theme-text-primary, #333)',
+                color: option.danger ? '#ef4444' : 'var(--text)',
                 fontSize: '14px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid var(--theme-border-color, #eee)',
+                borderBottom: '1px solid var(--border)',
                 backgroundColor: 'transparent',
                 transition: 'background-color 0.2s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-hover-bg, #f5f5f5)'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--neutral-100)'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             onClick={(e) => {
                 e.stopPropagation();
@@ -87,14 +87,14 @@ export const ContextMenu: React.FC<Props> = ({ x, y, options, onClose }) => {
                 position: 'fixed',
                 top: y,
                 left: x,
-                backgroundColor: 'var(--theme-bg, #fff)',
+                backgroundColor: 'var(--bg)',
                 borderRadius: '12px',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                 padding: '0',
                 zIndex: 1000,
                 minWidth: '220px',
                 maxWidth: '280px', // Prevent too wide on mobile
-                border: '1px solid var(--theme-border-color, #e5e7eb)',
+                border: '1px solid var(--border)',
                 overflow: 'hidden',
                 animation: 'fadeIn 0.1s ease-out'
             }}>
@@ -104,12 +104,12 @@ export const ContextMenu: React.FC<Props> = ({ x, y, options, onClose }) => {
                         onClick={handleBack}
                         style={{
                             padding: '10px 16px',
-                            borderBottom: '1px solid var(--theme-border-color, #eee)',
+                            borderBottom: '1px solid var(--border)',
                             display: 'flex',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            backgroundColor: 'var(--theme-hover-bg, #f9fafb)',
-                            color: 'var(--theme-text-secondary, #666)',
+                            backgroundColor: 'var(--neutral-100)',
+                            color: 'var(--textSecondary)',
                             fontSize: '13px',
                             fontWeight: 600
                         }}

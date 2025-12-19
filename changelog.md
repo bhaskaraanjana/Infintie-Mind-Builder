@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Theme System Revamp:**
+  - **Dynamic Theming:** Implemented robust "Cream" (Light) and "Midnight" (Dark) themes with CSS variable injection.
+  - **Visual Polish:** Updated "Cream" theme with a modern Sky Blue primary color and Orange literature notes.
+  - **Dark Mode Fixes:** Resolved "Midnight" theme white-background bugs and ensured correct glassmorphism rendering.
+  - **Legacy Cleanup:** Replaced all outdated `var(--theme-*)` variables with standard tokens (e.g., `var(--text)`, `var(--glass-bg)`).
+- **UI Stability:**
+  - **Selection UI:** Fixed visibility issues in selection toggle and toolbar across all themes.
+  - **Selection Logic:** Ensure close button in selection toolbar properly exits multi-select mode.
+  - **Code Quality:** Cleaned up unused props and legacy state in `NoteEditor.tsx`.
 - **Smart Link Anchoring:** Links now connect cleanly to the edges of notes (cards and orbs) instead of the center, improving visual clarity.
 - **Living Link Animations:** Added a subtle flowing dash animation to links to make the knowledge graph feel more dynamic.
 - **Link Visualization 2.0:**
