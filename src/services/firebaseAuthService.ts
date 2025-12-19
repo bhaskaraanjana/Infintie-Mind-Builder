@@ -5,6 +5,7 @@ import {
     signOut,
     onAuthStateChanged as firebaseOnAuthStateChanged,
     sendPasswordResetEmail,
+    sendEmailVerification,
     type User as FirebaseUser
 } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -14,12 +15,14 @@ import type { AuthService, User } from './authService';
 const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
     uid: firebaseUser.uid,
     email: firebaseUser.email,
-    displayName: firebaseUser.displayName
+    displayName: firebaseUser.displayName,
+    emailVerified: firebaseUser.emailVerified
 });
 
 class FirebaseAuthService implements AuthService {
     async signup(email: string, password: string): Promise<User> {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await sendEmailVerification(userCredential.user);
         return mapFirebaseUser(userCredential.user);
     }
 
@@ -45,6 +48,22 @@ class FirebaseAuthService implements AuthService {
 
     async sendPasswordReset(email: string): Promise<void> {
         await sendPasswordResetEmail(auth, email);
+    }
+
+    async reloadUser(): Promise<User | null> {
+        const firebaseUser = auth.currentUser;
+        if (firebaseUser) {
+            await firebaseUser.reload();
+            return mapFirebaseUser(firebaseUser);
+        }
+        return null;
+    }
+
+    async sendVerificationEmail(): Promise<void> {
+        const firebaseUser = auth.currentUser;
+        if (firebaseUser) {
+            await sendEmailVerification(firebaseUser);
+        }
     }
 }
 

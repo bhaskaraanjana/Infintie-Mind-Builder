@@ -9,6 +9,8 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     sendPasswordReset: (email: string) => Promise<void>;
+    reloadUser: () => Promise<void>;
+    sendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -58,13 +60,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         await authService.sendPasswordReset(email);
     };
 
+    const reloadUser = async () => {
+        const updatedUser = await authService.reloadUser();
+        if (updatedUser) {
+            setUser(updatedUser);
+        }
+    };
+
+    const sendVerificationEmail = async () => {
+        await authService.sendVerificationEmail();
+    };
+
     const value = {
         user,
         loading,
         signup,
         login,
         logout,
-        sendPasswordReset
+        logout,
+        sendPasswordReset,
+        reloadUser,
+        sendVerificationEmail
     };
 
     return (

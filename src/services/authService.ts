@@ -5,6 +5,7 @@ export interface User {
     uid: string;
     email: string | null;
     displayName: string | null;
+    emailVerified: boolean;
 }
 
 export interface AuthService {
@@ -25,6 +26,12 @@ export interface AuthService {
 
     // Password reset
     sendPasswordReset(email: string): Promise<void>;
+
+    // Refresh user data (for email verification check)
+    reloadUser(): Promise<User | null>;
+
+    // Send verification email
+    sendVerificationEmail(): Promise<void>;
 
     // Google sign-in (optional for later)
     loginWithGoogle?(): Promise<User>;

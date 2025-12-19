@@ -10,6 +10,7 @@ import { useStore } from './store';
 import { themes } from './themes';
 import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './LoginModal';
+import { EmailVerificationModal } from './EmailVerificationModal';
 import { DebugMenu } from './DebugMenu';
 import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
@@ -22,6 +23,10 @@ function App() {
     // Show login modal if not authenticated
     if (!user) {
         return <LoginModal />;
+    }
+
+    if (!user.emailVerified) {
+        return <EmailVerificationModal />;
     }
 
     const loadData = useStore((state) => state.loadData);
