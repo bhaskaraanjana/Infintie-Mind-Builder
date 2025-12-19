@@ -20,17 +20,24 @@ import { useModalHistory } from './hooks/useModalHistory';
 function App() {
     const { user } = useAuth();
 
-    // Show login modal if not authenticated
-    if (!user) {
-        return <LoginModal />;
-    }
+    const themeName = useStore((state) => state.theme);
 
-    if (!user.emailVerified) {
-        return <EmailVerificationModal />;
-    }
+    // Apply theme colors immediately
+    useEffect(() => {
+        const theme = themes[themeName];
+        if (theme) {
+            const root = document.documentElement;
+            // Dynamic injection of all theme variables
+            Object.entries(theme.colors).forEach(([key, value]) => {
+                root.style.setProperty(`--${key}`, value);
+            });
+        }
+    }, [themeName]);
+
+
 
     const loadData = useStore((state) => state.loadData);
-    const themeName = useStore((state) => state.theme);
+    // themeName moved up
     const initializeSync = useStore((state) => state.initializeSync);
     const reconcileWithCloud = useStore((state) => state.reconcileWithCloud);
     const cleanupSync = useStore((state) => state.cleanupSync);
@@ -71,19 +78,18 @@ function App() {
         loadData();
     }, [loadData]);
 
-    // Apply theme colors
-    useEffect(() => {
-        const theme = themes[themeName];
-        if (theme) {
-            const root = document.documentElement;
-            // Dynamic injection of all theme variables
-            Object.entries(theme.colors).forEach(([key, value]) => {
-                root.style.setProperty(`--${key}`, value);
-            });
-        }
-    }, [themeName]);
+
 
     useModalHistory(!!editingNoteId, () => setEditingNoteId(null), 'editor');
+
+    // Show login modal if not authenticated
+    if (!user) {
+        return <LoginModal />;
+    }
+
+    if (!user.emailVerified) {
+        return <EmailVerificationModal />;
+    }
 
     return (
         <div

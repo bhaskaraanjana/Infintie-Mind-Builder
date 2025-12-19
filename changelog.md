@@ -38,6 +38,8 @@ All notable changes to this project will be documented in this file.
   - **Mobile Friendly:** Improved touch targets and responsive layout for all new editor components.
 
 ### Fixed
+- **Startup Crash:** Fixed critical "Rendered more hooks" error causing blank page after login by ensuring unconditional hook execution.
+- **Theme Initialization:** Fixed white-on-white Login page issue by hoisting theme initialization logic to run before authentication checks.
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.
 - **Mobile Link Interaction:** Enabled long-press context menu for links on touch devices.
 
