@@ -13,6 +13,14 @@ export const Settings: React.FC = () => {
     const [installPrompt, setInstallPrompt] = useState<any>(null);
     const { theme: currentTheme, setTheme } = useStore();
     const { logout, user } = useAuth();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Debug stats
     const noteCount = Object.keys(useStore((state) => state.notes)).length;
@@ -51,21 +59,25 @@ export const Settings: React.FC = () => {
             style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                width: '100%',
+                gap: '8px',
+                padding: isMobile ? '8px 12px' : '12px 16px',
+                width: isMobile ? 'auto' : '100%',
+                flex: isMobile ? 1 : 'none',
+                justifyContent: isMobile ? 'center' : 'flex-start',
                 backgroundColor: activeTab === id ? 'var(--primary-50)' : 'transparent',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: isMobile ? '20px' : '12px',
                 color: activeTab === id ? 'var(--primary-600)' : 'var(--neutral-600)',
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: 'pointer',
-                textAlign: 'left',
+                textAlign: isMobile ? 'center' : 'left',
                 transition: 'all 0.2s',
-                marginBottom: '4px'
+                marginBottom: isMobile ? '0' : '4px',
+                flexDirection: isMobile ? 'column' : 'row',
+                fontSize: isMobile ? '11px' : '14px'
             }}
         >
-            <Icon size={20} />
+            <Icon size={isMobile ? 20 : 20} />
             <span>{label}</span>
         </button>
     );
@@ -111,54 +123,77 @@ export const Settings: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '20px'
+                        padding: isMobile ? '0' : '20px'
                     }}
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
                         className="glass"
                         style={{
-                            width: '800px',
+                            width: isMobile ? '100%' : '800px',
                             maxWidth: '100%',
-                            height: '600px',
-                            maxHeight: '90vh',
-                            borderRadius: '24px',
+                            height: isMobile ? '100%' : '600px',
+                            maxHeight: isMobile ? '100vh' : '90vh',
+                            borderRadius: isMobile ? '0' : '24px',
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                             display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
                             overflow: 'hidden',
                             backgroundColor: 'var(--bg)', // Ensure opaque-ish background
-                            border: '1px solid var(--border)'
+                            border: isMobile ? 'none' : '1px solid var(--border)'
                         }}
                     >
                         {/* Sidebar */}
                         <div style={{
-                            width: '240px',
-                            padding: '24px',
-                            borderRight: '1px solid var(--border)',
+                            width: isMobile ? '100%' : '240px',
+                            padding: isMobile ? '16px' : '24px',
+                            borderRight: isMobile ? 'none' : '1px solid var(--border)',
+                            borderBottom: isMobile ? '1px solid var(--border)' : 'none',
                             backgroundColor: 'var(--neutral-50)',
                             display: 'flex',
-                            flexDirection: 'column'
+                            flexDirection: isMobile ? 'column' : 'column',
+                            gap: isMobile ? '12px' : '0'
                         }}>
-                            <h2 style={{
-                                fontSize: '20px',
-                                fontWeight: 700,
-                                margin: '0 0 24px 0',
-                                paddingLeft: '12px'
-                            }}>
-                                Settings
-                            </h2>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '0' : '24px' }}>
+                                <h2 style={{
+                                    fontSize: isMobile ? '18px' : '20px',
+                                    fontWeight: 700,
+                                    margin: 0,
+                                    paddingLeft: isMobile ? '0' : '12px'
+                                }}>
+                                    Settings
+                                </h2>
+                                {isMobile && (
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                        style={{ border: 'none', background: 'transparent', padding: '8px', cursor: 'pointer', fontSize: '18px' }}
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
 
-                            <div style={{ flex: 1 }}>
+                            <div style={{
+                                flex: isMobile ? 'none' : 1,
+                                display: 'flex',
+                                flexDirection: isMobile ? 'row' : 'column',
+                                gap: isMobile ? '4px' : '0',
+                                backgroundColor: isMobile ? 'var(--neutral-100)' : 'transparent',
+                                padding: isMobile ? '4px' : '0',
+                                borderRadius: isMobile ? '24px' : '0'
+                            }}>
                                 <TabButton id="account" label="Account" icon={User} />
                                 <TabButton id="appearance" label="Appearance" icon={Palette} />
                                 <TabButton id="advanced" label="Advanced" icon={Wrench} />
                             </div>
 
-                            <div style={{ paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-                                <p style={{ fontSize: '12px', color: 'var(--neutral-400)', textAlign: 'center' }}>
-                                    Version 0.6.1-beta
-                                </p>
-                            </div>
+                            {!isMobile && (
+                                <div style={{ paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                                    <p style={{ fontSize: '12px', color: 'var(--neutral-400)', textAlign: 'center' }}>
+                                        Version 0.6.1-beta
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Content Area */}
