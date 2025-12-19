@@ -11,7 +11,7 @@ import { themes } from './themes';
 import { useAuth } from './contexts/AuthContext';
 import { LoginModal } from './LoginModal';
 import { EmailVerificationModal } from './EmailVerificationModal';
-import { DebugMenu } from './DebugMenu';
+
 import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
 import { SelectionToolbar } from './components/SelectionToolbar';
@@ -106,7 +106,7 @@ function App() {
             <TagFilter />
             <NoteEditor key={editingNoteId} />
             <Minimap />
-            <DebugMenu />
+
             <Settings />
             <ViewControls />
             <SelectionToggle />
