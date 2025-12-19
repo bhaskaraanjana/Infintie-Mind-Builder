@@ -62,7 +62,8 @@ export const Settings: React.FC = () => {
                 gap: '8px',
                 padding: isMobile ? '8px 12px' : '12px 16px',
                 width: isMobile ? 'auto' : '100%',
-                flex: isMobile ? 1 : 'none',
+                flex: isMobile ? '0 0 auto' : 'none', // Allow scrolling on mobile
+                padding: isMobile ? '8px 16px' : '12px 16px',
                 justifyContent: isMobile ? 'center' : 'flex-start',
                 backgroundColor: activeTab === id ? 'var(--primary-50)' : 'transparent',
                 border: 'none',
@@ -166,7 +167,14 @@ export const Settings: React.FC = () => {
                                 {isMobile && (
                                     <button
                                         onClick={() => setIsOpen(false)}
-                                        style={{ border: 'none', background: 'transparent', padding: '8px', cursor: 'pointer', fontSize: '18px' }}
+                                        style={{
+                                            border: 'none',
+                                            background: 'transparent',
+                                            padding: '8px 40px', // Increase tap area
+                                            cursor: 'pointer',
+                                            fontSize: '20px',
+                                            marginRight: '-4px' // Optical alignment
+                                        }}
                                     >
                                         ✕
                                     </button>
@@ -177,14 +185,23 @@ export const Settings: React.FC = () => {
                                 flex: isMobile ? 'none' : 1,
                                 display: 'flex',
                                 flexDirection: isMobile ? 'row' : 'column',
-                                gap: isMobile ? '4px' : '0',
-                                backgroundColor: isMobile ? 'var(--neutral-100)' : 'transparent',
-                                padding: isMobile ? '4px' : '0',
-                                borderRadius: isMobile ? '24px' : '0'
+                                gap: isMobile ? '8px' : '0',
+                                backgroundColor: isMobile ? 'transperent' : 'transparent', // Remove bg on mobile to allow scroll bleed
+                                padding: isMobile ? '0 4px' : '0',
+                                borderRadius: isMobile ? '0' : '0',
+                                overflowX: isMobile ? 'auto' : 'visible', // Enable scrolling
+                                scrollbarWidth: 'none', // Hide scrollbar for Firefox
+                                WebkitOverflowScrolling: 'touch', // Smooth scrolling
                             }}>
-                                <TabButton id="account" label="Account" icon={User} />
-                                <TabButton id="appearance" label="Appearance" icon={Palette} />
-                                <TabButton id="advanced" label="Advanced" icon={Wrench} />
+                                {/* Hide scrollbar for Chrome/Safari via CSS injection or class if possible, using inline for now */}
+                                <style>{`
+                                    .hide-scrollbar::-webkit-scrollbar { display: none; }
+                                `}</style>
+                                <div className="hide-scrollbar" style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '0', width: '100%' }}>
+                                    <TabButton id="account" label="Account" icon={User} />
+                                    <TabButton id="appearance" label="Appearance" icon={Palette} />
+                                    <TabButton id="advanced" label="Advanced" icon={Wrench} />
+                                </div>
                             </div>
 
                             {!isMobile && (
@@ -230,7 +247,14 @@ export const Settings: React.FC = () => {
                                                 {user?.email?.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <div style={{ fontSize: '18px', fontWeight: 600 }}>{user?.email}</div>
+                                                <div style={{
+                                                    fontSize: '18px',
+                                                    fontWeight: 600,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '200px' // Limit width
+                                                }}>{user?.email}</div>
                                                 <div style={{ color: 'var(--neutral-500)', fontSize: '14px' }}>User ID: {user?.uid.slice(0, 8)}...</div>
                                             </div>
                                         </div>
