@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useStore } from './store';
 import { X, Trash2, Maximize2, Minimize2, GripHorizontal, Tag, BookOpen, Zap, ChevronDown, ChevronRight, Network } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
@@ -369,6 +369,8 @@ export const NoteEditor = () => {
 
     const [viewportHeight, setViewportHeight] = useState(window.visualViewport?.height || window.innerHeight);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+
 
     const noteStateRef = useRef({ title, content, noteTags, type, metadata, sourcesMetadata });
 

@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file.
     - **Pinch-to-Zoom:** Added pinch gesture support in minimap for zooming the canvas.
     - **Visibility:** Minimap is now hidden by default on mobile to save screen space, with centered overlay when active.
     - **Touch Interaction:** Improved touch handling for minimap viewport dragging.
+- **Tag Autocomplete:** Implemented smart autocomplete for note tags.
+    - **Suggestions:** Dropdown list of existing tags appears while typing.
+    - **Data Source:** Suggestions are dynamically sourced from all existing tags in the knowledge base.
+    - **Optimization:** Refactored `TagsPanel` to read directly from the store for reliable synchronization.
 - **Smart Link Anchoring:** Links now connect cleanly to the edges of notes (cards and orbs) instead of the center, improving visual clarity.
 - **Living Link Animations:** Added a subtle flowing dash animation to links to make the knowledge graph feel more dynamic.
 - **Link Visualization 2.0:**

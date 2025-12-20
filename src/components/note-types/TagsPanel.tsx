@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tag, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { useStore } from '../../store';
 
 interface TagsPanelProps {
     tags: string[];
@@ -21,6 +22,19 @@ export const TagsPanel: React.FC<TagsPanelProps> = ({
     onToggle: controlledOnToggle,
     hideHeader
 }) => {
+    const notes = useStore(state => state.notes);
+
+    // Compute available tags for autocomplete from store
+    const availableTags = useMemo(() => {
+        const uniqueTags = new Set<string>();
+        Object.values(notes).forEach(note => {
+            if (note.tags) {
+                note.tags.forEach(tag => uniqueTags.add(tag));
+            }
+        });
+        return Array.from(uniqueTags).sort();
+    }, [notes]);
+
     const [localIsOpen, setLocalIsOpen] = useState(false);
     const isControlled = controlledIsOpen !== undefined;
     const isOpen = isControlled ? controlledIsOpen : localIsOpen;
@@ -75,16 +89,39 @@ export const TagsPanel: React.FC<TagsPanelProps> = ({
                     </div>
 
                     {!readOnly && (
-                        <div className="flex items-center bg-white border border-neutral-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
-                            <Plus size={16} className="text-neutral-400 mr-2" />
-                            <input
-                                type="text"
-                                className="w-full bg-transparent outline-none text-sm min-h-[22px]"
-                                placeholder="add-tag..."
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
+                        <div className="relative">
+                            <div className="flex items-center bg-white border border-neutral-300 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                                <Plus size={16} className="text-neutral-400 mr-2" />
+                                <input
+                                    type="text"
+                                    className="w-full bg-transparent outline-none text-sm min-h-[22px]"
+                                    placeholder="add-tag..."
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                            </div>
+
+                            {/* Autocomplete Suggestions */}
+                            {input.trim() && availableTags.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                                    {availableTags
+                                        .filter(t => t.toLowerCase().includes(input.toLowerCase()) && !tags.includes(t))
+                                        .map(suggestion => (
+                                            <button
+                                                key={suggestion}
+                                                className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
+                                                onClick={() => {
+                                                    onAddTag(suggestion);
+                                                    setInput('');
+                                                }}
+                                            >
+                                                <Tag size={12} className="text-neutral-400" />
+                                                <span>{suggestion}</span>
+                                            </button>
+                                        ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
