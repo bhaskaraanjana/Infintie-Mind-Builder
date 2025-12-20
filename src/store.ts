@@ -124,7 +124,7 @@ export const useStore = create<AppState>((set, get) => ({
         return (stored && stored in themes) ? (stored as ThemeName) : 'cream';
     })(),
     ui: {
-        minimapVisible: true,
+        minimapVisible: false,
         lodMode: 'auto',
         showOrbLabels: false,
         showOrbDetails: false

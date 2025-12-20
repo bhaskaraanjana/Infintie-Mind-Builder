@@ -11,7 +11,19 @@ export const Minimap: React.FC = () => {
     const [isDragging, setIsDragging] = useState(false);
     const dragStartRef = useRef<{ x: number, y: number, viewX: number, viewY: number } | null>(null);
 
-    // Force update when viewport changes
+    // Pinch Zoom State
+    const [pinchStart, setPinchStart] = useState<{ dist: number, scale: number } | null>(null);
+
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Force update when viewport changes (keep this just in case, though useStore selector usually handles it)
     const [, forceUpdate] = useState({});
     useEffect(() => {
         forceUpdate({});
@@ -50,9 +62,7 @@ export const Minimap: React.FC = () => {
             maxY = Math.max(maxY, c.y + 100);
         });
 
-        // Include Current Viewport (so we don't disappear if we scroll away)
-        // Viewport X/Y is top-left of screen in world coords * -1 (inverted by scale behavior of Konva usually, 
-        // strictly: stage.x = -viewportX * scale) -> viewportX = -stage.x / scale
+        // Include Current Viewport
         const viewX = -viewport.x / viewport.scale;
         const viewY = -viewport.y / viewport.scale;
         const viewW = window.innerWidth / viewport.scale;
@@ -75,16 +85,15 @@ export const Minimap: React.FC = () => {
             width: maxX - minX,
             height: maxY - minY
         };
-    }, [notes, clusters, viewport.x, viewport.y, viewport.scale]); // Re-calc when content or view changes
+    }, [notes, clusters, viewport.x, viewport.y, viewport.scale]);
 
-    // Scale Factor: Fits the world width/height into the minimap box
-    // specific logic: use "contain" fit
+    // Scale Factor
     const scale = Math.min(
         MINIMAP_WIDTH / bounds.width,
         MINIMAP_HEIGHT / bounds.height
     );
 
-    // Centering offsets (if aspect ratios differ)
+    // Centering offsets
     const offsetX = (MINIMAP_WIDTH - bounds.width * scale) / 2;
     const offsetY = (MINIMAP_HEIGHT - bounds.height * scale) / 2;
 
@@ -114,27 +123,33 @@ export const Minimap: React.FC = () => {
         const worldPos = minimapToWorld(clickX, clickY);
 
         // Center Viewport on this point
-        // target: worldPos is center of screen
-        // formula: viewport.x = -worldX * scale + screenWidth/2 ? No, store is x/y offset
-        // Store viewport x,y is usually stage position.
-        // stage.x = -worldX * scale + screenW/2
-        // viewport.x = -worldX * scale + screenW/2 ... wait.
-        // Let's check InfiniteCanvas: scaleX={viewport.scale} x={viewport.x}
-        // So viewport.x IS stage.x.
-
-        // We want world center to be at center of screen.
-        // Center of screen in local coords: screenW/2, screenH/2
-        // Center of screen in world coords: (screenW/2 - stage.x) / scale
-        // We want (screenW/2 - newStageX) / scale = targetWorldX
-        // screenW/2 - newStageX = targetWorldX * scale
-        // newStageX = screenW/2 - targetWorldX * scale
-
         const newStageX = window.innerWidth / 2 - worldPos.x * viewport.scale;
         const newStageY = window.innerHeight / 2 - worldPos.y * viewport.scale;
 
         setViewport({
             x: newStageX,
             y: newStageY,
+            scale: viewport.scale
+        });
+    };
+
+    const updateViewportFromDelta = (clientX: number, clientY: number) => {
+        if (!dragStartRef.current) return;
+
+        const dx = clientX - dragStartRef.current.x;
+        const dy = clientY - dragStartRef.current.y;
+
+        // Convert pixel delta on screen to world delta
+        const worldDx = dx / scale;
+        const worldDy = dy / scale;
+
+        // Apply to Viewport
+        const deltaStageX = -(worldDx * viewport.scale);
+        const deltaStageY = -(worldDy * viewport.scale);
+
+        setViewport({
+            x: dragStartRef.current.viewX + deltaStageX,
+            y: dragStartRef.current.viewY + deltaStageY,
             scale: viewport.scale
         });
     };
@@ -150,36 +165,12 @@ export const Minimap: React.FC = () => {
             viewY: viewport.y
         };
 
-        // Add global listeners
         window.addEventListener('mousemove', handleDragMove);
         window.addEventListener('mouseup', handleDragEnd);
     };
 
     const handleDragMove = (e: MouseEvent) => {
-        if (!dragStartRef.current) return;
-
-        const dx = e.clientX - dragStartRef.current.x;
-        const dy = e.clientY - dragStartRef.current.y;
-
-        // Convert pixel delta on screen to world delta
-        // 1px on minimap = 1/scale px in world
-        // But dx is in screen pixels, same as minimap pixels
-        const worldDx = dx / scale;
-        const worldDy = dy / scale;
-
-        // Apply to Viewport
-        // Moving box RIGHT -> Viewport moves LEFT (camera moves right)
-        // If box moves +10px (representing +1000 world units), camera must look at +1000 world units
-        // So stage.x must DECREASE by (1000 * viewport.scale)
-
-        const deltaStageX = -(worldDx * viewport.scale);
-        const deltaStageY = -(worldDy * viewport.scale);
-
-        setViewport({
-            x: dragStartRef.current.viewX + deltaStageX,
-            y: dragStartRef.current.viewY + deltaStageY,
-            scale: viewport.scale
-        });
+        updateViewportFromDelta(e.clientX, e.clientY);
     };
 
     const handleDragEnd = () => {
@@ -189,21 +180,85 @@ export const Minimap: React.FC = () => {
         window.removeEventListener('mouseup', handleDragEnd);
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        // Pinch Zoom Start
+        if (e.touches.length === 2) {
+            e.stopPropagation();
+            e.preventDefault();
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            setPinchStart({ dist, scale: viewport.scale });
+            return;
+        }
+
+        // Check if target is viewport drag handle
+        const target = e.target as Element;
+        const isViewportDrag = target.closest('g')?.getAttribute('data-viewport-drag') === 'true';
+
+        if (isViewportDrag) {
+            e.stopPropagation();
+            setIsDragging(true);
+            const touch = e.touches[0];
+            dragStartRef.current = {
+                x: touch.clientX,
+                y: touch.clientY,
+                viewX: viewport.x,
+                viewY: viewport.y
+            };
+
+            window.addEventListener('touchmove', handleTouchMove, { passive: false });
+            window.addEventListener('touchend', handleTouchEnd);
+        }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault(); // Stop scrolling
+
+        // Pinch Zoom Move
+        if (e.touches.length === 2 && pinchStart) {
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+
+            // Calculate new scale
+            const scaleFactor = dist / pinchStart.dist;
+            let newScale = pinchStart.scale * scaleFactor;
+
+            // Clamp scale
+            newScale = Math.max(0.1, Math.min(5, newScale));
+
+            setViewport({ ...viewport, scale: newScale });
+            return;
+        }
+
+        if (!dragStartRef.current) return;
+        const touch = e.touches[0];
+        updateViewportFromDelta(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        setPinchStart(null); // Reset pinch
+        dragStartRef.current = null;
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
+    };
+
     // Calculate Viewport Rect
-    // Viewport world rect:
     const viewWorldX = -viewport.x / viewport.scale;
     const viewWorldY = -viewport.y / viewport.scale;
     const viewWorldW = window.innerWidth / viewport.scale;
     const viewWorldH = window.innerHeight / viewport.scale;
 
     const vpPos = worldToMinimap(viewWorldX, viewWorldY);
-    // Dimensions in minimap space: length * scale
     const vpW = viewWorldW * scale;
     const vpH = viewWorldH * scale;
 
-
     return (
-        <div className="hide-on-mobile">
+        <div>
             {/* Toggle Button */}
             <button
                 onClick={() => setUi({ minimapVisible: !ui.minimapVisible })}
@@ -243,14 +298,18 @@ export const Minimap: React.FC = () => {
                     className="glass"
                     style={{
                         position: 'fixed',
-                        bottom: '70px',
-                        right: '20px',
+                        bottom: isMobile ? 'auto' : '70px',
+                        right: isMobile ? 'auto' : '20px',
+                        top: isMobile ? '50%' : 'auto',
+                        left: isMobile ? '50%' : 'auto',
+                        transform: isMobile ? 'translate(-50%, -50%) scale(1.2)' : 'none',
                         borderRadius: 'var(--radius-2xl)',
                         padding: 'var(--spacing-4)',
                         zIndex: 'var(--z-sticky)',
                         boxShadow: 'var(--shadow-2xl)',
                         opacity: hover || isDragging ? 1 : 0.85,
-                        transition: 'opacity 0.2s'
+                        transition: 'opacity 0.2s',
+                        touchAction: 'none'
                     }}
                     onMouseEnter={() => setHover(true)}
                     onMouseLeave={() => setHover(false)}
@@ -285,9 +344,11 @@ export const Minimap: React.FC = () => {
                             cursor: 'crosshair',
                             borderRadius: 'var(--radius-lg)',
                             backgroundColor: 'var(--canvasBg)',
-                            border: '1px solid var(--border)'
+                            border: '1px solid var(--border)',
+                            touchAction: 'none'
                         }}
                         onClick={handleBackgroundClick}
+                        onTouchStart={handleTouchStart}
                     >
                         {/* Notes */}
                         {Object.values(notes).map(note => {
@@ -299,7 +360,7 @@ export const Minimap: React.FC = () => {
                                     key={note.id}
                                     cx={pos.x}
                                     cy={pos.y}
-                                    r={3} // Slightly larger for visibility
+                                    r={3}
                                     fill={fill}
                                     opacity={0.8}
                                 />
@@ -314,7 +375,7 @@ export const Minimap: React.FC = () => {
                                     key={cluster.id}
                                     cx={pos.x}
                                     cy={pos.y}
-                                    r={8}
+                                    r={8} // Cluster size on map
                                     fill={cluster.color}
                                     opacity={0.3}
                                 />
@@ -325,8 +386,8 @@ export const Minimap: React.FC = () => {
                         <g
                             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
                             onMouseDown={handleDragStart}
+                            data-viewport-drag="true"
                         >
-                            {/* Outer glow/border */}
                             <rect
                                 x={vpPos.x}
                                 y={vpPos.y}
