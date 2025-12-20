@@ -14,6 +14,11 @@ All notable changes to this project will be documented in this file.
   - **Selection UI:** Fixed visibility issues in selection toggle and toolbar across all themes.
   - **Selection Logic:** Ensure close button in selection toolbar properly exits multi-select mode.
   - **Code Quality:** Cleaned up unused props and legacy state in `NoteEditor.tsx`.
+- **Delink Feature:** Added "Delink" context menu option for Notes and Clusters to easily remove connected links with a submenu of targets.
+- **Mobile Minimap Improvements:** 
+    - **Pinch-to-Zoom:** Added pinch gesture support in minimap for zooming the canvas.
+    - **Visibility:** Minimap is now hidden by default on mobile to save screen space, with centered overlay when active.
+    - **Touch Interaction:** Improved touch handling for minimap viewport dragging.
 - **Smart Link Anchoring:** Links now connect cleanly to the edges of notes (cards and orbs) instead of the center, improving visual clarity.
 - **Living Link Animations:** Added a subtle flowing dash animation to links to make the knowledge graph feel more dynamic.
 - **Link Visualization 2.0:**

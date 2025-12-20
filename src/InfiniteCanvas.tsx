@@ -387,6 +387,24 @@ export const InfiniteCanvas = () => {
         if (noteGroup) {
             const noteId = noteGroup.name().replace('note-', '');
 
+            // Delink Submenu
+            const noteLinks = Object.values(links).filter(l => l.sourceId === noteId || l.targetId === noteId);
+            const delinkOptions: MenuOption[] = noteLinks.map(link => {
+                const otherId = link.sourceId === noteId ? link.targetId : link.sourceId;
+                const otherNode = notes[otherId];
+                const otherCluster = clusters[otherId];
+                // Determine label for the linked item
+                let label = 'Unknown';
+                if (otherNode) label = `Note: ${otherNode.title}`;
+                else if (otherCluster) label = `Cluster: ${otherCluster.title}`;
+
+                return {
+                    label: `Unlink: ${label}`,
+                    action: () => deleteLink(link.id),
+                    danger: true
+                };
+            });
+
             // Assign to Cluster Submenu
             const clusterOptions: MenuOption[] = Object.values(clusters).map(c => ({
                 label: c.title,
@@ -402,6 +420,13 @@ export const InfiniteCanvas = () => {
             ];
 
             options.push({ label: 'Link to note', action: () => setLinkingSourceId(noteId) });
+
+            if (delinkOptions.length > 0) {
+                options.push({
+                    label: 'Delink...',
+                    submenu: delinkOptions
+                });
+            }
 
             options.push({
                 label: 'Create Cluster',
@@ -428,6 +453,23 @@ export const InfiniteCanvas = () => {
         } else if (clusterGroup) {
             const clusterId = clusterGroup.name().replace('cluster-', '');
 
+            // Delink Submenu
+            const clusterLinks = Object.values(links).filter(l => l.sourceId === clusterId || l.targetId === clusterId);
+            const delinkOptions: MenuOption[] = clusterLinks.map(link => {
+                const otherId = link.sourceId === clusterId ? link.targetId : link.sourceId;
+                const otherNode = notes[otherId];
+                const otherCluster = clusters[otherId];
+                let label = 'Unknown';
+                if (otherNode) label = `Note: ${otherNode.title}`;
+                else if (otherCluster) label = `Cluster: ${otherCluster.title}`;
+
+                return {
+                    label: `Unlink: ${label}`,
+                    action: () => deleteLink(link.id),
+                    danger: true
+                };
+            });
+
             options.push({
                 label: 'Rename Cluster',
                 action: () => {
@@ -440,6 +482,13 @@ export const InfiniteCanvas = () => {
                 label: 'Link to Cluster',
                 action: () => setLinkingSourceId(clusterId)
             });
+
+            if (delinkOptions.length > 0) {
+                options.push({
+                    label: 'Delink...',
+                    submenu: delinkOptions
+                });
+            }
 
             options.push({
                 label: 'Change Color',
