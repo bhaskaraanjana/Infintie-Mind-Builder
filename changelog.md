@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file.
     - **Pinch-to-Zoom:** Added pinch gesture support in minimap for zooming the canvas.
     - **Visibility:** Minimap is now hidden by default on mobile to save screen space, with centered overlay when active.
     - **Touch Interaction:** Improved touch handling for minimap viewport dragging.
+- **Feedback Loop:** Built-in feedback system for beta testers.
+    - **Firestore Integration:** Submissions are stored directly in the `feedback` collection.
+    - **Smart Diagnostics:** Auto-collects device info (browser, screen size, theme) to help debug reports.
+    - **Dedicated UI:** Floating glassmorphic button with a clean submission modal.
 - **Global Error Handling:** Implemented a failsafe `ErrorBoundary` component.
     - **Crash Screen:** Replaces "white screen of death" with a friendly UI upon unexpected errors.
     - **Recovery Actions:** Users can "Reload" or "Emergency Reset" (clear local data) to recover from crashes.

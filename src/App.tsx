@@ -14,6 +14,7 @@ import { EmailVerificationModal } from './EmailVerificationModal';
 import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
 import { SelectionToolbar } from './components/SelectionToolbar';
+import { FeedbackButton } from './components/FeedbackButton';
 import { useModalHistory } from './hooks/useModalHistory';
 
 function App() {
@@ -112,6 +113,7 @@ function App() {
             <SelectionToggle />
             <SelectionToolbar />
             <MobileContextMenu />
+            <FeedbackButton />
         </div>
     );
 }
