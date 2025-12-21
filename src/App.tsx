@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { InfiniteCanvas as Canvas } from './InfiniteCanvas';
 import { NoteEditor } from './NoteEditor';
-import { SearchBar } from './SearchBar';
+import { SearchAndFilter } from './SearchAndFilter';
 import { Minimap } from './Minimap';
-import { TagFilter } from './TagFilter';
 import { Settings } from './Settings';
 import { ViewControls } from './ViewControls';
 import { useStore } from './store';
@@ -102,8 +101,9 @@ function App() {
             }}
         >
             <Canvas />
-            <SearchBar />
-            <TagFilter />
+
+            <SearchAndFilter />
+
             <NoteEditor key={editingNoteId} />
             <Minimap />
 

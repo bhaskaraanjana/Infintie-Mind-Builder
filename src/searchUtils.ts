@@ -1,5 +1,5 @@
 import Fuse, { type IFuseOptions, type FuseResult } from 'fuse.js';
-import type { Note } from './types';
+import type { Note, Cluster } from './types';
 
 export interface SearchResult {
     item: Note;
@@ -32,6 +32,37 @@ export const searchNotes = (query: string, notes: Note[]): SearchResult[] => {
 
     // Regular fuzzy search
     const fuse = new Fuse(notes, fuseOptions);
+    const results = fuse.search(query);
+
+    return results.map(result => ({
+        item: result.item,
+        score: result.score || 0,
+        matches: result.matches
+    }));
+};
+
+// Generic Search Interface
+export interface GenericSearchResult<T> {
+    item: T;
+    score: number;
+    matches?: FuseResult<T>['matches'];
+}
+
+// Cluster Search
+
+const clusterFuseOptions: IFuseOptions<Cluster> = {
+    keys: [{ name: 'title', weight: 1 }],
+    threshold: 0.3,
+    includeScore: true,
+    includeMatches: true
+};
+
+export const searchClusters = (query: string, clusters: Cluster[]): GenericSearchResult<Cluster>[] => {
+    if (!query.trim()) return [];
+
+    // Clusters don't have tags usually, but we could add tag logic if needed
+
+    const fuse = new Fuse(clusters, clusterFuseOptions);
     const results = fuse.search(query);
 
     return results.map(result => ({

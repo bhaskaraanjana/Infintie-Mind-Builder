@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file.
     - **Pinch-to-Zoom:** Added pinch gesture support in minimap for zooming the canvas.
     - **Visibility:** Minimap is now hidden by default on mobile to save screen space, with centered overlay when active.
     - **Touch Interaction:** Improved touch handling for minimap viewport dragging.
+- **Search & Filter Merge:** Unified Search and Filter components into a single powerful interface using `SearchAndFilter.tsx`.
+    - **Combined Logic:** Search queries now respect active tag filters simultaneously.
+    - **Cluster Search:** Search now finds **Clusters** in addition to notes, with viewport navigation support.
+    - **UI Enhancement:** Single glassmorphic search icon replaced cluttered separate buttons; active filters are clearly indicated.
 - **Tag Autocomplete:** Implemented smart autocomplete for note tags.
     - **Suggestions:** Dropdown list of existing tags appears while typing.
     - **Data Source:** Suggestions are dynamically sourced from all existing tags in the knowledge base.
