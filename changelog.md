@@ -19,6 +19,9 @@ All notable changes to this project will be documented in this file.
     - **Pinch-to-Zoom:** Added pinch gesture support in minimap for zooming the canvas.
     - **Visibility:** Minimap is now hidden by default on mobile to save screen space, with centered overlay when active.
     - **Touch Interaction:** Improved touch handling for minimap viewport dragging.
+- **UI Layering Fix:** Adjusted z-index of User/Settings icon.
+    - **Issue:** Fixed overlap where User icon appeared on top of Note Editors.
+    - **Fix:** Standardized z-index layers; User icon now sits correctly below modals (z-30 vs z-40).
 - **Search & Filter Merge:** Unified Search and Filter components into a single powerful interface using `SearchAndFilter.tsx`.
     - **Combined Logic:** Search queries now respect active tag filters simultaneously.
     - **Cluster Search:** Search now finds **Clusters** in addition to notes, with viewport navigation support.

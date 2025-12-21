@@ -63,7 +63,8 @@ export const Settings: React.FC = () => {
                 padding: isMobile ? '8px 12px' : '12px 16px',
                 width: isMobile ? 'auto' : '100%',
                 flex: isMobile ? '0 0 auto' : 'none', // Allow scrolling on mobile
-                padding: isMobile ? '8px 16px' : '12px 16px',
+                // padding: isMobile ? '8px 16px' : '12px 16px', // REMOVE DUPLICATE
+
                 justifyContent: isMobile ? 'center' : 'flex-start',
                 backgroundColor: activeTab === id ? 'var(--primary-50)' : 'transparent',
                 border: 'none',
@@ -96,7 +97,7 @@ export const Settings: React.FC = () => {
                     width: '48px',
                     height: '48px',
                     borderRadius: '50%',
-                    zIndex: 999,
+                    zIndex: 'var(--z-popover)',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -120,7 +121,7 @@ export const Settings: React.FC = () => {
                         inset: 0,
                         backgroundColor: 'rgba(0, 0, 0, 0.4)',
                         backdropFilter: 'blur(4px)',
-                        zIndex: 1000,
+                        zIndex: 'var(--z-tooltip)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
