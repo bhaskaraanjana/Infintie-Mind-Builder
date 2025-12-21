@@ -538,7 +538,10 @@ export const Settings: React.FC = () => {
                                                                 db.links.clear();
                                                             });
 
-                                                            alert('All data cleared successfully.');
+                                                            // Reset onboarding flag so it can trigger again
+                                                            localStorage.removeItem('infinite-mind-onboarded');
+
+                                                            alert('All data cleared successfully. Reload to see onboarding.');
                                                         } catch (e) {
                                                             console.error(e);
                                                             alert('Wipe partial or failed. Check console.');

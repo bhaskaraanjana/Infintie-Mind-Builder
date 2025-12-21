@@ -27,6 +27,10 @@ All notable changes to this project will be documented in this file.
     - **Auto Error Reporting:** Crashes are now automatically logged to Firestore `reports` collection with full stack traces and system diagnostics.
     - **Crash Screen:** Replaces "white screen of death" with a friendly UI upon unexpected errors.
     - **Recovery Actions:** Users can "Reload" or "Emergency Reset" (clear local data) to recover from crashes.
+- **New User Onboarding:** First-time users see a pre-populated example knowledge graph.
+    - **Seed Data:** Includes a Hub note, Fleeting note, Literature note, Permanent note, Cluster, and Links.
+    - **Teach by Example:** Users learn by interacting with real notes instead of modal tutorials.
+    - **Idempotent:** Uses fixed IDs to prevent duplicates across sessions.
 - **UI Layering Fix:** Adjusted z-index of User/Settings icon.
     - **Issue:** Fixed overlap where User icon appeared on top of Note Editors.
     - **Fix:** Standardized z-index layers; User icon now sits correctly below modals (z-30 vs z-40).

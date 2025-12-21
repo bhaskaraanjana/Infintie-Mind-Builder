@@ -263,6 +263,52 @@ export const useStore = create<AppState>((set, get) => ({
         const links: Record<string, Link> = {};
         linksArray.forEach((l: Link) => links[l.id] = l);
 
+        // Check if this is a first-time user (no notes AND not previously onboarded)
+        const hasOnboarded = localStorage.getItem('infinite-mind-onboarded');
+        if (Object.keys(notes).length === 0 && !hasOnboarded) {
+            console.log('First-time user detected, seeding onboarding data...');
+            const { generateOnboardingData } = await import('./onboardingData');
+            const seedData = generateOnboardingData();
+
+            // Add notes to state and DB
+            seedData.notes.forEach(n => {
+                notes[n.id] = n;
+            });
+            await db.notes.bulkAdd(seedData.notes);
+
+            // Add clusters to state and DB
+            seedData.clusters.forEach(c => {
+                clusters[c.id] = c;
+            });
+            await db.clusters.bulkAdd(seedData.clusters);
+
+            // Add links to state and DB
+            seedData.links.forEach(l => {
+                links[l.id] = l;
+            });
+            await db.links.bulkAdd(seedData.links);
+
+            // CRITICAL: Sync to cloud immediately so onSnapshot doesn't overwrite with empty data
+            try {
+                for (const note of seedData.notes) {
+                    await syncService.syncNote(note);
+                }
+                for (const cluster of seedData.clusters) {
+                    await syncService.syncCluster(cluster);
+                }
+                for (const link of seedData.links) {
+                    await syncService.syncLink(link);
+                }
+                console.log('Onboarding data synced to cloud!');
+            } catch (err) {
+                console.error('Failed to sync onboarding to cloud (may not be logged in yet):', err);
+            }
+
+            // Mark as onboarded so we don't seed again
+            localStorage.setItem('infinite-mind-onboarded', 'true');
+            console.log('Onboarding data seeded successfully!');
+        }
+
         set({ notes, clusters, links });
     },
 
