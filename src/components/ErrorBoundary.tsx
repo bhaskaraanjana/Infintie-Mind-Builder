@@ -1,6 +1,9 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore, auth } from '../firebase';
+import { useStore } from '../store';
 
 interface Props {
     children: ReactNode;
@@ -23,9 +26,36 @@ export class ErrorBoundary extends Component<Props, State> {
         return { hasError: true, error, errorInfo: null };
     }
 
-    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    public async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Uncaught error:', error, errorInfo);
         this.setState({ errorInfo });
+
+        // Auto Error Reporting
+        try {
+            const user = auth.currentUser;
+            const theme = useStore.getState().theme;
+
+            const deviceInfo = {
+                userAgent: navigator.userAgent,
+                screenSize: `${window.innerWidth}x${window.innerHeight}`,
+                theme,
+                language: navigator.language,
+                platform: navigator.platform
+            };
+
+            await addDoc(collection(firestore, 'reports'), {
+                userId: user?.uid || 'anonymous',
+                email: user?.email || 'unknown',
+                error: error.toString(),
+                stack: error.stack || 'No stack trace',
+                componentStack: errorInfo.componentStack || 'No component stack',
+                timestamp: serverTimestamp(),
+                deviceInfo
+            });
+            console.log('Error automatically reported to Firestore.');
+        } catch (reportError) {
+            console.error('Failed to auto-report error:', reportError);
+        }
     }
 
     private handleReload = () => {

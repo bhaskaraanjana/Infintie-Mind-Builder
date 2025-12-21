@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
     - **Smart Diagnostics:** Auto-collects device info (browser, screen size, theme) to help debug reports.
     - **Dedicated UI:** Floating glassmorphic button with a clean submission modal.
 - **Global Error Handling:** Implemented a failsafe `ErrorBoundary` component.
+    - **Auto Error Reporting:** Crashes are now automatically logged to Firestore `reports` collection with full stack traces and system diagnostics.
     - **Crash Screen:** Replaces "white screen of death" with a friendly UI upon unexpected errors.
     - **Recovery Actions:** Users can "Reload" or "Emergency Reset" (clear local data) to recover from crashes.
 - **UI Layering Fix:** Adjusted z-index of User/Settings icon.
