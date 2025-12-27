@@ -48,16 +48,25 @@ export const FleetingActions: React.FC<FleetingActionsProps> = ({
                 <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                     <button
                         onClick={onConvertToLiterature}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-200 hover:border-primary-300 hover:bg-neutral-50 rounded-md transition-colors text-left"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors text-left border"
+                        style={{
+                            backgroundColor: 'var(--neutral-50)',
+                            borderColor: 'var(--neutral-200)',
+                            color: 'var(--text)'
+                        }}
                         title="Convert to Literature Note (Add Sources)"
                     >
-                        <BookOpen size={16} className="text-neutral-500" />
+                        <BookOpen size={16} style={{ color: 'var(--neutral-500)' }} />
                         <span className="flex-grow">To Literature</span>
                     </button>
 
                     <button
                         onClick={onConvertToPermanent}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 border border-transparent rounded-md transition-colors shadow-sm text-left"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors shadow-sm text-left border border-transparent"
+                        style={{
+                            backgroundColor: 'var(--primary-600)',
+                            color: 'white'
+                        }}
                         title="Convert to Permanent Note (Solidify Idea)"
                     >
                         <ArrowRightCircle size={16} />

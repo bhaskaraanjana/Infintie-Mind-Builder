@@ -1,5 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
 import { WikiLink } from './components/extensions/WikiLink';
 import { Search } from './components/extensions/Search';
 import suggestion from './components/extensions/mentionSuggestion';
@@ -134,6 +135,9 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                 },
             }),
             Search,
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
+            }),
         ],
         content: content,
         editable: editable,

@@ -136,7 +136,11 @@ export const LiteratureMetadata: React.FC<LiteratureMetadataProps> = ({
                             ) : sources.map(source => (
                                 <div
                                     key={source.id}
-                                    className="flex items-center justify-between gap-3 p-2 bg-white border border-neutral-200 rounded-md hover:border-primary-300 hover:shadow-sm transition-all"
+                                    className="flex items-center justify-between gap-3 p-2 border rounded-md hover:shadow-sm transition-all"
+                                    style={{
+                                        backgroundColor: 'var(--neutral-50)',
+                                        borderColor: 'var(--neutral-200)'
+                                    }}
                                 >
                                     <div className="flex-grow min-w-0 flex items-center gap-2 text-sm text-neutral-700 overflow-x-auto scrollbar-hide whitespace-nowrap pr-2">
                                         <span className="font-semibold text-neutral-900">{source.title}</span>

@@ -196,9 +196,12 @@ const DraggableEditorContent = ({
                         <button
                             onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'actions' ? null : 'actions')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'actions'
-                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                ? 'border-primary-500 text-primary-900'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800'
                                 }`}
+                            style={{
+                                backgroundColor: activeMetadataPanel === 'actions' ? 'var(--primary-100)' : 'transparent'
+                            }}
                         >
                             <Zap size={16} />
                             <span>Process Note</span>
@@ -210,9 +213,12 @@ const DraggableEditorContent = ({
                         <button
                             onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'sources' ? null : 'sources')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'sources'
-                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                ? 'border-primary-500 text-primary-900'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800'
                                 }`}
+                            style={{
+                                backgroundColor: activeMetadataPanel === 'sources' ? 'var(--primary-100)' : 'transparent'
+                            }}
                         >
                             <BookOpen size={16} />
                             <span>Sources <span className="text-neutral-500 font-normal">({sourcesMetadata.length})</span></span>
@@ -224,9 +230,12 @@ const DraggableEditorContent = ({
                         <button
                             onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'connections' ? null : 'connections')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'connections'
-                                ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                                ? 'border-primary-500 text-primary-900'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800'
                                 }`}
+                            style={{
+                                backgroundColor: activeMetadataPanel === 'connections' ? 'var(--primary-100)' : 'transparent'
+                            }}
                         >
                             <Network size={16} />
                             <span>Connections</span>
@@ -237,9 +246,12 @@ const DraggableEditorContent = ({
                     <button
                         onClick={() => setActiveMetadataPanel(activeMetadataPanel === 'tags' ? null : 'tags')}
                         className={`flex items-center gap-2 px-3 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-md ${activeMetadataPanel === 'tags'
-                            ? 'border-primary-500 text-primary-700 bg-primary-50/30'
-                            : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'
+                            ? 'border-primary-500 text-primary-900'
+                            : 'border-transparent text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800'
                             }`}
+                        style={{
+                            backgroundColor: activeMetadataPanel === 'tags' ? 'var(--primary-100)' : 'transparent'
+                        }}
                     >
                         <Tag size={16} />
                         <span>Tags <span className="text-neutral-500 font-normal">({noteTags.length})</span></span>

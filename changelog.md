@@ -17,6 +17,9 @@ All notable changes to this project will be documented in this file.
   - **Local Find:** Added a native "Find in Note" bar inside the editor, toggled via the toolbar.
   - **Replace Support:** Added full Find & Replace capabilities (Replace, Replace All) to text editing.
   - **Visuals:** Matches are highlighted in real-time with navigation controls (Next/Prev).
+- **Text Alignment:**
+  - **Controls:** Added specific Left, Center, and Right alignment buttons to the editor toolbar.
+  - **Support:** Works on all paragraphs and headings.
 - **Wiki-links:**
   - **Syntax:** Support for `[[Note Title]]` syntax to create internal links.
   - **Navigation:** Clicking a wiki-link instantly opens the target note.

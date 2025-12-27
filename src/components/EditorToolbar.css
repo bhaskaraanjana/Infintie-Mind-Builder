@@ -2,13 +2,15 @@
 .editor-toolbar {
     /* Use position sticky only if not in flex container, or rely on parent */
     /* Removed sticky default to allow flexibility */
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--glass-bg);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     padding: var(--spacing-1);
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
 
     /* Horizontal Scroll Logic */
     flex-wrap: nowrap;
@@ -34,7 +36,8 @@
     background: transparent;
     border: none;
     border-radius: var(--radius-sm);
-    color: var(--neutral-600);
+    color: var(--textSecondary);
+    /* Use text-secondary instead of neutral-600 for better semantic mapping */
     cursor: pointer;
     transition: all 0.2s;
 }

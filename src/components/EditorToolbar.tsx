@@ -2,7 +2,8 @@ import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
     Image as ImageIcon, Youtube as YoutubeIcon, Quote,
-    Undo2, Redo2, Table as TableIcon, Upload, Search
+    Undo2, Redo2, Table as TableIcon, Upload, Search,
+    AlignLeft, AlignCenter, AlignRight
 } from 'lucide-react';
 import { type Editor } from '@tiptap/react';
 import './EditorToolbar.css';
@@ -149,6 +150,31 @@ export const EditorToolbar = ({ editor, className = '', onSearchClick }: EditorT
                 title="Heading 2"
             >
                 <Heading2 size={18} />
+            </button>
+
+            <div className="toolbar-divider" />
+
+            {/* Alignment */}
+            <button
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                className={`toolbar-btn ${editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}`}
+                title="Align Left"
+            >
+                <AlignLeft size={18} />
+            </button>
+            <button
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                className={`toolbar-btn ${editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}`}
+                title="Align Center"
+            >
+                <AlignCenter size={18} />
+            </button>
+            <button
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                className={`toolbar-btn ${editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}`}
+                title="Align Right"
+            >
+                <AlignRight size={18} />
             </button>
 
             <div className="toolbar-divider" />
