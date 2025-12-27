@@ -90,7 +90,7 @@ export const LoginModal = () => {
                         justifyContent: 'center',
                         boxShadow: '0 10px 15px -3px rgba(14, 165, 233, 0.3)'
                     }}>
-                        <img src="/pwa-192x192.png" alt="Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                        <img src="/pwa-192x192.png" alt="Logo" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '10px' }} />
                     </div>
                     <h1 style={{
                         fontSize: '24px',
