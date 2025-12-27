@@ -35,8 +35,6 @@ export const Settings: React.FC = () => {
     // Enable Back Button navigation
     useModalHistory(isOpen, () => setIsOpen(false), 'settings');
 
-    useModalHistory(isOpen, () => setIsOpen(false), 'settings');
-
     // Check standalone mode
     const [isStandalone, setIsStandalone] = useState(false);
     useEffect(() => {
@@ -65,7 +63,7 @@ export const Settings: React.FC = () => {
                 backgroundColor: activeTab === id ? 'var(--primary-50)' : 'transparent',
                 border: 'none',
                 borderRadius: isMobile ? '20px' : '12px',
-                color: activeTab === id ? 'var(--primary-600)' : 'var(--neutral-600)',
+                color: activeTab === id ? 'var(--primary-500)' : 'var(--textSecondary)',
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: 'pointer',
                 textAlign: isMobile ? 'center' : 'left',
@@ -158,7 +156,8 @@ export const Settings: React.FC = () => {
                                     fontSize: isMobile ? '18px' : '20px',
                                     fontWeight: 700,
                                     margin: 0,
-                                    paddingLeft: isMobile ? '0' : '12px'
+                                    paddingLeft: isMobile ? '0' : '12px',
+                                    color: 'var(--text)'
                                 }}>
                                     Settings
                                 </h2>
@@ -220,7 +219,7 @@ export const Settings: React.FC = () => {
                             {/* ACCOUNT TAB */}
                             {activeTab === 'account' && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px' }}>Account</h3>
+                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px', color: 'var(--text)' }}>Account</h3>
 
                                     <div style={{
                                         padding: '24px',
@@ -251,9 +250,10 @@ export const Settings: React.FC = () => {
                                                     whiteSpace: 'nowrap',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    maxWidth: '200px' // Limit width
+                                                    maxWidth: '200px',
+                                                    color: 'var(--text)'
                                                 }}>{user?.email}</div>
-                                                <div style={{ color: 'var(--neutral-500)', fontSize: '14px' }}>User ID: {user?.uid.slice(0, 8)}...</div>
+                                                <div style={{ color: 'var(--textSecondary)', fontSize: '14px' }}>User ID: {user?.uid.slice(0, 8)}...</div>
                                             </div>
                                         </div>
 
@@ -270,8 +270,8 @@ export const Settings: React.FC = () => {
                                                 padding: '10px 20px',
                                                 borderRadius: '10px',
                                                 border: '1px solid var(--neutral-300)',
-                                                backgroundColor: 'white',
-                                                color: 'var(--neutral-700)',
+                                                backgroundColor: 'var(--neutral-200)',
+                                                color: 'var(--text)',
                                                 fontWeight: 600,
                                                 cursor: 'pointer',
                                                 fontSize: '14px',
@@ -346,7 +346,7 @@ export const Settings: React.FC = () => {
                             {/* APPEARANCE TAB */}
                             {activeTab === 'appearance' && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px' }}>Appearance</h3>
+                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px', color: 'var(--text)' }}>Appearance</h3>
 
                                     <div style={{
                                         display: 'grid',
@@ -395,7 +395,7 @@ export const Settings: React.FC = () => {
                             {/* ADVANCED TAB */}
                             {activeTab === 'advanced' && (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px' }}>Advanced</h3>
+                                    <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px', color: 'var(--text)' }}>Advanced</h3>
 
                                     {/* Stats */}
                                     <div style={{
@@ -406,15 +406,15 @@ export const Settings: React.FC = () => {
                                     }}>
                                         <div style={{ padding: '16px', backgroundColor: 'var(--neutral-50)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                             <div style={{ fontSize: '13px', color: 'var(--neutral-500)', marginBottom: '4px' }}>Notes</div>
-                                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{noteCount}</div>
+                                            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text)' }}>{noteCount}</div>
                                         </div>
                                         <div style={{ padding: '16px', backgroundColor: 'var(--neutral-50)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                             <div style={{ fontSize: '13px', color: 'var(--neutral-500)', marginBottom: '4px' }}>Clusters</div>
-                                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{clusterCount}</div>
+                                            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text)' }}>{clusterCount}</div>
                                         </div>
                                         <div style={{ padding: '16px', backgroundColor: 'var(--neutral-50)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                                             <div style={{ fontSize: '13px', color: 'var(--neutral-500)', marginBottom: '4px' }}>Links</div>
-                                            <div style={{ fontSize: '24px', fontWeight: 700 }}>{linkCount}</div>
+                                            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text)' }}>{linkCount}</div>
                                         </div>
                                         <div style={{ padding: '16px', backgroundColor: 'var(--neutral-50)', borderRadius: '12px', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
                                             <div style={{ fontSize: '13px', color: 'var(--neutral-500)', marginBottom: '4px' }}>Sync Status</div>
@@ -425,7 +425,7 @@ export const Settings: React.FC = () => {
                                     </div>
 
                                     {/* Data Management */}
-                                    <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
                                         <Database size={18} /> Data Management
                                     </h4>
                                     <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
@@ -436,14 +436,14 @@ export const Settings: React.FC = () => {
                                                 padding: '12px',
                                                 borderRadius: '8px',
                                                 border: '1px solid var(--border)',
-                                                backgroundColor: 'white',
+                                                backgroundColor: 'var(--neutral-200)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 gap: '8px',
                                                 fontWeight: 500,
                                                 cursor: 'pointer',
-                                                color: 'var(--neutral-700)'
+                                                color: 'var(--text)'
                                             }}
                                         >
                                             <Download size={16} /> Export JSON
@@ -475,14 +475,14 @@ export const Settings: React.FC = () => {
                                                 padding: '12px',
                                                 borderRadius: '8px',
                                                 border: '1px solid var(--border)',
-                                                backgroundColor: 'white',
+                                                backgroundColor: 'var(--neutral-200)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 gap: '8px',
                                                 fontWeight: 500,
                                                 cursor: 'pointer',
-                                                color: 'var(--neutral-700)'
+                                                color: 'var(--text)'
                                             }}
                                         >
                                             <Upload size={16} /> Import JSON
@@ -490,7 +490,7 @@ export const Settings: React.FC = () => {
                                     </div>
 
                                     {/* Debug Actions */}
-                                    <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h4 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
                                         <Cloud size={18} /> Cloud Sync
                                     </h4>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
@@ -505,7 +505,7 @@ export const Settings: React.FC = () => {
                                                     } catch (e) { console.error(e); alert('Sync Failed'); }
                                                 }
                                             }}
-                                            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', cursor: 'pointer' }}
+                                            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--neutral-200)', cursor: 'pointer', color: 'var(--text)' }}
                                         >
                                             Force Push Notes
                                         </button>
@@ -514,7 +514,7 @@ export const Settings: React.FC = () => {
                                                 console.log(useStore.getState());
                                                 alert('State logged to console');
                                             }}
-                                            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', cursor: 'pointer' }}
+                                            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--neutral-200)', cursor: 'pointer', color: 'var(--text)' }}
                                         >
                                             Log State to Console
                                         </button>
@@ -593,7 +593,7 @@ export const Settings: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </div >
             )}
         </>
     );

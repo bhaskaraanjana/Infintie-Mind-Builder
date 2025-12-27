@@ -146,10 +146,10 @@ export const LoginModal = () => {
                                     paddingRight: '16px',
                                     paddingTop: '12px',
                                     paddingBottom: '12px',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                    backgroundColor: 'var(--neutral-200)',
                                     border: `1px solid ${focusedInput === 'email' ? 'var(--primary-500)' : 'var(--neutral-200)'}`,
                                     borderRadius: '12px',
-                                    color: 'var(--neutral-900)',
+                                    color: 'var(--text)',
                                     fontSize: '16px',
                                     outline: 'none',
                                     boxShadow: focusedInput === 'email' ? '0 0 0 2px rgba(14, 165, 233, 0.2)' : 'none',
@@ -187,10 +187,10 @@ export const LoginModal = () => {
                                     paddingRight: '16px',
                                     paddingTop: '12px',
                                     paddingBottom: '12px',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                    backgroundColor: 'var(--neutral-200)',
                                     border: `1px solid ${focusedInput === 'password' ? 'var(--primary-500)' : 'var(--neutral-200)'}`,
                                     borderRadius: '12px',
-                                    color: 'var(--neutral-900)',
+                                    color: 'var(--text)',
                                     fontSize: '16px',
                                     outline: 'none',
                                     boxShadow: focusedInput === 'password' ? '0 0 0 2px rgba(14, 165, 233, 0.2)' : 'none',
@@ -270,7 +270,7 @@ export const LoginModal = () => {
                             <div style={{ width: '100%', borderTop: '1px solid var(--neutral-200)' }}></div>
                         </div>
                         <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '12px', textTransform: 'uppercase' }}>
-                            <span style={{ backgroundColor: 'rgba(255,255,255,0.7)', padding: '0 8px', color: 'var(--neutral-400)' }}>Or</span>
+                            <span style={{ backgroundColor: 'var(--neutral-200)', padding: '0 8px', color: 'var(--textSecondary)' }}>Or</span>
                         </div>
                     </div>
 

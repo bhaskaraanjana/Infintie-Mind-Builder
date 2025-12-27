@@ -636,8 +636,8 @@ select {
     padding: var(--spacing-3) var(--spacing-4);
     font-size: var(--text-sm);
     line-height: 1.5;
-    color: var(--neutral-900);
-    background: white;
+    color: var(--text);
+    background: var(--neutral-200);
     border: 1px solid var(--neutral-300);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);

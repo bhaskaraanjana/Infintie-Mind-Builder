@@ -130,65 +130,61 @@ export const themes: Record<ThemeName, Theme> = {
     midnight: {
         name: 'midnight',
         label: 'Midnight',
-        description: 'True black OLED optimized',
+        description: 'High contrast dark theme',
         colors: {
-            // True Black
-            bg: '#000000',
-            canvasBg: '#050505',
-            canvasPattern: '#1A1A1A',
+            // Deep Zinc (not pure black - easier on eyes)
+            bg: '#09090b',           // Zinc-950
+            canvasBg: '#09090b',     // Zinc-950
+            canvasPattern: '#18181b', // Zinc-900 (subtle pattern)
 
-            text: '#EDEDED',
-            textSecondary: '#A1A1AA', // Zinc-400
-            textMuted: '#52525B',     // Zinc-600
+            text: '#fafafa',          // Zinc-50 (high contrast white)
+            textSecondary: '#a1a1aa', // Zinc-400
+            textMuted: '#71717a',     // Zinc-500
 
-            border: '#27272A',        // Zinc-800
+            border: '#3f3f46',        // Zinc-700 (visible borders!)
 
-            'glass-bg': 'rgba(0, 0, 0, 0.7)',
-            'glass-border': 'rgba(255, 255, 255, 0.1)',
+            'glass-bg': 'rgba(24, 24, 27, 0.85)',  // Zinc-900 with opacity
+            'glass-border': 'rgba(255, 255, 255, 0.15)',
 
-            // Neutrals (Tailwind Zinc - Cool Gray)
-            'neutral-50': '#09090B',  // Inverted for dark mode mapping? No, keep standard scale but UI will map them.
-            // ACTUALLY: For the UI tokens to work (bg-neutral-50, etc), we should Map them semantically OR keep the scale correct and ensure components use the right tokens.
-            // But usually "bg-neutral-50" implies "lightest".
-            // If we want "Midnight" to be dark, we should INVERT the palette so neutral-50 is DARK.
-            // This is the easiest way to make existing components compatible without refactoring everything.
-            'neutral-50': '#000000', // Was light, now darkest
-            'neutral-100': '#09090B',
-            'neutral-200': '#18181B', // Card bg
-            'neutral-300': '#27272A', // Borders
-            'neutral-400': '#3F3F46',
-            'neutral-500': '#52525B', // Muted text
-            'neutral-600': '#71717A',
-            'neutral-700': '#A1A1AA', // Secondary text
-            'neutral-800': '#D4D4D8',
-            'neutral-900': '#FAFAFA', // Primary text
-            'neutral-950': '#FFFFFF',
+            // Neutrals - INVERTED for dark mode (50=darkest, 950=lightest)
+            // This ensures components using neutral-50 get a dark background
+            'neutral-50': '#18181b',   // Zinc-900 (sidebar/panel bg)
+            'neutral-100': '#27272a',  // Zinc-800 (card bg)
+            'neutral-200': '#3f3f46',  // Zinc-700 (hover states)
+            'neutral-300': '#52525b',  // Zinc-600 (borders)
+            'neutral-400': '#71717a',  // Zinc-500 (muted)
+            'neutral-500': '#a1a1aa',  // Zinc-400 (secondary text)
+            'neutral-600': '#d4d4d8',  // Zinc-300
+            'neutral-700': '#e4e4e7',  // Zinc-200
+            'neutral-800': '#f4f4f5',  // Zinc-100
+            'neutral-900': '#fafafa',  // Zinc-50 (primary text)
+            'neutral-950': '#ffffff',
 
-            // Primary (Blue/Indigo - "Electric")
-            'primary-50': '#020617',
-            'primary-100': '#0F172A',
-            'primary-200': '#1E293B',
-            'primary-300': '#334155',
-            'primary-400': '#475569',
-            'primary-500': '#3B82F6', // Blue-500 (Main Brand)
-            'primary-600': '#60A5FA', // Lighter on dark hover
-            'primary-700': '#93C5FD',
-            'primary-800': '#BFDBFE',
-            'primary-900': '#DBEAFE',
-            'primary-950': '#EFF6FF',
+            // Primary (Blue - Electric)
+            'primary-50': '#eff6ff',
+            'primary-100': '#dbeafe',
+            'primary-200': '#bfdbfe',
+            'primary-300': '#93c5fd',
+            'primary-400': '#60a5fa',
+            'primary-500': '#3b82f6',
+            'primary-600': '#2563eb',
+            'primary-700': '#1d4ed8',
+            'primary-800': '#1e40af',
+            'primary-900': '#1e3a8a',
+            'primary-950': '#172554',
 
-            // Note Types (High Neon)
-            'fleeting-main': '#FACC15', // Yellow-400
-            'fleeting-glow': 'rgba(250, 204, 21, 0.5)',
-            'literature-main': '#22D3EE', // Cyan-400
-            'literature-glow': 'rgba(34, 211, 238, 0.5)',
-            'permanent-main': '#4ADE80', // Green-400
-            'permanent-glow': 'rgba(74, 222, 128, 0.5)',
-            'hub-main': '#C084FC',       // Purple-400
-            'hub-glow': 'rgba(192, 132, 252, 0.5)',
+            // Note Types (Vibrant Neon for dark bg)
+            'fleeting-main': '#facc15',
+            'fleeting-glow': 'rgba(250, 204, 21, 0.6)',
+            'literature-main': '#22d3ee',
+            'literature-glow': 'rgba(34, 211, 238, 0.6)',
+            'permanent-main': '#4ade80',
+            'permanent-glow': 'rgba(74, 222, 128, 0.6)',
+            'hub-main': '#c084fc',
+            'hub-glow': 'rgba(192, 132, 252, 0.6)',
 
-            linkDefault: '#52525B',
-            linkHover: '#A1A1AA'
+            linkDefault: '#71717a',
+            linkHover: '#a1a1aa'
         }
     }
 };
