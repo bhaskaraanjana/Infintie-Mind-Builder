@@ -24,6 +24,7 @@ export const ViewControls: React.FC = () => {
 
     return (
         <div
+            id="view-controls"
             className="glass"
             style={{
                 position: 'fixed',

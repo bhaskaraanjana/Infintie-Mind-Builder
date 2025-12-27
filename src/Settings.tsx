@@ -88,6 +88,7 @@ export const Settings: React.FC = () => {
         <>
             {/* Settings Fab */}
             <button
+                id="settings-button"
                 onClick={() => setIsOpen(true)}
                 className="glass"
                 style={{
@@ -499,6 +500,15 @@ export const Settings: React.FC = () => {
                                             style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'white', cursor: 'pointer' }}
                                         >
                                             Log State to Console
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                useStore.getState().startOnboarding();
+                                                setIsOpen(false);
+                                            }}
+                                            style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--primary-200)', background: 'var(--primary-50)', cursor: 'pointer', color: 'var(--primary-700)', gridColumn: '1 / -1' }}
+                                        >
+                                            🎓 Start Onboarding Tour
                                         </button>
                                     </div>
 

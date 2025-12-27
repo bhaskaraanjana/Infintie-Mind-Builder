@@ -170,6 +170,7 @@ export const SearchAndFilter: React.FC = () => {
     if (!isOpen) {
         return (
             <button
+                id="search-trigger"
                 className="glass"
                 style={{
                     position: 'fixed',
@@ -290,7 +291,7 @@ export const SearchAndFilter: React.FC = () => {
                         gap: '8px',
                         scrollbarWidth: 'none'
                     }} className="hide-scrollbar">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px' }}>
+                        <div id="filter-tags" style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px' }}>
                             <Filter size={14} className="text-neutral-500" />
                             <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--neutral-500)' }}>FILTERS:</span>
                         </div>

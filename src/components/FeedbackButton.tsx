@@ -50,6 +50,7 @@ export const FeedbackButton = () => {
         <>
             {/* Floating Button */}
             <button
+                id="feedback-button"
                 onClick={() => setIsOpen(true)}
                 className="glass"
                 style={{

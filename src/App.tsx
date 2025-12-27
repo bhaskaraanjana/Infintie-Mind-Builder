@@ -15,6 +15,7 @@ import { MobileContextMenu } from './components/MobileContextMenu';
 import { SelectionToggle } from './components/SelectionToggle';
 import { SelectionToolbar } from './components/SelectionToolbar';
 import { FeedbackButton } from './components/FeedbackButton';
+import { OnboardingTour } from './components/OnboardingTour';
 import { useModalHistory } from './hooks/useModalHistory';
 
 function App() {
@@ -59,8 +60,12 @@ function App() {
 
 
     // Initialize cloud sync when user logs in
+    // Data Loaded Flag
+    const isDataLoaded = useStore((state) => state.isDataLoaded);
+
+    // Initialize cloud sync when user logs in AND data is loaded
     useEffect(() => {
-        if (user) {
+        if (user && isDataLoaded) {
             (async () => {
                 await initializeSync(user.uid);
                 // DISABLED: reconcileWithCloud blindly pushes local data, causing resurrection of deleted notes.
@@ -70,9 +75,11 @@ function App() {
         }
 
         return () => {
+            // Only cleanup if we actually initialized? 
+            // cleanupSync handles repeated calls safely usually.
             cleanupSync();
         };
-    }, [user, initializeSync, reconcileWithCloud, cleanupSync]);
+    }, [user, isDataLoaded, initializeSync, reconcileWithCloud, cleanupSync]);
 
     useEffect(() => {
         loadData();
@@ -114,6 +121,7 @@ function App() {
             <SelectionToolbar />
             <MobileContextMenu />
             <FeedbackButton />
+            <OnboardingTour />
         </div>
     );
 }

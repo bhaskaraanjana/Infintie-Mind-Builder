@@ -261,6 +261,7 @@ export const Minimap: React.FC = () => {
         <div>
             {/* Toggle Button */}
             <button
+                id="minimap-toggle"
                 onClick={() => setUi({ minimapVisible: !ui.minimapVisible })}
                 className="glass"
                 style={{

@@ -174,8 +174,17 @@ class FirebaseSyncService implements SyncService {
         // This implies the user explicitly deleted everything.
         // We should NOT upload local data (which would "resurrect" it).
         if (hasMetadata && !hasCloudData) {
-            console.log('⚠️ Metadata exists but cloud is empty. Respecting deletion state.');
-            return; // Exit. The subsequent sync listeners will wipe local data to match the empty cloud.
+            // Check if we have FRESH local data created after the last delete (e.g. re-seeded onboarding data)
+            const lastDelete = metadataSnap.data()?.lastDelete || 0;
+            const hasFreshData = localNotes.some(n => (n.created || 0) > lastDelete);
+
+            if (hasFreshData) {
+                console.log('✨ Fresh local data detected after wipe. Migrating...');
+                // Fall through to migration logic
+            } else {
+                console.log('⚠️ Metadata exists but cloud is empty. Respecting deletion state.');
+                return; // Exit. The subsequent sync listeners will wipe local data to match the empty cloud.
+            }
         }
 
         // Case B: Cloud has data.

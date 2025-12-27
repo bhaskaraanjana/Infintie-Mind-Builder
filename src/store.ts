@@ -44,6 +44,12 @@ interface AppState {
     };
     setUi: (updates: Partial<AppState['ui']>) => void;
 
+    // Onboarding State
+    onboardingStep: number; // -1 = done, 0+ = current step
+    setOnboardingStep: (step: number) => void;
+    completeOnboarding: () => void;
+    startOnboarding: () => void;
+
     // Context Menu State
     contextMenu: {
         itemType: 'note' | 'canvas' | 'cluster' | 'link';
@@ -82,6 +88,7 @@ interface AppState {
 
     // Cloud Sync
     syncing: boolean;
+    isDataLoaded: boolean;
     initializeSync: (userId: string) => Promise<void>;
     reconcileWithCloud: () => Promise<void>;
     cleanupSync: () => void;
@@ -130,10 +137,28 @@ export const useStore = create<AppState>((set, get) => ({
         showOrbDetails: false
     },
     syncing: false,
+    isDataLoaded: false,
 
     setUi: (updates) => set((state) => ({
         ui: { ...state.ui, ...updates }
     })),
+
+    // Onboarding - start at 0 for new users, -1 if completed
+    onboardingStep: (() => {
+        const completed = localStorage.getItem('infinite-mind-tour-complete');
+        // Default to 0 (Start) if not explicitly completed
+        return completed === 'true' ? -1 : 0;
+    })(),
+    setOnboardingStep: (step) => set({ onboardingStep: step }),
+    completeOnboarding: () => {
+        localStorage.setItem('infinite-mind-tour-complete', 'true');
+        set({ onboardingStep: -1 });
+    },
+    startOnboarding: () => {
+        localStorage.removeItem('infinite-mind-tour-complete');
+        localStorage.setItem('infinite-mind-tour-started', 'true');
+        set({ onboardingStep: 0 });
+    },
 
     contextMenu: null,
     setContextMenu: (menu) => set({ contextMenu: menu }),
@@ -265,6 +290,8 @@ export const useStore = create<AppState>((set, get) => ({
 
         // Check if this is a first-time user (no notes AND not previously onboarded)
         const hasOnboarded = localStorage.getItem('infinite-mind-onboarded');
+        let shouldStartTour = false;
+
         if (Object.keys(notes).length === 0 && !hasOnboarded) {
             console.log('First-time user detected, seeding onboarding data...');
             const { generateOnboardingData } = await import('./onboardingData');
@@ -274,42 +301,35 @@ export const useStore = create<AppState>((set, get) => ({
             seedData.notes.forEach(n => {
                 notes[n.id] = n;
             });
-            await db.notes.bulkAdd(seedData.notes);
+            await db.notes.bulkPut(seedData.notes);
 
             // Add clusters to state and DB
             seedData.clusters.forEach(c => {
                 clusters[c.id] = c;
             });
-            await db.clusters.bulkAdd(seedData.clusters);
+            await db.clusters.bulkPut(seedData.clusters);
 
             // Add links to state and DB
             seedData.links.forEach(l => {
                 links[l.id] = l;
             });
-            await db.links.bulkAdd(seedData.links);
+            await db.links.bulkPut(seedData.links);
 
-            // CRITICAL: Sync to cloud immediately so onSnapshot doesn't overwrite with empty data
-            try {
-                for (const note of seedData.notes) {
-                    await syncService.syncNote(note);
-                }
-                for (const cluster of seedData.clusters) {
-                    await syncService.syncCluster(cluster);
-                }
-                for (const link of seedData.links) {
-                    await syncService.syncLink(link);
-                }
-                console.log('Onboarding data synced to cloud!');
-            } catch (err) {
-                console.error('Failed to sync onboarding to cloud (may not be logged in yet):', err);
-            }
+            // Syncing is handled by App.tsx initialization logic (waiting for isDataLoaded)
 
             // Mark as onboarded so we don't seed again
             localStorage.setItem('infinite-mind-onboarded', 'true');
             console.log('Onboarding data seeded successfully!');
+            shouldStartTour = true;
         }
 
-        set({ notes, clusters, links });
+        set({
+            notes,
+            clusters,
+            links,
+            isDataLoaded: true,
+            ...(shouldStartTour ? { onboardingStep: 0 } : {})
+        });
     },
 
     addNote: async (noteData) => {
