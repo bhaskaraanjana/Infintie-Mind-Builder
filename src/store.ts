@@ -133,8 +133,8 @@ export const useStore = create<AppState>((set, get) => ({
     ui: {
         minimapVisible: false,
         lodMode: 'auto',
-        showOrbLabels: false,
-        showOrbDetails: false
+        showOrbLabels: true,
+        showOrbDetails: true
     },
     syncing: false,
     isDataLoaded: false,

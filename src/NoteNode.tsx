@@ -287,6 +287,7 @@ export const NoteNode: React.FC<Props> = ({ note, scale, updateNotePosition, onD
                 y={15}
                 width={cardWidth - 45}
                 ellipsis={true}
+                wrap="none"
                 listening={false}
             />
             {contentPreview && (

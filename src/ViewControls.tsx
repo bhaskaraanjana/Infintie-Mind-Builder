@@ -119,6 +119,7 @@ export const ViewControls: React.FC = () => {
                                 justifyContent: 'center',
                                 transition: 'all 0.2s'
                             }}
+                            title="Toggle Labels"
                         >
                             <Tag size={18} />
                         </button>
@@ -137,6 +138,7 @@ export const ViewControls: React.FC = () => {
                                 justifyContent: 'center',
                                 transition: 'all 0.2s'
                             }}
+                            title="Toggle Details"
                         >
                             <AlignLeft size={18} />
                         </button>
