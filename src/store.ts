@@ -41,8 +41,10 @@ interface AppState {
         lodMode: 'auto' | 'orb' | 'card';
         showOrbLabels: boolean;
         showOrbDetails: boolean;
+        installPrompt: any;
     };
     setUi: (updates: Partial<AppState['ui']>) => void;
+    setInstallPrompt: (prompt: any) => void;
 
     // Onboarding State
     onboardingStep: number; // -1 = done, 0+ = current step
@@ -134,13 +136,17 @@ export const useStore = create<AppState>((set, get) => ({
         minimapVisible: false,
         lodMode: 'auto',
         showOrbLabels: true,
-        showOrbDetails: true
+        showOrbDetails: true,
+        installPrompt: null as any // Store beforeinstallprompt event
     },
     syncing: false,
     isDataLoaded: false,
 
     setUi: (updates) => set((state) => ({
         ui: { ...state.ui, ...updates }
+    })),
+    setInstallPrompt: (prompt) => set((state) => ({
+        ui: { ...state.ui, installPrompt: prompt }
     })),
 
     // Onboarding - start at 0 for new users, -1 if completed

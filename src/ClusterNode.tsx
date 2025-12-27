@@ -10,11 +10,12 @@ interface Props {
     notes: Record<string, Note>;
     updateClusterPosition: (id: string, x: number, y: number) => void;
     themeName: ThemeName;
+    filteredNoteIds?: Set<string> | null;
 }
 
 import { useStore } from './store';
 
-export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClusterPosition, themeName }) => {
+export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClusterPosition, themeName, filteredNoteIds }) => {
     const [hover, setHover] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const theme = themes[themeName];
@@ -68,7 +69,9 @@ export const ClusterNode: React.FC<Props> = ({ cluster, scale, notes, updateClus
         };
     }, []);
 
-    const childrenNotes = cluster.children.map(id => notes[id]).filter(Boolean);
+    const childrenNotes = cluster.children
+        .map(id => notes[id])
+        .filter((n): n is Note => !!n && (!filteredNoteIds || filteredNoteIds.has(n.id)));
     if (childrenNotes.length === 0) return null;
 
     const minX = Math.min(...childrenNotes.map(n => n.x));

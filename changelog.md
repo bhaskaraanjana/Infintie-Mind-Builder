@@ -78,6 +78,10 @@ All notable changes to this project will be documented in this file.
 - **Theme Initialization:** Fixed white-on-white Login page issue by hoisting theme initialization logic to run before authentication checks.
 - **Link Rendering:** Fixed "janky" arrow alignment and double-rendering artifacts.
 - **Mobile Link Interaction:** Enabled long-press context menu for links on touch devices.
+- **PWA Installation:**
+  - **Fixed:** Resolved issue where "Install App" button disappeared in Chrome.
+  - **Enhanced:** Improved fallback guidance for manual installation (iOS/Desktop).
+  - **Reliability:** Hardened Service Worker registration to ensure consistent installability.
 
 ## [0.6.0] - 2025-11-29
 

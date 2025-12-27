@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '../store';
-import { Sparkles, X, ChevronRight } from 'lucide-react';
+import { Sparkles, X, ChevronRight, Download } from 'lucide-react';
+
 
 // Phase 1: Canvas Tour Steps (Simplified + Interactions)
 const TOUR_STEPS = [
@@ -114,20 +115,66 @@ export const OnboardingTour: React.FC = () => {
         setOnboardingStep,
         completeOnboarding,
         setViewport,
+        ui: { installPrompt },
+        setInstallPrompt
     } = useStore();
+
+    // Memoize final steps to include Install option
+    const steps = useMemo(() => {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        if (isStandalone) return TOUR_STEPS;
+
+        const baseSteps = [...TOUR_STEPS];
+        const lastStep = baseSteps.pop()!; // Remove 'explore' temporarily
+
+        // Always add Install App step (instructions or button)
+        baseSteps.push({
+            id: 'install-app',
+            targetId: null,
+            title: "Install Infinite Mind 📲",
+            content: "Experience the infinite canvas as a native app. Faster performance and offline ready!",
+            position: 'center',
+            actionType: 'button',
+            buttonText: "Install App",
+            shape: 'rect',
+            phase: 1,
+        });
+
+        baseSteps.push(lastStep); // Add 'explore' back at the end
+        return baseSteps;
+    }, [installPrompt]);
 
     // Hooks MUST run unconditionally
     const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
     const clickListenerRef = useRef<(() => void) | null>(null);
 
-    const currentStep = (onboardingStep >= 0 && onboardingStep < TOUR_STEPS.length)
-        ? TOUR_STEPS[onboardingStep]
+    const currentStep = (onboardingStep >= 0 && onboardingStep < steps.length)
+        ? steps[onboardingStep]
         : null;
 
-    const isLastStep = onboardingStep === TOUR_STEPS.length - 1;
+    const isLastStep = onboardingStep === steps.length - 1;
 
-    const handleNext = useCallback(() => {
+    const handleNext = useCallback(async () => {
+        // Handle Install Action
+        // Handle Install Action
+        // Handle Install Action
+        if (currentStep?.id === 'install-app') {
+            if (installPrompt) {
+                installPrompt.prompt();
+                const { outcome } = await installPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                setInstallPrompt(null);
+            } else {
+                // Fallback Guide
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                const msg = isIOS
+                    ? "On iOS: Tap the 'Share' button (square with arrow) and select 'Add to Home Screen'."
+                    : "To install: Look for the 'Install' icon in your browser's address bar, or open the menu (⋮) and select 'Install Infinite Mind'.";
+                alert(msg);
+            }
+        }
+
         if (isLastStep) {
             completeOnboarding();
         } else {
@@ -377,7 +424,7 @@ export const OnboardingTour: React.FC = () => {
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px'
                         }}>
-                            Step {onboardingStep + 1} of {TOUR_STEPS.length}
+                            Step {onboardingStep + 1} of {steps.length}
                         </span>
                     </div>
                     <button
@@ -425,7 +472,7 @@ export const OnboardingTour: React.FC = () => {
                     gap: '6px',
                     marginBottom: '16px'
                 }}>
-                    {TOUR_STEPS.map((_, idx) => (
+                    {steps.map((_, idx) => (
                         <div
                             key={idx}
                             style={{
@@ -465,7 +512,7 @@ export const OnboardingTour: React.FC = () => {
                             }}
                         >
                             {currentStep.buttonText}
-                            <ChevronRight size={16} />
+                            {currentStep.id === 'install-app' ? <Download size={16} /> : <ChevronRight size={16} />}
                         </button>
                     )}
 

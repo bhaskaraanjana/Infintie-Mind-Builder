@@ -10,8 +10,12 @@ type Tab = 'account' | 'appearance' | 'advanced';
 export const Settings: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('account');
-    const [installPrompt, setInstallPrompt] = useState<any>(null);
-    const { theme: currentTheme, setTheme } = useStore();
+    const {
+        theme: currentTheme,
+        setTheme,
+        ui: { installPrompt },
+        setInstallPrompt
+    } = useStore();
     const { logout, user } = useAuth();
     const [isMobile, setIsMobile] = useState(false);
 
@@ -31,23 +35,15 @@ export const Settings: React.FC = () => {
     // Enable Back Button navigation
     useModalHistory(isOpen, () => setIsOpen(false), 'settings');
 
+    useModalHistory(isOpen, () => setIsOpen(false), 'settings');
+
+    // Check standalone mode
+    const [isStandalone, setIsStandalone] = useState(false);
     useEffect(() => {
-        const handler = (e: any) => {
-            e.preventDefault();
-            setInstallPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
     }, []);
 
-    const handleInstallClick = async () => {
-        if (!installPrompt) return;
-        installPrompt.prompt();
-        const { outcome } = await installPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setInstallPrompt(null);
-        }
-    };
+
 
     const handleThemeChange = (themeName: ThemeName) => {
         setTheme(themeName);
@@ -287,7 +283,7 @@ export const Settings: React.FC = () => {
                                         </button>
                                     </div>
 
-                                    {installPrompt && (
+                                    {!isStandalone && (
                                         <div style={{
                                             padding: '24px',
                                             backgroundColor: 'var(--primary-50)',
@@ -302,24 +298,45 @@ export const Settings: React.FC = () => {
                                                 <div>
                                                     <h4 style={{ margin: 0, fontWeight: 600, color: 'var(--primary-900)' }}>Install App</h4>
                                                     <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--primary-700)' }}>
-                                                        Install Infinite Mind for a better full-screen experience.
+                                                        Install Infinite Mind for a better full-screen experience and offline access.
                                                     </p>
                                                 </div>
                                             </div>
                                             <button
-                                                onClick={handleInstallClick}
+                                                onClick={() => {
+                                                    if (installPrompt) {
+                                                        installPrompt.prompt();
+                                                        installPrompt.userChoice.then((choice: any) => {
+                                                            if (choice.outcome === 'accepted') {
+                                                                setInstallPrompt(null);
+                                                            }
+                                                        });
+                                                    } else {
+                                                        // Fallback Guide
+                                                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                                                        const msg = isIOS
+                                                            ? "On iOS: Tap the 'Share' button (square with arrow) and select 'Add to Home Screen'."
+                                                            : "To install: Look for the 'Install' icon in your browser's address bar, or open the menu (⋮) and select 'Install Infinite Mind'.";
+                                                        alert(msg);
+                                                    }
+                                                }}
                                                 style={{
                                                     alignSelf: 'flex-start',
-                                                    padding: '8px 16px',
+                                                    padding: '10px 20px',
                                                     backgroundColor: 'var(--primary-600)',
                                                     color: 'white',
                                                     border: 'none',
                                                     borderRadius: '8px',
                                                     fontWeight: 600,
-                                                    cursor: 'pointer'
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                                 }}
                                             >
-                                                Install Now
+                                                <Download size={18} />
+                                                {installPrompt ? "Install Now" : "How to Install"}
                                             </button>
                                         </div>
                                     )}

@@ -42,6 +42,21 @@ function App() {
     const initializeSync = useStore((state) => state.initializeSync);
     const reconcileWithCloud = useStore((state) => state.reconcileWithCloud);
     const cleanupSync = useStore((state) => state.cleanupSync);
+    const setInstallPrompt = useStore((state) => state.setInstallPrompt);
+
+    // Capture install prompt
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: any) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, [setInstallPrompt]);
 
     // Navigation History
     const editingNoteId = useStore((state) => state.editingNoteId);

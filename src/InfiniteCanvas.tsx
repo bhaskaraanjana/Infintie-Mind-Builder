@@ -726,6 +726,62 @@ export const InfiniteCanvas = () => {
         });
     }, [notes, viewport, selectedTags]);
 
+    // Tag Filtered IDs (ignoring viewport) for Link Visibility
+    const tagFilteredIds = useMemo(() => {
+        if (!selectedTags || selectedTags.length === 0) return null;
+        const ids = new Set<string>();
+        Object.values(notes).forEach(note => {
+            const hasTag = note.tags && note.tags.some(tag => selectedTags.includes(tag));
+            if (hasTag) ids.add(note.id);
+        });
+        return ids;
+    }, [notes, selectedTags]);
+
+    // Tag Filtered Cluser IDs
+    const filteredClusterIds = useMemo(() => {
+        if (!tagFilteredIds) return null;
+        const ids = new Set<string>();
+        Object.values(clusters).forEach(cluster => {
+            const hasVisibleChild = cluster.children.some(id => tagFilteredIds.has(id));
+            if (hasVisibleChild) ids.add(cluster.id);
+        });
+        return ids;
+    }, [clusters, tagFilteredIds]);
+
+    // Filtered Links
+    const filteredLinks = useMemo(() => {
+        if (!tagFilteredIds) return links; // No filter active
+
+        const result: Record<string, any> = {};
+        Object.values(links).forEach(link => {
+            // Check Source Visibility
+            let sourceVisible = false;
+            if (notes[link.sourceId]) {
+                sourceVisible = tagFilteredIds.has(link.sourceId);
+            } else if (clusters[link.sourceId]) {
+                sourceVisible = !filteredClusterIds || filteredClusterIds.has(link.sourceId);
+            }
+
+            // Check Target Visibility
+            let targetVisible = false;
+            if (notes[link.targetId]) {
+                targetVisible = tagFilteredIds.has(link.targetId);
+            } else if (clusters[link.targetId]) {
+                targetVisible = !filteredClusterIds || filteredClusterIds.has(link.targetId);
+            }
+
+            // Only show if both endpoints are visible
+            if (sourceVisible && targetVisible) {
+                // Double check existence
+                if ((notes[link.sourceId] || clusters[link.sourceId]) &&
+                    (notes[link.targetId] || clusters[link.targetId])) {
+                    result[link.id] = link;
+                }
+            }
+        });
+        return result;
+    }, [links, notes, clusters, tagFilteredIds, filteredClusterIds]);
+
     // Long Press Logic
     const {
         onTouchStart: onLongPressTouchStart,
@@ -980,13 +1036,14 @@ export const InfiniteCanvas = () => {
                             notes={notes}
                             updateClusterPosition={updateClusterPosition}
                             themeName={theme}
+                            filteredNoteIds={tagFilteredIds}
                         />
                     ))}
 
                     <LinkLayer
                         notes={notes}
                         clusters={clusters}
-                        links={links}
+                        links={filteredLinks}
                         onLinkContextMenu={handleLinkContextMenu}
                         scale={viewport.scale}
                     />
