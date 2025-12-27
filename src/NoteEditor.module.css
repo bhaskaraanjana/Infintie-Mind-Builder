@@ -46,6 +46,12 @@
     padding: 2rem;
 }
 
+@media (max-width: 768px) {
+    .expandedContent {
+        padding: 0;
+    }
+}
+
 .editorContent {
     display: flex;
     flex-direction: column;
