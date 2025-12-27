@@ -14,7 +14,8 @@ export default forwardRef((props: any, ref) => {
         const item = props.items[index]
 
         if (item) {
-            props.command({ id: item.title, label: item.title })
+            // Pass both label and noteId for proper wiki-link creation
+            props.command({ id: item.id, label: item.label, noteId: item.noteId })
         }
     }
 
@@ -53,21 +54,22 @@ export default forwardRef((props: any, ref) => {
         },
     }))
 
+    // Don't render anything if no items
+    if (!props.items.length) {
+        return null
+    }
+
     return (
         <div className={styles.items}>
-            {props.items.length ? (
-                props.items.map((item: any, index: number) => (
-                    <button
-                        className={`${styles.item} ${index === selectedIndex ? styles.isSelected : ''}`}
-                        key={index}
-                        onClick={() => selectItem(index)}
-                    >
-                        {item.title}
-                    </button>
-                ))
-            ) : (
-                <div className={styles.item}>No result</div>
-            )}
+            {props.items.map((item: any, index: number) => (
+                <button
+                    className={`${styles.item} ${index === selectedIndex ? styles.isSelected : ''}`}
+                    key={index}
+                    onClick={() => selectItem(index)}
+                >
+                    {item.label}
+                </button>
+            ))}
         </div>
     )
 })

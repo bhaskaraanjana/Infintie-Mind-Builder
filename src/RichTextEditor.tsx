@@ -1,6 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Mention from '@tiptap/extension-mention';
+import { WikiLink } from './components/extensions/WikiLink';
 import suggestion from './components/extensions/mentionSuggestion';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { createLowlight, all } from 'lowlight';
@@ -31,6 +31,7 @@ interface Props {
     isExpanded?: boolean;
     showToolbar?: boolean;
     onEditorReady?: (editor: any) => void;
+    onWikiLinkClick?: (noteId: string) => void;
 }
 
 // Helper to count words
@@ -41,8 +42,27 @@ const countWords = (text: string): number => {
 // Create lowlight instance with all languages
 const lowlight = createLowlight(all);
 
-export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false, showToolbar = true, onEditorReady }: Props) => {
+export const RichTextEditor = ({ content, onChange, onStatsChange, editable = true, isExpanded = false, onEditorReady, onWikiLinkClick }: Props) => {
     const [isUploading, setIsUploading] = useState(false);
+
+    // Handle wiki-link clicks
+    useEffect(() => {
+        if (!onWikiLinkClick) return;
+
+        const handleClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.classList.contains('wiki-link')) {
+                e.preventDefault();
+                const noteId = target.getAttribute('data-note-id');
+                if (noteId) {
+                    onWikiLinkClick(noteId);
+                }
+            }
+        };
+
+        document.addEventListener('click', handleClick);
+        return () => document.removeEventListener('click', handleClick);
+    }, [onWikiLinkClick]);
 
     const handleFileUpload = async (file: File, view: any, pos?: number) => {
         setIsUploading(true);
@@ -88,18 +108,26 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
             TableRow,
             TableCell,
             TableHeader,
-            Mention.configure({
-                HTMLAttributes: {
-                    class: 'mention',
-                },
+            WikiLink.configure({
                 suggestion: {
                     ...suggestion,
+                    char: '[',
+                    allowSpaces: true,
                     command: ({ editor, range, props }: any) => {
-                        const title = props.id || props.label;
+                        // Delete the extra [ that was typed before the trigger
+                        const from = range.from - 1; // Go back one more to delete the first [
                         editor
                             .chain()
                             .focus()
-                            .insertContentAt(range, `[[${title}]] `)
+                            .deleteRange({ from: from >= 0 ? from : range.from, to: range.to })
+                            .insertContent({
+                                type: 'mention',
+                                attrs: {
+                                    id: props.noteId || props.id,
+                                    label: props.label || props.id,
+                                },
+                            })
+                            .insertContent(' ')
                             .run();
                     },
                 },
@@ -213,6 +241,22 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     pointer-events: none;
                 }
                 
+                /* Wiki-Link Styling */
+                .ProseMirror .wiki-link {
+                    color: var(--primary-500);
+                    background-color: rgba(14, 165, 233, 0.1);
+                    padding: 2px 4px;
+                    border-radius: 4px;
+                    text-decoration: none;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    font-weight: 500;
+                }
+                .ProseMirror .wiki-link:hover {
+                    background-color: rgba(14, 165, 233, 0.2);
+                    color: var(--primary-600);
+                }
+
 
                 
                 /* Image Styling */

@@ -8,10 +8,15 @@ export default {
         const store = useStore.getState()
         const notes = Object.values(store.notes)
 
-        // Filter notes by title
+        // Filter notes by title and return with noteId
         return notes
             .filter(item => item.title.toLowerCase().startsWith(query.toLowerCase()))
             .slice(0, 5)
+            .map(note => ({
+                id: note.title, // Used for display
+                label: note.title,
+                noteId: note.id, // Actual note ID for linking
+            }))
     },
 
     render: () => {

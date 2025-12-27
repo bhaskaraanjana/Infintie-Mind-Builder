@@ -153,8 +153,11 @@ const DraggableEditorContent = ({
                     onChange={setContent}
                     onStatsChange={setEditorStats}
                     isExpanded={isExpanded}
-                    showToolbar={false} // Use external toolbar
                     onEditorReady={setEditorInstance}
+                    onWikiLinkClick={(noteId) => {
+                        handleSave();
+                        setEditingNoteId(noteId);
+                    }}
                 />
             </div>
 
