@@ -77,7 +77,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         signup,
         login,
         logout,
-        logout,
         sendPasswordReset,
         reloadUser,
         sendVerificationEmail
