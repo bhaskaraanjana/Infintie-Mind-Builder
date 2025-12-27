@@ -7,6 +7,13 @@ export interface SearchResult {
     matches?: FuseResult<Note>['matches'];
 }
 
+const stripHtml = (html: string) => {
+    if (!html) return '';
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+};
+
 const fuseOptions: IFuseOptions<Note> = {
     keys: [
         { name: 'title', weight: 2 },
@@ -16,7 +23,16 @@ const fuseOptions: IFuseOptions<Note> = {
     threshold: 0.3,
     includeScore: true,
     includeMatches: true,
-    minMatchCharLength: 2
+    minMatchCharLength: 2,
+    ignoreLocation: true,
+    useExtendedSearch: true,
+    getFn: (obj: Note, path: string | string[]) => {
+        if (path === 'content') {
+            return stripHtml(obj.content);
+        }
+        // @ts-ignore - Default Fuse behavior for other paths
+        return Fuse.config.getFn(obj, path);
+    }
 };
 
 export const searchNotes = (query: string, notes: Note[]): SearchResult[] => {
@@ -72,9 +88,12 @@ export const searchClusters = (query: string, clusters: Cluster[]): GenericSearc
     }));
 };
 
-export const getSearchSnippet = (text: string, matches?: FuseResult<Note>['matches']): { pre: string; match: string; post: string } => {
+export const getSearchSnippet = (rawText: string, matches?: FuseResult<Note>['matches']): { pre: string; match: string; post: string } => {
     // Determine the best match to show (prioritize content matches over title)
     const contentMatch = matches?.find(m => m.key === 'content');
+
+    // We search on stripped text, so we must generate snippet from stripped text
+    const text = stripHtml(rawText);
 
     if (!contentMatch || !contentMatch.indices.length) {
         // Fallback: no highlight, just start of text

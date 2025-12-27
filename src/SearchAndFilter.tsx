@@ -4,9 +4,22 @@ import { searchNotes, searchClusters, getSearchSnippet } from './searchUtils';
 import { Search, Filter, X, Tag, Box } from 'lucide-react';
 
 export const SearchAndFilter: React.FC = () => {
-    const { notes, clusters, setViewport, selectedTags, setSelectedTags } = useStore();
+    const {
+        notes,
+        clusters,
+        setViewport,
+        selectedTags,
+        setSelectedTags,
+        ui: { isSearchOpen },
+        setSearchOpen
+    } = useStore(); // Destructure properly
+
+    // Alias for backward compatibility in this file
+    const isOpen = isSearchOpen;
+    const setIsOpen = setSearchOpen; // Direct mapping
+
     const [query, setQuery] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
+    // const [isOpen, setIsOpen] = useState(false); // Removed local state
 
     // Unified result type
     type CombinedResult =
@@ -34,16 +47,16 @@ export const SearchAndFilter: React.FC = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
-                setIsOpen(prev => !prev);
-            } else if (e.key === 'Escape' && isOpen) {
-                setIsOpen(false);
+                setSearchOpen(!isSearchOpen);
+            } else if (e.key === 'Escape' && isSearchOpen) {
+                setSearchOpen(false);
                 setQuery('');
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen]);
+    }, [isSearchOpen, setSearchOpen]);
 
     // Focus input on open
     useEffect(() => {

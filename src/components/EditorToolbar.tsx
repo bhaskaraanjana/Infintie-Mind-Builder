@@ -2,19 +2,19 @@ import {
     Bold, Italic, Strikethrough, Code,
     Heading1, Heading2, List, ListOrdered,
     Image as ImageIcon, Youtube as YoutubeIcon, Quote,
-    Undo2, Redo2, Table as TableIcon, Upload
+    Undo2, Redo2, Table as TableIcon, Upload, Search
 } from 'lucide-react';
 import { type Editor } from '@tiptap/react';
 import './EditorToolbar.css';
 import { useCallback, useRef } from 'react';
 import { uploadFile } from '../services/storageService';
-
 interface EditorToolbarProps {
     editor: Editor | null;
     className?: string;
+    onSearchClick?: () => void;
 }
 
-export const EditorToolbar = ({ editor, className = '' }: EditorToolbarProps) => {
+export const EditorToolbar = ({ editor, className = '', onSearchClick }: EditorToolbarProps) => {
     if (!editor) return null;
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +71,18 @@ export const EditorToolbar = ({ editor, className = '' }: EditorToolbarProps) =>
                 accept="image/*,video/*"
                 style={{ display: 'none' }}
             />
+
+            {/* Search (Local) */}
+            <button
+                onClick={() => onSearchClick?.()}
+                className="toolbar-btn"
+                title="Find in Note"
+            >
+                <Search size={18} />
+            </button>
+
+            <div className="toolbar-divider" />
+
             {/* Undo/Redo */}
             <button
                 onClick={() => editor.chain().focus().undo().run()}

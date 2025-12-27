@@ -1,6 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { WikiLink } from './components/extensions/WikiLink';
+import { Search } from './components/extensions/Search';
 import suggestion from './components/extensions/mentionSuggestion';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { createLowlight, all } from 'lowlight';
@@ -132,6 +133,7 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                     },
                 },
             }),
+            Search,
         ],
         content: content,
         editable: editable,
@@ -319,6 +321,16 @@ export const RichTextEditor = ({ content, onChange, onStatsChange, editable = tr
                         overflow-x: auto;
                         -webkit-overflow-scrolling: touch;
                     }
+                }
+
+                /* Search Styling */
+                .ProseMirror .search-result {
+                    background-color: rgba(255, 219, 77, 0.4);
+                    border-radius: 2px;
+                }
+                .ProseMirror .search-result-current {
+                    background-color: rgba(255, 165, 0, 0.6);
+                    border-bottom: 2px solid orange;
                 }
 
                 @keyframes fadeIn {

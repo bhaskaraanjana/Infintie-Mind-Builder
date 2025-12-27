@@ -10,6 +10,16 @@ All notable changes to this project will be documented in this file.
   - **Visual Polish:** Updated "Cream" theme with a modern Sky Blue primary color and Orange literature notes.
   - **Dark Mode Fixes:** Resolved "Midnight" theme white-background bugs and ensured correct glassmorphism rendering.
   - **Legacy Cleanup:** Replaced all outdated `var(--theme-*)` variables with standard tokens (e.g., `var(--text)`, `var(--glass-bg)`).
+- **Full-Text Search:**
+  - **Deep Search:** Upgraded Fuse.js configuration (`ignoreLocation: true`) to effectively search note content beyond just titles and initial characters.
+  - **Smart Snippets:** Implemented HTML stripping to generate clean, readable text previews of search hits.
+- **In-Editor Find & Replace:**
+  - **Local Find:** Added a native "Find in Note" bar inside the editor, toggled via the toolbar.
+  - **Replace Support:** Added full Find & Replace capabilities (Replace, Replace All) to text editing.
+  - **Visuals:** Matches are highlighted in real-time with navigation controls (Next/Prev).
+- **Wiki-links:**
+  - **Syntax:** Support for `[[Note Title]]` syntax to create internal links.
+  - **Navigation:** Clicking a wiki-link instantly opens the target note.
 - **UI Stability:**
   - **Selection UI:** Fixed visibility issues in selection toggle and toolbar across all themes.
   - **Selection Logic:** Ensure close button in selection toolbar properly exits multi-select mode.

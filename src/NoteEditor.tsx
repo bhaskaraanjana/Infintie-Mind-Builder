@@ -3,6 +3,7 @@ import { useStore } from './store';
 import { X, Trash2, Maximize2, Minimize2, GripHorizontal, Tag, BookOpen, Zap, ChevronDown, ChevronRight, Network } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { EditorToolbar } from './components/EditorToolbar';
+import { EditorSearchBar } from './components/EditorSearchBar';
 import styles from './NoteEditor.module.css';
 import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -57,6 +58,7 @@ const DraggableEditorContent = ({
     setActiveMetadataPanel
 }: any) => {
     const [editorInstance, setEditorInstance] = useState<any>(null);
+    const [showSearchBar, setShowSearchBar] = useState(false);
 
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: 'note-editor-window',
@@ -139,8 +141,19 @@ const DraggableEditorContent = ({
                     </div>
                 )}
                 {/* External Toolbar */}
+                {/* External Toolbar or Search Bar */}
                 {isExpanded && editorInstance && (
-                    <EditorToolbar editor={editorInstance} />
+                    showSearchBar ? (
+                        <EditorSearchBar
+                            editor={editorInstance}
+                            onClose={() => setShowSearchBar(false)}
+                        />
+                    ) : (
+                        <EditorToolbar
+                            editor={editorInstance}
+                            onSearchClick={() => setShowSearchBar(true)}
+                        />
+                    )
                 )}
             </div>
 

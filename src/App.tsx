@@ -125,12 +125,11 @@ function App() {
         >
             <Canvas />
 
-            <SearchAndFilter />
-
             <NoteEditor key={editingNoteId} />
             <Minimap />
 
             <Settings />
+            <SearchAndFilter />
             <ViewControls />
             <SelectionToggle />
             <SelectionToolbar />

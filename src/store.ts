@@ -42,9 +42,13 @@ interface AppState {
         showOrbLabels: boolean;
         showOrbDetails: boolean;
         installPrompt: any;
+        isSearchOpen: boolean;
     };
     setUi: (updates: Partial<AppState['ui']>) => void;
     setInstallPrompt: (prompt: any) => void;
+
+    // Actions
+    setSearchOpen: (isOpen: boolean) => void;
 
     // Onboarding State
     onboardingStep: number; // -1 = done, 0+ = current step
@@ -137,7 +141,8 @@ export const useStore = create<AppState>((set, get) => ({
         lodMode: 'auto',
         showOrbLabels: true,
         showOrbDetails: true,
-        installPrompt: null as any // Store beforeinstallprompt event
+        installPrompt: null as any, // Store beforeinstallprompt event
+        isSearchOpen: false
     },
     syncing: false,
     isDataLoaded: false,
@@ -147,6 +152,9 @@ export const useStore = create<AppState>((set, get) => ({
     })),
     setInstallPrompt: (prompt) => set((state) => ({
         ui: { ...state.ui, installPrompt: prompt }
+    })),
+    setSearchOpen: (isOpen) => set((state) => ({
+        ui: { ...state.ui, isSearchOpen: isOpen }
     })),
 
     // Onboarding - start at 0 for new users, -1 if completed
