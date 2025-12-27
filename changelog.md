@@ -65,6 +65,14 @@ All notable changes to this project will be documented in this file.
   - **Collapsible UI:** Optimized screen space with toggleable panels for all specialized metadata.
   - **Mobile Friendly:** Improved touch targets and responsive layout for all new editor components.
 
+- **Onboarding Stability & Tour Revamp:**
+  - **Crash Fix:** Fixed "Rendered more hooks" crash loop for new users.
+  - **Data Resilience:** Fixed race condition causing onboarding data to disappear after refresh. Added `isDataLoaded` flag and improved seed timestamps.
+  - **Simplified Tour:** Removed complex Phase 2 steps for a streamlined "UI Tour -> Explore" flow.
+  - **Auto-Start:** Onboarding tour now automatically launches for all new users.
+  - **Power Moves:** Added explicit guidance for double-tap and hold interactions.
+  - **DB Robustness:** Switched to safer seeding methods (`bulkPut`) to prevent database consistency errors.
+
 ### Fixed
 - **Startup Crash:** Fixed critical "Rendered more hooks" error causing blank page after login by ensuring unconditional hook execution.
 - **Theme Initialization:** Fixed white-on-white Login page issue by hoisting theme initialization logic to run before authentication checks.
