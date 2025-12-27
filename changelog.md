@@ -77,6 +77,9 @@ All notable changes to this project will be documented in this file.
   - **Fleeting Notes:** Added quick conversion actions to transform into Literature or Permanent types.
   - **Collapsible UI:** Optimized screen space with toggleable panels for all specialized metadata.
   - **Mobile Friendly:** Improved touch targets and responsive layout for all new editor components.
+- **Mobile Editor Polish:**
+  - **Edge-to-Edge:** Expanded editor now uses full width on mobile devices for better space utilization.
+  - **Better Spacing:** Adjusted padding and margins for headers and controls in mobile view.
 
 - **Onboarding Stability & Tour Revamp:**
   - **Crash Fix:** Fixed "Rendered more hooks" crash loop for new users.

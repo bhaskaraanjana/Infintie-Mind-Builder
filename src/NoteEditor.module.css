@@ -64,8 +64,35 @@
 
 @media (max-width: 768px) {
     .expandedEditorContent {
-        padding: 0 0.5rem;
-        /* Minimal padding on mobile */
+        padding: 0;
+        /* Edge to edge */
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .expandedEditorContent .contentArea {
+        border-radius: 0;
+        border-right: none;
+        border-left: none;
+        background: transparent;
+        /* Merge with background */
+        padding: 1rem;
+        /* Internal text padding */
+    }
+
+    .expandedEditorContent .header {
+        padding: 0.5rem 1rem;
+        margin-bottom: 0;
+    }
+
+    .expandedEditorContent .controlsBar {
+        padding: 0 1rem 0.5rem 1rem;
+    }
+
+    /* Compact Typography on Mobile */
+    .titleInput {
+        font-size: 1.25rem;
     }
 }
 
